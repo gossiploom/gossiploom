@@ -14,7 +14,112 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      gossip_comments: {
+        Row: {
+          author_name: string | null
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          author_name?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gossip_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "gossip_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gossip_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_fingerprint: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_fingerprint: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_fingerprint?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gossip_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "gossip_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gossip_posts: {
+        Row: {
+          author_name: string | null
+          category: string
+          comments_count: number | null
+          content: string
+          created_at: string
+          excerpt: string | null
+          id: string
+          image_url: string | null
+          is_trending: boolean | null
+          likes_count: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          category: string
+          comments_count?: number | null
+          content: string
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          is_trending?: boolean | null
+          likes_count?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          category?: string
+          comments_count?: number | null
+          content?: string
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          is_trending?: boolean | null
+          likes_count?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

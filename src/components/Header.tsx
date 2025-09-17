@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Zap, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import SubmitGossipForm from '@/components/SubmitGossipForm';
 
 const Header = () => {
   return (
@@ -35,9 +36,11 @@ const Header = () => {
               <TrendingUp className="w-4 h-4" />
               Trending
             </Button>
-            <Button variant="hero" size="sm">
-              Submit Gossip
-            </Button>
+            <SubmitGossipForm>
+              <Button variant="hero" size="sm">
+                Submit Gossip
+              </Button>
+            </SubmitGossipForm>
           </div>
         </div>
       </div>

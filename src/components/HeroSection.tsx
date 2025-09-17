@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import SubmitGossipForm from '@/components/SubmitGossipForm';
 import { Sparkles, Zap } from 'lucide-react';
 
 const HeroSection = () => {
@@ -30,10 +31,12 @@ const HeroSection = () => {
               <Sparkles className="w-5 h-5 mr-2" />
               Start Reading Gossip
             </Button>
-            <Button variant="secondary" size="lg" className="text-lg px-8 py-6">
-              <Zap className="w-5 h-5 mr-2" />
-              Submit Your Story
-            </Button>
+            <SubmitGossipForm>
+              <Button variant="secondary" size="lg" className="text-lg px-8 py-6">
+                <Zap className="w-5 h-5 mr-2" />
+                Submit Your Story
+              </Button>
+            </SubmitGossipForm>
           </div>
           
           <div className="mt-12 text-white/70 text-sm">
