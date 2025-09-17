@@ -19,7 +19,6 @@ Automated keyword filters and basic manual moderation keep the platform in line 
 No User Accounts or Backend Profiles:
 No personal data is stored—only the submitted content is published.
 
-SEO & AdSense Ready:
 All content is unique, structured, and optimized.
 
 🚀 Getting Started
@@ -58,4 +57,4 @@ Optional contributor badges for regular posters.
 
 📄 License
 
-This project is open for community use. Content posted by users belongs to the original contributor. The platform owner is responsible for moderating content to ensure compliance with Google AdSense and legal standards.
+This project is open for community use. Content posted by users belongs to the original contributor. The platform owner is responsible for moderating content to ensure compliance with legal standards.
