@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import PostCard from './PostCard';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -16,20 +15,31 @@ interface GossipPost {
   created_at: string;
 }
 
-const PostsGrid = () => {
+interface PostsGridProps {
+  selectedCategory: string;
+}
+
+const PostsGrid: React.FC<PostsGridProps> = ({ selectedCategory }) => {
   const [posts, setPosts] = useState<GossipPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [selectedCategory]);
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('gossip_posts')
         .select('*')
         .order('created_at', { ascending: false });
+      
+      // Filter by category if not "All"
+      if (selectedCategory !== 'All') {
+        query = query.eq('category', selectedCategory);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setPosts(data || []);
@@ -80,18 +90,18 @@ const PostsGrid = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {posts.map((post) => (
-          <Link key={post.id} to={`/post/${post.id}`}>
-            <PostCard
-              title={post.title}
-              excerpt={post.excerpt || ''}
-              category={post.category}
-              timeAgo={formatTimeAgo(post.created_at)}
-              likes={post.likes_count}
-              comments={post.comments_count}
-              trending={post.is_trending}
-              imageUrl={post.image_url || undefined}
-            />
-          </Link>
+          <PostCard
+            key={post.id}
+            id={post.id}
+            title={post.title}
+            excerpt={post.excerpt || ''}
+            category={post.category}
+            timeAgo={formatTimeAgo(post.created_at)}
+            likes={post.likes_count}
+            comments={post.comments_count}
+            trending={post.is_trending}
+            imageUrl={post.image_url || undefined}
+          />
         ))}
       </div>
       

@@ -1,10 +1,12 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Share2, Clock, TrendingUp } from 'lucide-react';
 
 interface PostCardProps {
+  id: string;
   title: string;
   excerpt: string;
   category: string;
@@ -16,6 +18,7 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({
+  id,
   title,
   excerpt,
   category,
@@ -26,7 +29,8 @@ const PostCard: React.FC<PostCardProps> = ({
   imageUrl
 }) => {
   return (
-    <Card className={`group cursor-pointer hover:scale-[1.02] ${trending ? 'ring-1 ring-trending/50' : ''}`}>
+    <Link to={`/post/${id}`}>
+      <Card className={`group cursor-pointer hover:scale-[1.02] ${trending ? 'ring-1 ring-trending/50' : ''}`}>
       {imageUrl && (
         <div className="relative overflow-hidden rounded-t-lg">
           <img 
@@ -80,6 +84,7 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
       </CardContent>
     </Card>
+    </Link>
   );
 };
 
