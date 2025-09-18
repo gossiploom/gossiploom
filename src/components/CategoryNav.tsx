@@ -7,6 +7,7 @@ const categories = [
   { name: 'Celebrity', icon: Users },
   { name: 'TV Shows', icon: Tv },
   { name: 'Lifestyle', icon: Heart },
+  { name: 'Education', icon: Books },
   { name: 'Entertainment', icon: Sparkles },
   { name: 'Politics', icon: Vote },
 ];
