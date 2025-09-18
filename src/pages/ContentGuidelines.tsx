@@ -26,7 +26,7 @@ const ContentGuidelines = () => {
 
           <div className="prose prose-gray dark:prose-invert max-w-none space-y-6">
             <p className="text-lg">
-              To ensure GossipLoom remains a safe, entertaining, and AdSense-compliant community, all submissions must follow these guidelines:
+              To ensure GossipLoom remains a safe and entertaining community, all submissions must follow these guidelines:
             </p>
 
             <section>
