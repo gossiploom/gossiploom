@@ -2,108 +2,108 @@
 @tailwind components;
 @tailwind utilities;
 
-/* GossipLoom Design System - Retro Sunset theme */
+/* GossipLoom Design System - Cool Horizon theme */
 
 @layer base {
   :root {
     /* Background & Base Colors */
-    --background: 240 10% 5%;            /* Deep Charcoal */
-    --foreground: 0 0% 98%;              /* Off-White */
+    --background: 220 20% 8%;            /* Deep Night Blue */
+    --foreground: 210 20% 95%;           /* Light Cool Gray */
 
     /* Card System */
-    --card: 240 10% 8%;                  /* Darker Gray */
-    --card-foreground: 0 0% 98%;
+    --card: 220 20% 12%;                 /* Slightly Lighter Blue */
+    --card-foreground: 210 20% 95%;
 
     /* Popover */
-    --popover: 240 10% 8%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220 20% 12%;
+    --popover-foreground: 210 20% 95%;
 
-    /* Primary Burnt Orange */
-    --primary: 25 80% 55%;
-    --primary-foreground: 0 0% 98%;
+    /* Primary Deep Cyan */
+    --primary: 190 80% 50%;
+    --primary-foreground: 220 20% 8%;
 
-    /* Secondary Soft Pink */
-    --secondary: 340 70% 70%;
-    --secondary-foreground: 0 0% 98%;
+    /* Secondary Electric Blue */
+    --secondary: 220 90% 60%;
+    --secondary-foreground: 220 20% 8%;
 
     /* Muted/Subtle */
-    --muted: 240 5% 25%;
-    --muted-foreground: 240 5% 65%;
+    --muted: 220 20% 20%;
+    --muted-foreground: 210 20% 60%;
 
-    /* Accent Bright Yellow */
-    --accent: 45 90% 65%;
-    --accent-foreground: 240 10% 3.9%;
+    /* Accent Soft Green */
+    --accent: 150 60% 50%;
+    --accent-foreground: 220 20% 8%;
 
-    /* Trending Hot Pink */
-    --trending: 340 100% 70%;
-    --trending-foreground: 0 0% 98%;
+    /* Trending Vibrant Yellow */
+    --trending: 45 90% 65%;
+    --trending-foreground: 220 20% 8%;
 
     /* Destructive */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     /* Borders & Inputs */
-    --border: 240 5% 25%;
-    --input: 240 5% 25%;
-    --ring: 25 80% 55%;
+    --border: 220 20% 25%;
+    --input: 220 20% 25%;
+    --ring: 190 80% 50%;
 
     /* Border Radius */
     --radius: 0.75rem;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(25 80% 55%), hsl(40 70% 60%));
-    --gradient-secondary: linear-gradient(135deg, hsl(340 70% 70%), hsl(350 75% 75%));
-    --gradient-hero: linear-gradient(135deg, hsl(25 80% 55%) 0%, hsl(340 70% 70%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(240 10% 8%), hsl(240 15% 12%));
+    --gradient-primary: linear-gradient(135deg, hsl(190 80% 50%), hsl(200 80% 55%));
+    --gradient-secondary: linear-gradient(135deg, hsl(220 90% 60%), hsl(230 90% 65%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 20% 8%) 0%, hsl(220 20% 15%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(220 20% 12%), hsl(220 25% 15%));
 
     /* Shadows & Effects */
-    --shadow-glow: 0 0 30px hsl(25 80% 55% / 0.2);
-    --shadow-card: 0 10px 30px -10px hsl(240 15% 5% / 0.5);
-    --shadow-trending: 0 0 25px hsl(340 100% 70% / 0.4);
+    --shadow-glow: 0 0 30px hsl(190 80% 50% / 0.2);
+    --shadow-card: 0 10px 30px -10px hsl(220 15% 5% / 0.5);
+    --shadow-trending: 0 0 25px hsl(45 90% 65% / 0.4);
 
     /* Animation */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 240 10% 8%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 25 80% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 15%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 5% 25%;
-    --sidebar-ring: 25 80% 55%;
+    --sidebar-background: 220 20% 12%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 190 80% 50%;
+    --sidebar-primary-foreground: 220 20% 8%;
+    --sidebar-accent: 220 20% 18%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 220 20% 20%;
+    --sidebar-ring: 190 80% 50%;
   }
 
   .dark {
-    --background: 220 30% 10%;
-    --foreground: 210 20% 98%;
-    --card: 220 30% 15%;
-    --card-foreground: 210 20% 98%;
-    --popover: 220 30% 15%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 10 70% 60%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 180 40% 50%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 220 20% 25%;
-    --muted-foreground: 220 20% 65%;
-    --accent: 40 80% 70%;
-    --accent-foreground: 210 20% 98%;
-    --trending: 340 50% 70%;
-    --trending-foreground: 210 20% 98%;
+    --background: 220 20% 8%;
+    --foreground: 210 20% 95%;
+    --card: 220 20% 12%;
+    --card-foreground: 210 20% 95%;
+    --popover: 220 20% 12%;
+    --popover-foreground: 210 20% 95%;
+    --primary: 190 80% 50%;
+    --primary-foreground: 210 20% 95%;
+    --secondary: 220 90% 60%;
+    --secondary-foreground: 210 20% 95%;
+    --muted: 220 20% 20%;
+    --muted-foreground: 210 20% 60%;
+    --accent: 150 60% 50%;
+    --accent-foreground: 210 20% 95%;
+    --trending: 45 90% 65%;
+    --trending-foreground: 210 20% 95%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 20% 25%;
     --input: 220 20% 25%;
-    --ring: 10 70% 60%;
-    --sidebar-background: 220 30% 15%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 10 70% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 20% 20%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 220 20% 25%;
-    --sidebar-ring: 10 70% 60%;
+    --ring: 190 80% 50%;
+    --sidebar-background: 220 20% 12%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 190 80% 50%;
+    --sidebar-primary-foreground: 210 20% 95%;
+    --sidebar-accent: 220 20% 18%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 220 20% 20%;
+    --sidebar-ring: 190 80% 50%;
   }
 }
 
