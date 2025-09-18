@@ -69,16 +69,31 @@ const PostCard: React.FC<PostCardProps> = ({
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="text-xs gap-1 h-7 px-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs gap-1 h-7 px-2"
+              onClick={(e) => e.preventDefault()}
+            >
               <Heart className="w-3 h-3" />
               {likes}
             </Button>
-            <Button variant="ghost" size="sm" className="text-xs gap-1 h-7 px-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs gap-1 h-7 px-2"
+              onClick={(e) => e.preventDefault()}
+            >
               <MessageCircle className="w-3 h-3" />
               {comments}
             </Button>
           </div>
-          <Button variant="ghost" size="sm" className="h-7 px-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 px-2"
+            onClick={(e) => e.preventDefault()}
+          >
             <Share2 className="w-3 h-3" />
           </Button>
         </div>
