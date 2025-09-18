@@ -42,7 +42,7 @@ const PrivacyPolicy = () => {
               <h2 className="text-2xl font-semibold text-foreground mb-4">2. How We Use Information</h2>
               <ul className="list-disc pl-6 space-y-2">
                 <li>To publish and display user-submitted content.</li>
-                <li>To maintain website functionality, security, and compliance with AdSense and legal standards.</li>
+                <li>To maintain website functionality, security, and compliance withlegal standards.</li>
                 <li>To improve user experience (e.g., performance monitoring, trending content).</li>
               </ul>
             </section>
@@ -51,13 +51,13 @@ const PrivacyPolicy = () => {
               <h2 className="text-2xl font-semibold text-foreground mb-4">3. Data Sharing</h2>
               <div className="space-y-3">
                 <p>We do not sell, rent, or trade personal data.</p>
-                <p>Technical data may be shared with service providers (e.g., hosting, analytics, AdSense) strictly for operational purposes.</p>
+                <p>Technical data may be shared with service providers strictly for operational purposes.</p>
               </div>
             </section>
 
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">4. Cookies & Tracking</h2>
-              <p>We use cookies to enhance functionality and serve relevant ads via Google AdSense. You can disable cookies in your browser, though some features may not function properly.</p>
+              <p>We use cookies to enhance functionality. You can disable cookies in your browser, though some features may not function properly.</p>
             </section>
 
             <section>
