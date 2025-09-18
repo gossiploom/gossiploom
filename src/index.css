@@ -2,40 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
-/* GossipLoom Design System - Professional Twilight theme */
+/* GossipLoom Design System - Vibrant gossip & entertainment news theme */
 
 @layer base {
   :root {
     /* Background & Base Colors */
-    --background: 240 5% 15%;        /* Soft Dark Gray */
-    --foreground: 210 20% 95%;       /* Light Cool Gray */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
 
     /* Card System */
-    --card: 240 5% 20%;              /* Slightly Lighter Gray */
-    --card-foreground: 210 20% 95%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --card-glow: 320 70% 50%;
 
     /* Popover */
-    --popover: 240 5% 20%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
 
-    /* Primary Muted Lavender */
-    --primary: 270 50% 60%;
-    --primary-foreground: 240 5% 15%;
+    /* Primary Gossip Pink-Purple */
+    --primary: 320 70% 50%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 320 85% 60%;
 
-    /* Secondary Soft Teal */
-    --secondary: 170 60% 50%;
-    --secondary-foreground: 240 5% 15%;
+    /* Secondary Electric Blue */
+    --secondary: 220 100% 60%;
+    --secondary-foreground: 0 0% 98%;
 
     /* Muted/Subtle */
-    --muted: 240 5% 30%;
-    --muted-foreground: 210 15% 65%;
+    --muted: 240 5% 25%;
+    --muted-foreground: 240 5% 65%;
 
-    /* Accent Warm Gold */
-    --accent: 40 80% 60%;
-    --accent-foreground: 240 5% 15%;
+    /* Accent Gold/Yellow */
+    --accent: 50 100% 60%;
+    --accent-foreground: 240 10% 3.9%;
 
-    /* Trending Vibrant Coral */
-    --trending: 10 90% 60%;
+    /* Trending Orange */
+    --trending: 15 100% 60%;
     --trending-foreground: 0 0% 98%;
 
     /* Destructive */
@@ -43,68 +45,80 @@
     --destructive-foreground: 0 0% 98%;
 
     /* Borders & Inputs */
-    --border: 240 5% 35%;
-    --input: 240 5% 35%;
-    --ring: 270 50% 60%;
+    --border: 240 5% 25%;
+    --input: 240 5% 25%;
+    --ring: 320 70% 50%;
 
     /* Border Radius */
     --radius: 0.75rem;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(270 50% 60%), hsl(290 60% 55%));
-    --gradient-secondary: linear-gradient(135deg, hsl(170 60% 50%), hsl(180 60% 55%));
-    --gradient-hero: linear-gradient(135deg, hsl(240 5% 15%) 0%, hsl(240 10% 25%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(240 5% 20%), hsl(240 10% 25%));
-
+    --gradient-primary: linear-gradient(135deg, hsl(320 70% 50%), hsl(260 70% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(220 100% 60%), hsl(280 70% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(320 70% 50%) 0%, hsl(260 70% 60%) 50%, hsl(220 100% 60%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(240 10% 8%), hsl(240 15% 12%));
+    
     /* Shadows & Effects */
-    --shadow-glow: 0 0 30px hsl(270 50% 60% / 0.2);
-    --shadow-card: 0 10px 30px -10px hsl(220 15% 5% / 0.5);
-    --shadow-trending: 0 0 25px hsl(10 90% 60% / 0.4);
+    --shadow-glow: 0 0 40px hsl(320 70% 50% / 0.3);
+    --shadow-card: 0 10px 30px -10px hsl(0 0% 0% / 0.3);
+    --shadow-trending: 0 0 30px hsl(15 100% 60% / 0.4);
 
     /* Animation */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 240 5% 20%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 270 50% 60%;
-    --sidebar-primary-foreground: 240 5% 15%;
-    --sidebar-accent: 240 5% 25%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 240 5% 30%;
-    --sidebar-ring: 270 50% 60%;
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    /* Since this is a dark theme, the "dark" mode is the same */
-    --background: 240 5% 15%;
-    --foreground: 210 20% 95%;
-    --card: 240 5% 20%;
-    --card-foreground: 210 20% 95%;
-    --popover: 240 5% 20%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 270 50% 60%;
-    --primary-foreground: 240 5% 15%;
-    --secondary: 170 60% 50%;
-    --secondary-foreground: 240 5% 15%;
-    --muted: 240 5% 30%;
-    --muted-foreground: 210 15% 65%;
-    --accent: 40 80% 60%;
-    --accent-foreground: 240 5% 15%;
-    --trending: 10 90% 60%;
-    --trending-foreground: 0 0% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5% 35%;
-    --input: 240 5% 35%;
-    --ring: 270 50% 60%;
-    --sidebar-background: 240 5% 20%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 270 50% 60%;
-    --sidebar-primary-foreground: 240 5% 15%;
-    --sidebar-accent: 240 5% 25%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 240 5% 30%;
-    --sidebar-ring: 270 50% 60%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -112,6 +126,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -125,12 +140,12 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
+  
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-
+  
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
