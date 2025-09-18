@@ -2,76 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
-/* GossipLoom Design System - Twilight Serenity theme */
+/* GossipLoom Design System - Retro Sunset theme */
 
 @layer base {
   :root {
     /* Background & Base Colors */
-    --background: 210 20% 98%;           /* Light Off-White */
-    --foreground: 210 10% 20%;           /* Dark Gray */
+    --background: 240 10% 5%;            /* Deep Charcoal */
+    --foreground: 0 0% 98%;              /* Off-White */
 
     /* Card System */
-    --card: 210 20% 95%;                 /* Lighter Gray */
-    --card-foreground: 210 10% 20%;
+    --card: 240 10% 8%;                  /* Darker Gray */
+    --card-foreground: 0 0% 98%;
 
     /* Popover */
-    --popover: 210 20% 98%;
-    --popover-foreground: 210 10% 20%;
+    --popover: 240 10% 8%;
+    --popover-foreground: 0 0% 98%;
 
-    /* Primary Soft Coral */
-    --primary: 10 70% 60%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary Burnt Orange */
+    --primary: 25 80% 55%;
+    --primary-foreground: 0 0% 98%;
 
-    /* Secondary Muted Teal */
-    --secondary: 180 40% 50%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary Soft Pink */
+    --secondary: 340 70% 70%;
+    --secondary-foreground: 0 0% 98%;
 
     /* Muted/Subtle */
-    --muted: 210 20% 90%;
-    --muted-foreground: 210 15% 55%;
+    --muted: 240 5% 25%;
+    --muted-foreground: 240 5% 65%;
 
-    /* Accent Soft Gold */
-    --accent: 40 80% 70%;
-    --accent-foreground: 210 10% 20%;
+    /* Accent Bright Yellow */
+    --accent: 45 90% 65%;
+    --accent-foreground: 240 10% 3.9%;
 
-    /* Trending Muted Rose */
-    --trending: 340 50% 70%;
-    --trending-foreground: 0 0% 100%;
+    /* Trending Hot Pink */
+    --trending: 340 100% 70%;
+    --trending-foreground: 0 0% 98%;
 
     /* Destructive */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     /* Borders & Inputs */
-    --border: 210 20% 85%;
-    --input: 210 20% 85%;
-    --ring: 10 70% 60%;
+    --border: 240 5% 25%;
+    --input: 240 5% 25%;
+    --ring: 25 80% 55%;
 
     /* Border Radius */
     --radius: 0.75rem;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(10 70% 60%), hsl(20 70% 65%));
-    --gradient-secondary: linear-gradient(135deg, hsl(180 40% 50%), hsl(190 45% 55%));
-    --gradient-hero: linear-gradient(135deg, hsl(210 20% 98%) 0%, hsl(210 15% 95%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(210 20% 95%), hsl(210 18% 92%));
+    --gradient-primary: linear-gradient(135deg, hsl(25 80% 55%), hsl(40 70% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(340 70% 70%), hsl(350 75% 75%));
+    --gradient-hero: linear-gradient(135deg, hsl(25 80% 55%) 0%, hsl(340 70% 70%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(240 10% 8%), hsl(240 15% 12%));
 
     /* Shadows & Effects */
-    --shadow-glow: 0 0 30px hsl(10 70% 60% / 0.2);
-    --shadow-card: 0 8px 25px -8px hsl(210 15% 55% / 0.1);
-    --shadow-trending: 0 0 25px hsl(340 50% 70% / 0.3);
+    --shadow-glow: 0 0 30px hsl(25 80% 55% / 0.2);
+    --shadow-card: 0 10px 30px -10px hsl(240 15% 5% / 0.5);
+    --shadow-trending: 0 0 25px hsl(340 100% 70% / 0.4);
 
     /* Animation */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 210 20% 98%;
-    --sidebar-foreground: 210 10% 20%;
-    --sidebar-primary: 10 70% 60%;
+    --sidebar-background: 240 10% 8%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 25 80% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 90%;
-    --sidebar-accent-foreground: 210 10% 20%;
-    --sidebar-border: 210 15% 85%;
-    --sidebar-ring: 10 70% 60%;
+    --sidebar-accent: 240 5% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 5% 25%;
+    --sidebar-ring: 25 80% 55%;
   }
 
   .dark {
