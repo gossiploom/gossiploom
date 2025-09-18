@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* GossipLoom Design System - Dark Spectrum theme */
+/* GossipLoom Design System - Gradient Wave theme */
 
 @layer base {
   :root {
@@ -18,11 +18,11 @@
     --popover: 240 10% 8%;
     --popover-foreground: 0 0% 98%;
 
-    /* Primary Neon Fuchsia */
-    --primary: 320 90% 60%;
+    /* Primary Bright Orange (for buttons) */
+    --primary: 25 90% 60%;
     --primary-foreground: 0 0% 98%;
 
-    /* Secondary Electric Blue */
+    /* Secondary Blue (for buttons) */
     --secondary: 220 90% 60%;
     --secondary-foreground: 0 0% 98%;
 
@@ -45,19 +45,19 @@
     /* Borders & Inputs */
     --border: 240 5% 25%;
     --input: 240 5% 25%;
-    --ring: 320 90% 60%;
+    --ring: 25 90% 60%;
 
     /* Border Radius */
     --radius: 0.75rem;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(320 90% 60%), hsl(340 90% 70%));
+    --gradient-primary: linear-gradient(135deg, hsl(25 90% 60%), hsl(40 90% 70%));
     --gradient-secondary: linear-gradient(135deg, hsl(220 90% 60%), hsl(230 90% 70%));
     --gradient-hero: linear-gradient(135deg, hsl(320 90% 60%) 0%, hsl(220 90% 60%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(240 10% 8%), hsl(240 15% 12%));
 
     /* Shadows & Effects */
-    --shadow-glow: 0 0 40px hsl(320 90% 60% / 0.3);
+    --shadow-glow: 0 0 40px hsl(25 90% 60% / 0.3);
     --shadow-card: 0 10px 30px -10px hsl(240 15% 5% / 0.5);
     --shadow-trending: 0 0 30px hsl(340 100% 70% / 0.4);
 
@@ -66,12 +66,12 @@
 
     --sidebar-background: 240 10% 8%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 320 90% 60%;
+    --sidebar-primary: 25 90% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 5% 15%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 240 5% 25%;
-    --sidebar-ring: 320 90% 60%;
+    --sidebar-ring: 25 90% 60%;
   }
 
   .dark {
@@ -81,7 +81,7 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 320 90% 60%;
+    --primary: 25 90% 60%;
     --primary-foreground: 240 10% 3.9%;
     --secondary: 220 90% 60%;
     --secondary-foreground: 240 10% 3.9%;
@@ -95,15 +95,15 @@
     --destructive-foreground: 0 0% 98%;
     --border: 220 20% 90%;
     --input: 220 20% 90%;
-    --ring: 320 90% 60%;
+    --ring: 25 90% 60%;
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 320 90% 60%;
+    --sidebar-primary: 25 90% 60%;
     --sidebar-primary-foreground: 240 10% 3.9%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 320 90% 60%;
+    --sidebar-ring: 25 90% 60%;
   }
 }
 
