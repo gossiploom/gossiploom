@@ -17,26 +17,38 @@ interface GossipPost {
 
 interface PostsGridProps {
   selectedCategory: string;
+  searchQuery?: string;
+  showTrending?: boolean;
 }
 
-const PostsGrid: React.FC<PostsGridProps> = ({ selectedCategory }) => {
+const PostsGrid: React.FC<PostsGridProps> = ({ selectedCategory, searchQuery = '', showTrending = false }) => {
   const [posts, setPosts] = useState<GossipPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchPosts();
-  }, [selectedCategory]);
+  }, [selectedCategory, searchQuery, showTrending]);
 
   const fetchPosts = async () => {
+    setIsLoading(true);
     try {
       let query = supabase
         .from('gossip_posts')
         .select('*')
         .order('created_at', { ascending: false });
-      
-      // Filter by category if not "All"
-      if (selectedCategory !== 'All') {
+
+      // Filter by trending if showTrending is true
+      if (showTrending || selectedCategory === 'Trending') {
+        query = query.eq('is_trending', true);
+      }
+      // Filter by category if not "All" and not showing trending
+      else if (selectedCategory !== 'All' && selectedCategory !== 'Trending') {
         query = query.eq('category', selectedCategory);
+      }
+
+      // Add search functionality
+      if (searchQuery.trim()) {
+        query = query.or(`title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
       }
 
       const { data, error } = await query;

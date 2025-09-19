@@ -1,10 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Zap, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import SubmitGossipForm from '@/components/SubmitGossipForm';
 
-const Header = () => {
+interface HeaderProps {
+  onSearch?: (query: string) => void;
+  onTrendingClick?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onSearch, onTrendingClick }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (onSearch) {
+      onSearch(value);
+    }
+  };
+
+  const handleTrendingClick = () => {
+    if (onTrendingClick) {
+      onTrendingClick();
+    }
+  };
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4">
@@ -26,13 +46,20 @@ const Header = () => {
               <Input 
                 placeholder="Search for gossip, celebrities..." 
                 className="pl-10 bg-muted/50 border-border/50 focus:border-primary"
+                value={searchQuery}
+                onChange={handleSearchChange}
               />
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            <Button variant="trending" size="sm" className="hidden sm:flex">
+            <Button 
+              variant="trending" 
+              size="sm" 
+              className="hidden sm:flex"
+              onClick={handleTrendingClick}
+            >
               <TrendingUp className="w-4 h-4" />
               Trending
             </Button>

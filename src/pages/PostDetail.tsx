@@ -56,6 +56,21 @@ const PostDetail = () => {
     }
   }, [id]);
 
+  // Refresh post data after like/comment actions to sync with database
+  const refreshPost = async () => {
+    if (id) {
+      const { data, error } = await supabase
+        .from('gossip_posts')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (!error && data) {
+        setPost(data);
+      }
+    }
+  };
+
   const fetchPost = async () => {
     try {
       const { data, error } = await supabase
@@ -116,29 +131,31 @@ const PostDetail = () => {
       
       if (isLiked) {
         // Remove like
-        await supabase
+        const { error } = await supabase
           .from('gossip_likes')
           .delete()
           .eq('post_id', id)
           .eq('user_fingerprint', fingerprint);
         
+        if (error) throw error;
+        
         setIsLiked(false);
-        if (post) {
-          setPost({ ...post, likes_count: post.likes_count - 1 });
-        }
+        // Refresh to get updated count from database trigger
+        await refreshPost();
       } else {
         // Add like
-        await supabase
+        const { error } = await supabase
           .from('gossip_likes')
           .insert({
             post_id: id,
             user_fingerprint: fingerprint,
           });
         
+        if (error) throw error;
+        
         setIsLiked(true);
-        if (post) {
-          setPost({ ...post, likes_count: post.likes_count + 1 });
-        }
+        // Refresh to get updated count from database trigger
+        await refreshPost();
       }
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -173,10 +190,8 @@ const PostDetail = () => {
       setComments([data, ...comments]);
       setNewComment('');
       
-      // Update post comment count
-      if (post) {
-        setPost({ ...post, comments_count: post.comments_count + 1 });
-      }
+      // Refresh to get updated count from database trigger
+      await refreshPost();
 
       toast({
         title: "Comment added!",
