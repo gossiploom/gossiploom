@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Star, Users, Tv, Heart, Sparkles, Vote } from 'lucide-react';
+import { Star, Users, Tv, Heart, Sparkles, Vote, BookOpen } from 'lucide-react';
 
 const categories = [
   { name: 'All', icon: Star },
   { name: 'Celebrity', icon: Users },
   { name: 'TV Shows', icon: Tv },
   { name: 'Lifestyle', icon: Heart },
-  { name: 'Education', icon: Books },
+  { name: 'Education', icon: BookOpen },
   { name: 'Entertainment', icon: Sparkles },
   { name: 'Politics', icon: Vote },
 ];
