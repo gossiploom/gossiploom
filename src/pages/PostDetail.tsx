@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ContentRenderer from '@/components/ContentRenderer';
 
 interface GossipPost {
   id: string;
@@ -327,11 +328,10 @@ const PostDetail = () => {
             )}
 
             {/* Content */}
-            <div className="prose prose-lg max-w-none">
-              <div className="whitespace-pre-wrap text-base leading-relaxed">
-                {post.content}
-              </div>
-            </div>
+            <ContentRenderer 
+              content={post.content}
+              className="prose prose-lg max-w-none"
+            />
 
             {/* Actions */}
             <div className="flex items-center justify-end border-t border-b border-border py-4">

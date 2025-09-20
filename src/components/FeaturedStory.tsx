@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Clock } from 'lucide-react';
+import ContentRenderer from '@/components/ContentRenderer';
 
 interface FeaturedStoryProps {
   post: {
@@ -60,7 +61,10 @@ const FeaturedStory: React.FC<FeaturedStoryProps> = ({ post }) => {
             </h1>
             
             <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-              {post.excerpt || post.content.substring(0, 200) + '...'}
+              {post.excerpt || (() => {
+                const plainText = post.content.replace(/<[^>]*>/g, '');
+                return plainText.substring(0, 200) + '...';
+              })()}
             </p>
             
             <p className="text-sm text-muted-foreground">

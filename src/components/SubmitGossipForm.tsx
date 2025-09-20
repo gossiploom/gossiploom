@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from '@/components/RichTextEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -15,7 +16,11 @@ import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters').max(200, 'Title too long'),
-  content: z.string().min(50, 'Story must be at least 50 characters'),
+  content: z.string().min(50, 'Story must be at least 50 characters').refine((content) => {
+    // Strip HTML tags to count actual text content
+    const plainText = content.replace(/<[^>]*>/g, '').trim();
+    return plainText.length >= 50;
+  }, 'Story content must be at least 50 characters'),
   category: z.string().min(1, 'Please select a category'),
   authorName: z.string().optional(),
 });
@@ -71,7 +76,9 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
   };
 
   const generateExcerpt = (content: string): string => {
-    const sentences = content.split('. ');
+    // Strip HTML tags for excerpt
+    const plainText = content.replace(/<[^>]*>/g, '');
+    const sentences = plainText.split('. ');
     const excerpt = sentences.slice(0, 2).join('. ');
     return excerpt.length > 150 ? excerpt.substring(0, 147) + '...' : excerpt + '...';
   };
@@ -273,15 +280,16 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                 <FormItem>
                   <FormLabel>Your Story *</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Spill the tea... What happened? Who was involved? Don't hold back on the details!" 
-                      className="min-h-[200px] resize-none text-base"
-                      {...field}
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Spill the tea... What happened? Who was involved? Use the formatting tools above to make your story engaging!"
+                      className="min-h-[300px]"
                     />
                   </FormControl>
                   <FormMessage />
                   <p className="text-xs text-muted-foreground">
-                    Minimum 50 characters. Be detailed and engaging!
+                    Minimum 50 characters. Use rich formatting and embed YouTube videos!
                   </p>
                 </FormItem>
               )}
@@ -294,6 +302,7 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                 <li>• No hate speech or harassment</li>
                 <li>• Verify your facts when possible</li>
                 <li>• No personal information like addresses or phone numbers</li>
+                <li>• YouTube links will automatically become embedded videos</li>
               </ul>
             </div>
 
