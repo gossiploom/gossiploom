@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Heart, MessageCircle, Share2, Clock, ArrowLeft, TrendingUp, Send } from 'lucide-react';
+import { Share2, Clock, ArrowLeft, TrendingUp, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
@@ -334,22 +334,7 @@ const PostDetail = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between border-t border-b border-border py-4">
-              <div className="flex items-center gap-4">
-                <Button 
-                  variant={isLiked ? "default" : "ghost"} 
-                  size="sm" 
-                  onClick={handleLike}
-                  className="gap-2"
-                >
-                  <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
-                  {post.likes_count}
-                </Button>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <MessageCircle className="w-4 h-4" />
-                  {post.comments_count}
-                </Button>
-              </div>
+            <div className="flex items-center justify-end border-t border-b border-border py-4">
               <Button variant="ghost" size="sm" onClick={handleShare}>
                 <Share2 className="w-4 h-4" />
               </Button>
@@ -358,7 +343,7 @@ const PostDetail = () => {
 
           {/* Comments Section */}
           <section className="mt-12 space-y-6">
-            <h2 className="text-2xl font-bold">Comments ({comments.length})</h2>
+            <h2 className="text-2xl font-bold">Comments</h2>
             
             {/* Comment Form */}
             <Card>
