@@ -94,9 +94,8 @@ const SidebarStories: React.FC<SidebarStoriesProps> = ({ relatedStories, trendin
                   <h3 className="font-medium text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 mb-1">
                     {story.title}
                   </h3>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     <span>{story.category}</span>
-                    <span>{story.likes_count} likes</span>
                   </div>
                 </div>
               </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { Clock, Heart, MessageCircle } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 interface FeaturedStoryProps {
   post: {
@@ -63,22 +63,9 @@ const FeaturedStory: React.FC<FeaturedStoryProps> = ({ post }) => {
               {post.excerpt || post.content.substring(0, 200) + '...'}
             </p>
             
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                By <span className="font-medium">{post.author_name}</span>
-              </p>
-              
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Heart className="w-4 h-4" />
-                  <span className="text-sm">{post.likes_count}</span>
-                </div>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <MessageCircle className="w-4 h-4" />
-                  <span className="text-sm">{post.comments_count}</span>
-                </div>
-              </div>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              By <span className="font-medium">{post.author_name}</span>
+            </p>
           </CardContent>
         </Link>
       </Card>

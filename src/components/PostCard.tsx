@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Share2, Clock, TrendingUp } from 'lucide-react';
+import { Share2, Clock, TrendingUp } from 'lucide-react';
 
 interface PostCardProps {
   id: string;
@@ -67,27 +67,7 @@ const PostCard: React.FC<PostCardProps> = ({
           {excerpt}
         </p>
         
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs gap-1 h-7 px-2"
-              onClick={(e) => e.preventDefault()}
-            >
-              <Heart className="w-3 h-3" />
-              {likes}
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs gap-1 h-7 px-2"
-              onClick={(e) => e.preventDefault()}
-            >
-              <MessageCircle className="w-3 h-3" />
-              {comments}
-            </Button>
-          </div>
+        <div className="flex items-center justify-end">
           <Button 
             variant="ghost" 
             size="sm" 
