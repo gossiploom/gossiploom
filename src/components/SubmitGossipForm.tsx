@@ -23,6 +23,12 @@ const formSchema = z.object({
   }, 'Story content must be at least 50 characters'),
   category: z.string().min(1, 'Please select a category'),
   authorName: z.string().optional(),
+  youtubeUrl: z.string().optional().refine((url) => {
+    if (!url || url.trim() === '') return true; // Optional field
+    // Validate YouTube URL format
+    const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})$/;
+    return youtubeRegex.test(url);
+  }, 'Please enter a valid YouTube URL'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -46,6 +52,7 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
       content: '',
       category: '',
       authorName: '',
+      youtubeUrl: '',
     },
   });
 
@@ -119,6 +126,7 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
           category: data.category,
           author_name: data.authorName || 'Anonymous',
           image_url: imageUrl,
+          youtube_url: data.youtubeUrl || null,
         });
 
       if (error) throw error;
@@ -285,7 +293,28 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                       onChange={field.onChange}
                       placeholder="Spill the tea... What happened? Who was involved? Use the formatting tools above to make your story engaging!"
                       className="min-h-[300px]"
+            />
+
+            <FormField
+              control={form.control}
+              name="youtubeUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>YouTube Video (Optional)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Paste YouTube video URL here..." 
+                      {...field}
+                      className="text-base"
                     />
+                  </FormControl>
+                  <FormMessage />
+                  <p className="text-xs text-muted-foreground">
+                    Add a YouTube video to enhance your story. The video will appear after your content.
+                  </p>
+                </FormItem>
+              )}
+            />
                   </FormControl>
                   <FormMessage />
                   <p className="text-xs text-muted-foreground">
@@ -302,7 +331,7 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                 <li>• No hate speech or harassment</li>
                 <li>• Verify your facts when possible</li>
                 <li>• No personal information like addresses or phone numbers</li>
-                <li>• YouTube links will automatically become embedded videos</li>
+                <li>• Add YouTube videos in the separate field below for better presentation</li>
               </ul>
             </div>
 

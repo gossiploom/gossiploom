@@ -89,6 +89,7 @@ export type Database = {
           likes_count: number | null
           title: string
           updated_at: string
+          youtube_url: string | null
         }
         Insert: {
           author_name?: string | null
@@ -103,6 +104,7 @@ export type Database = {
           likes_count?: number | null
           title: string
           updated_at?: string
+          youtube_url?: string | null
         }
         Update: {
           author_name?: string | null
@@ -117,6 +119,7 @@ export type Database = {
           likes_count?: number | null
           title?: string
           updated_at?: string
+          youtube_url?: string | null
         }
         Relationships: []
       }

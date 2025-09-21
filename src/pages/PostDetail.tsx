@@ -20,6 +20,7 @@ interface GossipPost {
   category: string;
   author_name: string;
   image_url: string | null;
+  youtube_url: string | null;
   likes_count: number;
   comments_count: number;
   is_trending: boolean;
@@ -332,6 +333,22 @@ const PostDetail = () => {
               content={post.content}
               className="prose prose-lg max-w-none"
             />
+
+            {/* YouTube Video */}
+            {post.youtube_url && (
+              <div className="my-8">
+                <div className="aspect-video w-full max-w-2xl mx-auto">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${post.youtube_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/)?.[1] || ''}`}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full rounded-lg"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex items-center justify-end border-t border-b border-border py-4">
