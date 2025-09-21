@@ -293,6 +293,14 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                       onChange={field.onChange}
                       placeholder="Spill the tea... What happened? Who was involved? Use the formatting tools above to make your story engaging!"
                       className="min-h-[300px]"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                  <p className="text-xs text-muted-foreground">
+                    Minimum 50 characters. Use rich formatting for better presentation!
+                  </p>
+                </FormItem>
+              )}
             />
 
             <FormField
@@ -311,14 +319,6 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                   <FormMessage />
                   <p className="text-xs text-muted-foreground">
                     Add a YouTube video to enhance your story. The video will appear after your content.
-                  </p>
-                </FormItem>
-              )}
-            />
-                  </FormControl>
-                  <FormMessage />
-                  <p className="text-xs text-muted-foreground">
-                    Minimum 50 characters. Use rich formatting and embed YouTube videos!
                   </p>
                 </FormItem>
               )}
