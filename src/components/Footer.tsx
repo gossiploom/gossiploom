@@ -47,6 +47,22 @@ const Footer = () => {
             </ul>
           </div>
 
+          {/* Contact Us */}
+          <div>
+            <h4 className="font-semibold mb-4">Contact Us</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>
+                <a 
+                  href="mailto:gossiploom8@gmail.com" 
+                  className="hover:text-primary transition-colors"
+                >
+                  gossiploom8@gmail.com
+                </a>
+              </li>
+              <li className="text-xs">We'd love to hear from you!</li>
+            </ul>
+          </div>
+
           {/* Legal */}
           <div>
             <h4 className="font-semibold mb-4">Legal</h4>
@@ -54,7 +70,6 @@ const Footer = () => {
               <li><Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
               <li><Link to="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link></li>
               <li><Link to="/content-guidelines" className="hover:text-primary transition-colors">Content Guidelines</Link></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Contact Us</a></li>
             </ul>
           </div>
         </div>
