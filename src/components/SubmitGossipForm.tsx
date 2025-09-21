@@ -205,6 +205,18 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                       <SelectItem value="Lifestyle">Lifestyle</SelectItem>
                       <SelectItem value="Music">Music</SelectItem>
                       <SelectItem value="Sports">Sports</SelectItem>
+                      <SelectItem value="Fashion">Fashion</SelectItem>
+                      <SelectItem value="Movies">Movies</SelectItem>
+                      <SelectItem value="Politics">Politics</SelectItem>
+                      <SelectItem value="Social Media">Social Media</SelectItem>
+                      <SelectItem value="Reality TV">Reality TV</SelectItem>
+                      <SelectItem value="Relationships">Relationships</SelectItem>
+                      <SelectItem value="Business">Business</SelectItem>
+                      <SelectItem value="Travel">Travel</SelectItem>
+                      <SelectItem value="Beauty">Beauty</SelectItem>
+                      <SelectItem value="Technology">Technology</SelectItem>
+                      <SelectItem value="Food">Food</SelectItem>
+                      <SelectItem value="Gaming">Gaming</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
