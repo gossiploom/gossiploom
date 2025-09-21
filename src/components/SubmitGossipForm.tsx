@@ -217,6 +217,7 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                       <SelectItem value="Technology">Technology</SelectItem>
                       <SelectItem value="Food">Food</SelectItem>
                       <SelectItem value="Gaming">Gaming</SelectItem>
+                      <SelectItem value="Education">Education</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
