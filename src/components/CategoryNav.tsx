@@ -4,6 +4,7 @@ import { Star, Users, Tv, Heart, Sparkles, Vote, BookOpen } from 'lucide-react';
 
 const categories = [
   { name: 'All', icon: Star },
+  { name: 'Gossip', icon: Users },
   { name: 'Celebrity', icon: Users },
   { name: 'TV Shows', icon: Tv },
   { name: 'Lifestyle', icon: Heart },

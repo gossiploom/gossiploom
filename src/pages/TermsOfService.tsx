@@ -26,7 +26,7 @@ const TermsOfService = () => {
 
           <div className="prose prose-gray dark:prose-invert max-w-none space-y-6">
             <p className="text-lg">
-              By accessing and using GossipLoom, you agree to the following Terms of Service:
+              By accessing and using InsiderNewsWatch, you agree to the following Terms of Service:
             </p>
 
             <section>
@@ -41,7 +41,7 @@ const TermsOfService = () => {
               <h2 className="text-2xl font-semibold text-foreground mb-4">2. Content Ownership</h2>
               <div className="space-y-3">
                 <p>Users retain ownership of their submitted content.</p>
-                <p>By submitting content, you grant GossipLoom a non-exclusive, royalty-free license to display, distribute, and promote that content on the website.</p>
+                <p>By submitting content, you grant InsiderNewsWatch a non-exclusive, royalty-free license to display, distribute, and promote that content on the website.</p>
               </div>
             </section>
 
@@ -62,14 +62,14 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">5. Disclaimers</h2>
               <div className="space-y-3">
-                <p>GossipLoom provides user-generated content. We do not guarantee the accuracy, reliability, or truth of submissions.</p>
+                <p>InsiderNewsWatch provides user-generated content. We do not guarantee the accuracy, reliability, or truth of submissions.</p>
                 <p>The website is provided "as is" without warranties of any kind.</p>
               </div>
             </section>
 
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">6. Limitation of Liability</h2>
-              <p>GossipLoom and its owners are not liable for damages resulting from the use of the site, including reliance on user-generated content.</p>
+              <p>InsiderNewsWatch and its owners are not liable for damages resulting from the use of the site, including reliance on user-generated content.</p>
             </section>
 
             <section>

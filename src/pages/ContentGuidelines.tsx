@@ -26,13 +26,13 @@ const ContentGuidelines = () => {
 
           <div className="prose prose-gray dark:prose-invert max-w-none space-y-6">
             <p className="text-lg">
-              To ensure GossipLoom remains a safe and entertaining community, all submissions must follow these guidelines:
+              To ensure InsiderNewsWatch remains a safe and entertaining community, all submissions must follow these guidelines:
             </p>
 
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">Allowed Content</h2>
               <ul className="list-disc pl-6 space-y-2">
-                <li>Celebrity gossip, trending stories, lifestyle news, and entertainment discussions.</li>
+                <li>Breaking news, insider stories, celebrity gossip, trending content, lifestyle news, and entertainment discussions.</li>
                 <li>Community contributions, opinions, and commentary presented respectfully.</li>
               </ul>
             </section>

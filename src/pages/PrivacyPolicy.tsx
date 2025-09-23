@@ -26,7 +26,7 @@ const PrivacyPolicy = () => {
 
           <div className="prose prose-gray dark:prose-invert max-w-none space-y-6">
             <p className="text-lg">
-              GossipLoom ("we," "our," or "us") respects your privacy and is committed to protecting it through this Privacy Policy. This Policy explains how we handle information when you visit or use our website.
+              InsiderNewsWatch ("we," "our," or "us") respects your privacy and is committed to protecting it through this Privacy Policy. This Policy explains how we handle information when you visit or use our website.
             </p>
 
             <section>
@@ -67,7 +67,7 @@ const PrivacyPolicy = () => {
 
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">6. Children's Privacy</h2>
-              <p>GossipLoom is not intended for children under 13. We do not knowingly collect personal data from minors.</p>
+              <p>InsiderNewsWatch is not intended for children under 13. We do not knowingly collect personal data from minors.</p>
             </section>
 
             <section>

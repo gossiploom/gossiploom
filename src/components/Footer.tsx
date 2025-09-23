@@ -16,11 +16,11 @@ const Footer = () => {
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                GossipLoom
+                InsiderNewsWatch
               </h3>
             </div>
             <p className="text-muted-foreground mb-4 text-sm">
-              Your ultimate destination for entertainment news, celebrity gossip, and trending stories.
+              Your ultimate destination for breaking news, insider stories, and trending updates across all categories.
             </p>
             <div className="flex gap-2">
               <Button variant="ghost" size="icon">
@@ -76,7 +76,7 @@ const Footer = () => {
         <Separator className="mb-6" />
         
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-          <p>&copy; 2024-2025 GossipLoom. All rights reserved.</p>
+          <p>&copy; 2024-2025 InsiderNewsWatch. All rights reserved.</p>
           <p className="mt-2 md:mt-0">
             Built for entertainment • Community guidelines apply
           </p>

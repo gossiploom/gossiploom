@@ -132,7 +132,7 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
       if (error) throw error;
 
       toast({
-        title: "Gossip submitted!",
+        title: "News submitted!",
         description: "Your story has been published successfully.",
       });
 
@@ -162,7 +162,7 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl bg-gradient-primary bg-clip-text text-transparent">
-            Submit Your Gossip Story
+            Submit Your News Story
           </DialogTitle>
         </DialogHeader>
         
@@ -176,7 +176,7 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                   <FormLabel>Story Title *</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="What's the juicy headline?" 
+                      placeholder="What's the breaking headline?" 
                       {...field}
                       className="text-base"
                     />
@@ -199,6 +199,7 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="Gossip">Gossip</SelectItem>
                       <SelectItem value="Celebrity">Celebrity</SelectItem>
                       <SelectItem value="TV Shows">TV Shows</SelectItem>
                       <SelectItem value="Entertainment">Entertainment</SelectItem>
@@ -304,7 +305,7 @@ const SubmitGossipForm: React.FC<SubmitGossipFormProps> = ({ children, onSuccess
                     <RichTextEditor
                       value={field.value}
                       onChange={field.onChange}
-                      placeholder="Spill the tea... What happened? Who was involved? Use the formatting tools above to make your story engaging!"
+                      placeholder="Share the story... What happened? Who was involved? Use the formatting tools above to make your story engaging!"
                       className="min-h-[300px]"
                     />
                   </FormControl>

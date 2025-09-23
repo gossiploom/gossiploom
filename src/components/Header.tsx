@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onTrendingClick }) => {
               <Zap className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              GossipLoom
+              InsiderNewsWatch
             </h1>
           </div>
 
@@ -44,7 +44,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onTrendingClick }) => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input 
-                placeholder="Search for gossip, celebrities..." 
+                placeholder="Search news, gossips, celebrities..." 
                 className="pl-10 bg-muted/50 border-border/50 focus:border-primary"
                 value={searchQuery}
                 onChange={handleSearchChange}
@@ -65,7 +65,7 @@ const Header: React.FC<HeaderProps> = ({ onSearch, onTrendingClick }) => {
             </Button>
             <SubmitGossipForm>
               <Button variant="hero" size="sm">
-                Submit Gossip
+                Submit News
               </Button>
             </SubmitGossipForm>
           </div>
