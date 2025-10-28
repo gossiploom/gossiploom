@@ -14,112 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
-      gossip_comments: {
+      trades: {
         Row: {
-          author_name: string | null
-          content: string
+          activated: boolean | null
+          confidence: number
           created_at: string
+          direction: string
+          entry: number
           id: string
-          post_id: string
-        }
-        Insert: {
-          author_name?: string | null
-          content: string
-          created_at?: string
-          id?: string
-          post_id: string
-        }
-        Update: {
-          author_name?: string | null
-          content?: string
-          created_at?: string
-          id?: string
-          post_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gossip_comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "gossip_posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gossip_likes: {
-        Row: {
-          created_at: string
-          id: string
-          post_id: string
-          user_fingerprint: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          post_id: string
-          user_fingerprint: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          post_id?: string
-          user_fingerprint?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gossip_likes_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "gossip_posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gossip_posts: {
-        Row: {
-          author_name: string | null
-          category: string
-          comments_count: number | null
-          content: string
-          created_at: string
-          excerpt: string | null
-          id: string
-          image_url: string | null
-          is_trending: boolean | null
-          likes_count: number | null
-          title: string
+          invalidation: string
+          news_items: Json | null
+          outcome: string | null
+          profit_loss: number | null
+          rationale: Json
+          reward_amount: number
+          risk_amount: number
+          status: string
+          stop_loss: number
+          symbol: string
+          take_profit: number
+          timeframe: string
+          trade_type: string
           updated_at: string
-          youtube_url: string | null
+          user_id: string
         }
         Insert: {
-          author_name?: string | null
-          category: string
-          comments_count?: number | null
-          content: string
+          activated?: boolean | null
+          confidence: number
           created_at?: string
-          excerpt?: string | null
+          direction: string
+          entry: number
           id?: string
-          image_url?: string | null
-          is_trending?: boolean | null
-          likes_count?: number | null
-          title: string
+          invalidation: string
+          news_items?: Json | null
+          outcome?: string | null
+          profit_loss?: number | null
+          rationale: Json
+          reward_amount: number
+          risk_amount: number
+          status?: string
+          stop_loss: number
+          symbol: string
+          take_profit: number
+          timeframe: string
+          trade_type?: string
           updated_at?: string
-          youtube_url?: string | null
+          user_id: string
         }
         Update: {
-          author_name?: string | null
-          category?: string
-          comments_count?: number | null
-          content?: string
+          activated?: boolean | null
+          confidence?: number
           created_at?: string
-          excerpt?: string | null
+          direction?: string
+          entry?: number
           id?: string
-          image_url?: string | null
-          is_trending?: boolean | null
-          likes_count?: number | null
-          title?: string
+          invalidation?: string
+          news_items?: Json | null
+          outcome?: string | null
+          profit_loss?: number | null
+          rationale?: Json
+          reward_amount?: number
+          risk_amount?: number
+          status?: string
+          stop_loss?: number
+          symbol?: string
+          take_profit?: number
+          timeframe?: string
+          trade_type?: string
           updated_at?: string
-          youtube_url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          analysis_limit: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_limit?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_limit?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

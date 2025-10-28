@@ -1,60 +1,73 @@
-GossipLoom – Community Gossip & Entertainment News Platform
+# Welcome to your Lovable project
 
-GossipLoom is a community-driven gossip and entertainment news website built with WordPress. It allows anyone to publish content directly from the frontend without needing to create an account. Users can post anonymously or with their chosen name, and others can contribute to or expand on existing posts. The site is designed with simplicity, and openness.
+## Project info
 
-✨ Features
+**URL**: https://lovable.dev/projects/433cfa8e-ced1-4616-9130-4246b59dddc9
 
-Frontend Posting:
-Users can submit gossip articles, trending stories, or entertainment news without logging in.
+## How can I edit this code?
 
-Anonymous or Named Posting:
-Contributors may remain anonymous or display a chosen name alongside their post.
+There are several ways of editing your application.
 
-Collaborative Contributions:
-Others can add to or update existing posts to keep stories fresh and engaging.
+**Use Lovable**
 
-Content Moderation:
-Automated keyword filters and basic manual moderation keep the platform in line with community standards.
+Simply visit the [Lovable Project](https://lovable.dev/projects/433cfa8e-ced1-4616-9130-4246b59dddc9) and start prompting.
 
-No User Accounts or Backend Profiles:
-No personal data is stored—only the submitted content is published.
+Changes made via Lovable will be committed automatically to this repo.
 
-All content is unique, structured, and optimized.
+**Use your preferred IDE**
 
-🚀 Getting Started
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-Install WordPress on your hosting server.
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-Add a frontend posting plugin (e.g., WP User Frontend, Frontend Publishing, or a custom-built solution).
+Follow these steps:
 
-Configure categories such as Celebrity Gossip, Trending Now, Lifestyle Buzz, and Entertainment News.
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
 
-Enable moderation settings to ensure content meets quality and policy guidelines.
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
 
-Every post contains unique, high-value content.
+# Step 3: Install the necessary dependencies.
+npm i
 
-Prohibited content (hate, violence, adult, copyright infringement, etc.) is automatically blocked.
+# Step 4: Start the development server with auto-reloading and an instant preview.
+npm run dev
+```
 
-Clear community posting guidelines are displayed for all contributors.
+**Edit a file directly in GitHub**
 
-📂 Project Structure
-/gossipnest
-│── wp-content/        # WordPress core files
-│── themes/            # Custom or child theme for GossipNest
-│── plugins/           # Frontend posting + moderation plugins
-│── uploads/           # User-submitted images
-│── README.md          # Documentation file
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-🛠 Future Enhancements
+**Use GitHub Codespaces**
 
-Upvote/like system for posts.
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-Trending section for most popular stories.
+## What technologies are used for this project?
 
-AI-assisted moderation to improve content quality.
+This project is built with:
 
-Optional contributor badges for regular posters.
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
 
-📄 License
+## How can I deploy this project?
 
-This project is open for community use. Content posted by users belongs to the original contributor. The platform owner is responsible for moderating content to ensure compliance with legal standards.
+Simply open [Lovable](https://lovable.dev/projects/433cfa8e-ced1-4616-9130-4246b59dddc9) and click on Share -> Publish.
+
+## Can I connect a custom domain to my Lovable project?
+
+Yes, you can!
+
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)

@@ -1,176 +1,373 @@
-import React, { useState, useEffect } from 'react';
-import Header from '@/components/Header';
-import CategoryNav from '@/components/CategoryNav';
-import FeaturedStory from '@/components/FeaturedStory';
-import SidebarStories from '@/components/SidebarStories';
-import OldStoriesSection from '@/components/OldStoriesSection';
-import Footer from '@/components/Footer';
-import { supabase } from '@/integrations/supabase/client';
-
-interface GossipPost {
-  id: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  author_name: string;
-  image_url: string | null;
-  likes_count: number;
-  comments_count: number;
-  is_trending: boolean;
-  created_at: string;
-}
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ChartUpload } from "@/components/ChartUpload";
+import { AccountSettings } from "@/components/AccountSettings";
+import { TradeSignal } from "@/components/TradeSignal";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, Settings2, FileText, Loader2, LogOut } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showTrending, setShowTrending] = useState(false);
-  const [featuredStory, setFeaturedStory] = useState<GossipPost | null>(null);
-  const [relatedStories, setRelatedStories] = useState<GossipPost[]>([]);
-  const [trendingStories, setTrendingStories] = useState<GossipPost[]>([]);
-  const [oldStories, setOldStories] = useState<GossipPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [accountSize, setAccountSize] = useState(1000);
+  const [riskPercent, setRiskPercent] = useState(1);
+  const [symbolPreset, setSymbolPreset] = useState("xauusd");
+  const [pointsPerUsd, setPointsPerUsd] = useState(100);
+  const [tradeType, setTradeType] = useState<"pending" | "immediate">("pending");
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [signal, setSignal] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisCount, setAnalysisCount] = useState(0);
+  const [analysisLimit, setAnalysisLimit] = useState(30);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  useEffect(() => {
-    fetchStories();
-  }, [selectedCategory, searchQuery, showTrending]);
+  useEffect(() => {
+    // Check authentication and load analysis count
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
 
-  const fetchStories = async () => {
-    setIsLoading(true);
-    try {
-      // Calculate date for stories older than 2 months
-      const twoMonthsAgo = new Date();
-      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+      // Load user settings and count analyses
+      try {
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("analysis_limit")
+          .eq("user_id", session.user.id)
+          .single();
 
-      // Fetch all posts
-      let query = supabase
-        .from('gossip_posts')
-        .select('*')
-        .order('created_at', { ascending: false });
+        if (settings) {
+          setAnalysisLimit(settings.analysis_limit);
+        }
 
-      // Apply filters
-      if (showTrending || selectedCategory === 'Trending') {
-        query = query.eq('is_trending', true);
-      } else if (selectedCategory !== 'All' && selectedCategory !== 'Trending') {
-        query = query.eq('category', selectedCategory);
-      }
+        const { count } = await supabase
+          .from("trades")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", session.user.id);
 
-      if (searchQuery.trim()) {
-        query = query.or(`title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
-      }
+        setAnalysisCount(count || 0);
 
-      const { data: allPosts, error } = await query;
-      if (error) throw error;
+        // Show warning if running low
+        const remaining = (settings?.analysis_limit || 25) - (count || 0);
+        if (remaining > 0 && remaining <= 15) {
+          toast({
+            title: "Analysis Slots Running Low",
+            description: `You have ${remaining} analysis slots remaining out of ${settings?.analysis_limit || 25}.`,
+            variant: "default",
+          });
+        }
+      } catch (error) {
+        console.error("Error loading analysis count:", error);
+      }
+    });
 
-      if (allPosts && allPosts.length > 0) {
-        // Separate posts by age
-        const recentPosts = allPosts.filter(post => 
-          new Date(post.created_at) > twoMonthsAgo
-        );
-        const oldPosts = allPosts.filter(post => 
-          new Date(post.created_at) <= twoMonthsAgo
-        );
+    // Load saved settings
+    const savedAccountSize = localStorage.getItem("accountSize");
+    const savedRiskPercent = localStorage.getItem("riskPercent");
+    const savedSymbolPreset = localStorage.getItem("symbolPreset");
+    const savedPointsPerUsd = localStorage.getItem("pointsPerUsd");
+    const savedTradeType = localStorage.getItem("tradeType");
+    
+    if (savedAccountSize) setAccountSize(Number(savedAccountSize));
+    if (savedRiskPercent) setRiskPercent(Number(savedRiskPercent));
+    if (savedSymbolPreset) setSymbolPreset(savedSymbolPreset);
+    if (savedPointsPerUsd) setPointsPerUsd(Number(savedPointsPerUsd));
+    if (savedTradeType) setTradeType(savedTradeType as "pending" | "immediate");
+    
+    // load persisted signal
+    const savedSignal = localStorage.getItem("currentSignal");
+    if (savedSignal) {
+        try {
+            setSignal(JSON.parse(savedSignal));
+        } catch (error) {
+            console.error("Error loading saved signal:", error);
+            localStorage.removeItem("currentSignal");
+        }
+    }
+  }, [navigate, toast]);
 
-        // Set featured story (most recent post)
-        setFeaturedStory(recentPosts[0] || null);
+  const riskAmount = (accountSize * riskPercent) / 100;
+  const rewardAmount = riskAmount * 3;
 
-        // Set related stories (exclude featured story)
-        setRelatedStories(recentPosts.slice(1, 6));
+  const handleFilesUpload = async (files: File[]) => {
+    setUploadedFiles(files);
+  };
 
-        // Fetch trending stories separately
-        const { data: trendingData } = await supabase
-          .from('gossip_posts')
-          .select('*')
-          .eq('is_trending', true)
-          .gt('created_at', twoMonthsAgo.toISOString())
-          .order('likes_count', { ascending: false })
-          .limit(5);
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/auth");
+    } catch (error) {
+      toast({
+        title: "Sign Out Failed",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
-        setTrendingStories(trendingData || []);
-        setOldStories(oldPosts);
-      }
-    } catch (error) {
-      console.error('Error fetching stories:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleAnalyze = async () => {
+    if (uploadedFiles.length === 0) {
+      toast({
+        title: "No Charts",
+        description: "Please upload at least one chart to analyze.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
+    // Check analysis limit
+    if (analysisCount >= analysisLimit) {
+      toast({
+        title: "Analysis Limit Reached",
+        description: `You have used all ${analysisLimit} analysis slots. Please contact admin to reset your account.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const handleTrendingClick = () => {
-    setShowTrending(!showTrending);
-    setSelectedCategory(showTrending ? 'All' : 'Trending');
-  };
+    setIsAnalyzing(true);
+    setSignal(null);
+    // The critical bug fix: localStorage.setItem must be AFTER data is available
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header onSearch={handleSearch} onTrendingClick={handleTrendingClick} />
-        <CategoryNav 
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
-        <div className="container mx-auto px-4 py-12">
-          <div className="animate-pulse">
-            <div className="h-96 bg-muted rounded-lg mb-8"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-4">
-                <div className="h-8 bg-muted rounded"></div>
-                <div className="h-64 bg-muted rounded"></div>
-              </div>
-              <div className="space-y-4">
-                <div className="h-8 bg-muted rounded"></div>
-                <div className="h-32 bg-muted rounded"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+    toast({
+      title: "Analyzing Charts",
+      description: `Trade Advisor is Processing ${uploadedFiles.length} chart(s) Be Patient for the Signal...`,
+    });
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header onSearch={handleSearch} onTrendingClick={handleTrendingClick} />
-      <CategoryNav 
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-      />
-      
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-1 order-2 lg:order-1">
-            <SidebarStories 
-              relatedStories={relatedStories}
-              trendingStories={trendingStories}
-            />
-          </div>
-          
-          {/* Main Content */}
-          <div className="lg:col-span-3 order-1 lg:order-2">
-            {featuredStory ? (
-              <FeaturedStory post={featuredStory} />
-            ) : (
-              <div className="text-center py-12">
-                <h3 className="text-xl font-semibold mb-2">No stories found!</h3>
-                <p className="text-muted-foreground">Be the first to share a story.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+    try {
+      const formData = new FormData();
+      uploadedFiles.forEach((file, index) => {
+        formData.append(`file${index}`, file);
+      });
+      formData.append('fileCount', uploadedFiles.length.toString());
+      formData.append('accountSize', accountSize.toString());
+      formData.append('riskPercent', riskPercent.toString());
+      formData.append('pointsPerUsd', pointsPerUsd.toString());
+      formData.append('tradeType', tradeType);
 
-      {/* Old Stories Section */}
-      <OldStoriesSection oldStories={oldStories} />
-      
-      <Footer />
-    </div>
-  );
+      const { data, error } = await supabase.functions.invoke('analyze-chart', {
+        body: formData,
+      });
+
+      if (error) {
+        console.error('Analysis error:', error);
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setSignal(data);
+      // Correctly saving signal AFTER a successful analysis response
+      localStorage.setItem("currentSignal", JSON.stringify(data));
+      
+      // Save the analysis to the database
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { error: insertError } = await supabase
+          .from("trades")
+          .insert({
+            user_id: session.user.id,
+            symbol: data.symbol,
+            direction: data.direction,
+            timeframe: Array.isArray(data.timeframes) ? data.timeframes.join(", ") : data.timeframe || "N/A",
+            entry: data.entry,
+            stop_loss: data.stopLoss,
+            take_profit: data.takeProfit,
+            confidence: data.confidence,
+            risk_amount: data.riskAmount,
+            reward_amount: data.rewardAmount,
+            rationale: data.rationale || [],
+            invalidation: data.invalidation || "",
+            news_items: data.newsItems || [],
+            status: data.status || 'pending',
+            trade_type: tradeType,
+            activated: tradeType === 'pending' ? false : null
+          });
+
+        if (insertError) {
+          console.error("Error saving analysis:", insertError);
+          toast({
+            title: "Warning",
+            description: "Analysis completed but couldn't save to history.",
+            variant: "default",
+          });
+        }
+      }
+      
+      // Increment count
+      const newCount = analysisCount + 1;
+      setAnalysisCount(newCount);
+      const remaining = analysisLimit - newCount;
+
+      toast({
+        title: "Analysis Complete",
+        description: remaining > 0 
+          ? `${data.direction} signal for ${data.symbol}. ${remaining} analyses remaining.`
+          : "Analysis complete. You have used all your analysis slots.",
+      });
+
+      // Show warning if running low
+      if (remaining > 0 && remaining <= 15) {
+        setTimeout(() => {
+          toast({
+            title: "Running Low on Analyses Slots",
+            description: `Only ${remaining} analysis slots remaining out of ${analysisLimit}.`,
+            variant: "default",
+          });
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error analyzing chart:', error);
+      // Clear localStorage if analysis fails to prevent loading bad data on refresh
+      localStorage.removeItem("currentSignal"); 
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : "Failed to analyze charts. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-trading">
+      {/* Header */}
+      <header className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">TradeAdvisor</h1>
+                <p className="text-xs text-muted-foreground">Professional Trade Analysis</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate("/settings")}>
+                <Settings2 className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate("/history")}>
+                <FileText className="h-4 w-4 mr-2" />
+                History
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Column - Upload & Settings */}
+          <div className="lg:col-span-1 space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                Step 1: Account Configuration
+              </h2>
+              <AccountSettings
+                accountSize={accountSize}
+                riskPercent={riskPercent}
+                symbolPreset={symbolPreset}
+                pointsPerUsd={pointsPerUsd}
+                tradeType={tradeType}
+                onAccountSizeChange={setAccountSize}
+                onRiskPercentChange={setRiskPercent}
+                onSymbolPresetChange={setSymbolPreset}
+                onPointsPerUsdChange={setPointsPerUsd}
+                onTradeTypeChange={setTradeType}
+              />
+            </div>
+
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                Step 2: Upload Chart
+              </h2>
+              <ChartUpload 
+                onFilesUpload={handleFilesUpload}
+                uploadedFiles={uploadedFiles}
+              />
+              
+              {uploadedFiles.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <Button 
+                    onClick={handleAnalyze}
+                    disabled={isAnalyzing || analysisCount >= analysisLimit}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isAnalyzing ? "Analyzing..." : "Analyze Charts"}
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    {analysisCount} / {analysisLimit} analyses used
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column - Signal */}
+          <div className="lg:col-span-2">
+            {isAnalyzing ? (
+              <div className="flex items-center justify-center h-full min-h-[500px]">
+                <div className="text-center space-y-4 p-8">
+                  <div className="inline-block p-6 bg-secondary rounded-full animate-pulse">
+                    <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground">
+                    Analyzing Chart...
+                  </h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Trade Advisor is analyzing your chart and generating trade signals. This may take a moment.
+                  </p>
+                </div>
+              </div>
+            ) : signal ? (
+              <div>
+                <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                  Trade Signal Generated
+                </h2>
+                <TradeSignal
+                  signal={signal}
+                  riskAmount={riskAmount}
+                  rewardAmount={rewardAmount}
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[500px]">
+                <div className="text-center space-y-4 p-8">
+                  <div className="inline-block p-6 bg-secondary rounded-full">
+                    <TrendingUp className="h-12 w-12 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground">
+                    Ready to Analyze
+                  </h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Configure your account settings and upload a chart to receive a Trade Advisor-powered trade signal with precise entry, stop-loss, and take-profit levels.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 };
 
 export default Index;
