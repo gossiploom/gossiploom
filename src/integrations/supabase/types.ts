@@ -29,12 +29,12 @@ export type Database = {
           rationale: Json
           reward_amount: number
           risk_amount: number
-          status: string | null
+          status: string
           stop_loss: number
           symbol: string
           take_profit: number
           timeframe: string
-          trade_type: string | null
+          trade_type: string
           updated_at: string
           user_id: string
         }
@@ -52,12 +52,12 @@ export type Database = {
           rationale: Json
           reward_amount: number
           risk_amount: number
-          status?: string | null
+          status?: string
           stop_loss: number
           symbol: string
           take_profit: number
           timeframe: string
-          trade_type?: string | null
+          trade_type?: string
           updated_at?: string
           user_id: string
         }
@@ -75,12 +75,12 @@ export type Database = {
           rationale?: Json
           reward_amount?: number
           risk_amount?: number
-          status?: string | null
+          status?: string
           stop_loss?: number
           symbol?: string
           take_profit?: number
           timeframe?: string
-          trade_type?: string | null
+          trade_type?: string
           updated_at?: string
           user_id?: string
         }
@@ -88,21 +88,21 @@ export type Database = {
       }
       user_settings: {
         Row: {
-          analysis_limit: number | null
+          analysis_limit: number
           created_at: string
           id: string
           updated_at: string
           user_id: string
         }
         Insert: {
-          analysis_limit?: number | null
+          analysis_limit?: number
           created_at?: string
           id?: string
           updated_at?: string
           user_id: string
         }
         Update: {
-          analysis_limit?: number | null
+          analysis_limit?: number
           created_at?: string
           id?: string
           updated_at?: string
