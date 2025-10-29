@@ -63,9 +63,11 @@ export default {
       },
       backgroundImage: {
         'gradient-trading': 'var(--gradient-trading)',
+        'gradient-gold': 'var(--gradient-gold)',
       },
       boxShadow: {
         'glow': 'var(--glow-gold)',
+        'glow-strong': 'var(--glow-gold-strong)',
       },
       borderRadius: {
         lg: "var(--radius)",
