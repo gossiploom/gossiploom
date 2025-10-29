@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
+import { DerivTradeDialog } from "@/components/DerivTradeDialog";
 
 interface TradeSignalProps {
   signal: {
@@ -254,7 +255,18 @@ export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalPro
           <p className="text-sm text-foreground">{signal.invalidation}</p>
         </div>
 
-        <div className="pt-2">
+        <div className="pt-2 space-y-3">
+          <DerivTradeDialog 
+            signal={{
+              direction: signal.direction,
+              symbol: signal.symbol,
+              entry: signal.entry,
+              stopLoss: signal.stopLoss,
+              takeProfit: signal.takeProfit,
+            }}
+            riskAmount={riskAmount}
+          />
+          
           <Button variant="outline" className="w-full" onClick={handleDownloadTicket}>
             <Download className="h-4 w-4 mr-2" />
             Download Ticket
