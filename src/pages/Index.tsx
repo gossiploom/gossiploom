@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { TrendingUp, Settings2, FileText, Loader2, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ForexNewsBanner } from "@/components/ForexNewsBanner";
 
 const Index = () => {
   const [accountSize, setAccountSize] = useState(1000);
@@ -235,10 +236,11 @@ const Index = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-trading">
-      {/* Header */}
-      <header className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-0 z-50">
+  return (
+    <div className="min-h-screen bg-gradient-trading">
+      <ForexNewsBanner />
+      {/* Header */}
+      <header className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

@@ -65,11 +65,12 @@ export const ForexNewsBanner = () => {
                 {item.currency}
               </span>
               <span className="text-sm text-muted-foreground">
-                {new Date(item.event_time).toLocaleTimeString([], { 
+                {new Date(item.event_time).toLocaleString([], { 
                   hour: '2-digit', 
                   minute: '2-digit',
                   month: 'short',
-                  day: 'numeric'
+                  day: 'numeric',
+                  hour12: true
                 })}
               </span>
               <span className="text-sm font-medium text-foreground">
