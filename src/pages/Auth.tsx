@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { TrendingUp, Briefcase, Target, BarChart, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ForexNewsBanner } from "@/components/ForexNewsBanner";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -39,7 +40,9 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-trading flex flex-col md:grid md:grid-cols-2">
+    <div className="min-h-screen bg-gradient-trading flex flex-col">
+      <ForexNewsBanner />
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-2">
       <div className="flex flex-col justify-center items-start p-6 md:p-12 text-white">
         <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
             <div className="inline-block p-2 md:p-3 bg-primary/20 rounded-lg">
@@ -117,6 +120,7 @@ const Auth = () => {
                 </p>
             </form>
         </Card>
+      </div>
       </div>
     </div>
   );
