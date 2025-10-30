@@ -4,7 +4,7 @@ import { ChartUpload } from "@/components/ChartUpload";
 import { AccountSettings } from "@/components/AccountSettings";
 import { TradeSignal } from "@/components/TradeSignal";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Settings2, FileText, Loader2, LogOut } from "lucide-react";
+import { TrendingUp, Settings2, FileText, Loader2, LogOut, Newspaper } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ForexNewsBanner } from "@/components/ForexNewsBanner";
@@ -238,7 +238,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-trading">
-      <ForexNewsBanner />
+      <ForexNewsBanner dateFilter="today" impactFilter="High" />
+      <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
       {/* Header */}
       <header className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -252,20 +253,24 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">Professional Trade Analysis</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigate("/settings")}>
-                <Settings2 className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate("/history")}>
-                <FileText className="h-4 w-4 mr-2" />
-                History
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigate("/news")}>
+                <Newspaper className="h-4 w-4 mr-2" />
+                News
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate("/settings")}>
+                <Settings2 className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate("/history")}>
+                <FileText className="h-4 w-4 mr-2" />
+                History
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>

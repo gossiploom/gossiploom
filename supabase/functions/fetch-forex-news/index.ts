@@ -36,12 +36,12 @@ Deno.serve(async (req) => {
     const newsData = await response.json();
     console.log('Fetched news data:', newsData.length, 'items');
 
-    // Filter for high impact news only
-    const highImpactNews = newsData.filter((item: any) => 
-      item.impact === 'High' && new Date(item.date) >= new Date()
+    // Filter for both high and low impact news
+    const futureNews = newsData.filter((item: any) => 
+      (item.impact === 'High' || item.impact === 'Low') && new Date(item.date) >= new Date()
     );
 
-    console.log('High impact news items:', highImpactNews.length);
+    console.log('Future news items (High and Low):', futureNews.length);
 
     // Clear old news (older than 7 days)
     const sevenDaysAgo = new Date();
@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
       .delete()
       .lt('event_time', sevenDaysAgo.toISOString());
 
-    // Insert new high impact news
-    const newsToInsert: ForexNewsItem[] = highImpactNews.map((item: any) => ({
+    // Insert all future news (both high and low impact)
+    const newsToInsert: ForexNewsItem[] = futureNews.map((item: any) => ({
       title: item.title || '',
       currency: item.country || '',
       impact: item.impact || 'High',
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Fetched and stored ${newsToInsert.length} high impact news items`,
+        message: `Fetched and stored ${newsToInsert.length} news items`,
         count: newsToInsert.length 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }

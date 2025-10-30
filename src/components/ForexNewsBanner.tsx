@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Calendar } from "lucide-react";
 
 interface NewsItem {
   id: string;
@@ -10,7 +10,12 @@ interface NewsItem {
   event_time: string;
 }
 
-export const ForexNewsBanner = () => {
+interface ForexNewsBannerProps {
+  dateFilter?: "today" | "tomorrow";
+  impactFilter?: "High" | "Low";
+}
+
+export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }: ForexNewsBannerProps) => {
   const [news, setNews] = useState<NewsItem[]>([]);
 
   useEffect(() => {
@@ -26,14 +31,29 @@ export const ForexNewsBanner = () => {
     });
 
     return () => clearInterval(interval);
-  }, []);
+  }, [dateFilter, impactFilter]);
 
   const fetchNews = async () => {
+    // Calculate date range based on filter
+    const now = new Date();
+    let startDate: Date;
+    let endDate: Date;
+
+    if (dateFilter === "today") {
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    } else {
+      // tomorrow
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+    }
+
     const { data, error } = await supabase
       .from('forex_news')
       .select('*')
-      .eq('impact', 'High')
-      .gte('event_time', new Date().toISOString())
+      .eq('impact', impactFilter)
+      .gte('event_time', startDate.toISOString())
+      .lt('event_time', endDate.toISOString())
       .order('event_time', { ascending: true })
       .limit(20);
 
@@ -47,11 +67,21 @@ export const ForexNewsBanner = () => {
 
   if (news.length === 0) return null;
 
+  const dateLabel = dateFilter === "today" ? "Today" : "Tomorrow";
+  const impactColor = impactFilter === "High" ? "text-danger" : "text-warning";
+  const impactBg = impactFilter === "High" ? "bg-danger/20 border-danger/30" : "bg-warning/20 border-warning/30";
+
   return (
     <div className="w-full bg-card border-t border-b border-primary/20 overflow-hidden py-3">
       <div className="flex items-center gap-2 px-4 mb-2">
-        <AlertCircle className="h-4 w-4 text-danger flex-shrink-0" />
-        <span className="text-sm font-semibold text-foreground">High Impact Forex News</span>
+        {impactFilter === "High" ? (
+          <AlertCircle className={`h-4 w-4 ${impactColor} flex-shrink-0`} />
+        ) : (
+          <Calendar className={`h-4 w-4 ${impactColor} flex-shrink-0`} />
+        )}
+        <span className="text-sm font-semibold text-foreground">
+          {impactFilter} Impact Forex News - {dateLabel}
+        </span>
       </div>
       
       <div className="relative overflow-hidden">
@@ -61,7 +91,7 @@ export const ForexNewsBanner = () => {
               key={`${item.id}-${index}`}
               className="flex items-center gap-3 whitespace-nowrap px-4"
             >
-              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-danger/20 text-danger border border-danger/30">
+              <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${impactBg} ${impactColor} border`}>
                 {item.currency}
               </span>
               <span className="text-sm text-muted-foreground">
