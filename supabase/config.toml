@@ -3,9 +3,6 @@ project_id = "gjhbobzedztwinchfoyg"
 [functions.analyze-chart]
 verify_jwt = false
 
-[functions.deriv-trade]
-verify_jwt = true
-
 [functions.fetch-forex-news]
 verify_jwt = false
 
