@@ -41,6 +41,7 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
     let endDate: Date;
 
     if (dateFilter === "today") {
+      // Get all news from start of today to end of today (including past events)
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     } else {
@@ -60,7 +61,7 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
       .gte('event_time', startDate.toISOString())
       .lt('event_time', endDate.toISOString())
       .order('event_time', { ascending: true })
-      .limit(20);
+      .limit(50);
 
     if (error) {
       console.error('Error fetching news:', error);
