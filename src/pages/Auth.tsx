@@ -41,13 +41,17 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-trading flex flex-col">
-      {/* Fixed News Banners */}
+      {/* Top News Banner - Fixed */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <ForexNewsBanner dateFilter="today" impactFilter="High" />
+      </div>
+      
+      {/* Bottom News Banner - Fixed */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
         <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
       </div>
       
-      <div className="flex-1 flex flex-col md:grid md:grid-cols-2 pt-[120px]">
+      <div className="flex-1 flex flex-col md:grid md:grid-cols-2 pt-[60px] pb-[60px]">
       <div className="flex flex-col justify-center items-start p-6 md:p-12 text-white">
         <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
             <div className="inline-block p-2 md:p-3 bg-primary/20 rounded-lg">

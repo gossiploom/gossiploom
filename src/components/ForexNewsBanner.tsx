@@ -36,6 +36,7 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
   const fetchNews = async () => {
     // Calculate date range based on filter
     const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 5 = Friday
     let startDate: Date;
     let endDate: Date;
 
@@ -43,9 +44,13 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     } else {
-      // tomorrow
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+      // tomorrow or next working day (Monday if it's Friday)
+      let daysToAdd = 1;
+      if (dayOfWeek === 5) { // Friday
+        daysToAdd = 3; // Skip to Monday
+      }
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysToAdd);
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysToAdd + 1);
     }
 
     const { data, error } = await supabase
@@ -67,9 +72,19 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
 
   if (news.length === 0) return null;
 
-  const dateLabel = dateFilter === "today" ? "Today" : "Tomorrow";
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  let dateLabel = dateFilter === "today" ? "Today" : "Tomorrow";
+  if (dateFilter === "tomorrow" && dayOfWeek === 5) {
+    dateLabel = "Monday";
+  }
+  
   const impactColor = impactFilter === "High" ? "text-danger" : "text-warning";
   const impactBg = impactFilter === "High" ? "bg-danger/20 border-danger/30" : "bg-warning/20 border-warning/30";
+
+  // Repeat news items to ensure smooth scrolling even with few items
+  const minRepetitions = Math.max(5, Math.ceil(10 / news.length));
+  const repeatedNews = Array(minRepetitions).fill(news).flat();
 
   return (
     <div className="w-full bg-card border-t border-b border-primary/20 overflow-hidden py-3">
@@ -86,7 +101,7 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
       
       <div className="relative overflow-hidden">
         <div className="animate-scroll flex gap-8">
-          {[...news, ...news].map((item, index) => (
+          {repeatedNews.map((item, index) => (
             <div 
               key={`${item.id}-${index}`}
               className="flex items-center gap-3 whitespace-nowrap px-4"

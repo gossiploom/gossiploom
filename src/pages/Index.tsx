@@ -237,15 +237,19 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-trading">
-      {/* Fixed News Banners */}
+    <div className="min-h-screen bg-gradient-trading pb-[60px]">
+      {/* Top News Banner - Fixed */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <ForexNewsBanner dateFilter="today" impactFilter="High" />
+      </div>
+      
+      {/* Bottom News Banner - Fixed */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
         <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
       </div>
       
       {/* Header - adjusted for fixed banners */}
-      <header className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-[120px] z-40 mt-[120px]">
+      <header className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-[60px] z-40 mt-[60px]">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
