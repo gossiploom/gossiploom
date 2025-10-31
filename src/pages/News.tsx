@@ -17,10 +17,16 @@ interface NewsItem {
   previous: string | null;
 }
 
+interface NewsAnalysis {
+  [key: string]: string;
+}
+
 const News = () => {
   const [highImpactNews, setHighImpactNews] = useState<NewsItem[]>([]);
   const [lowImpactNews, setLowImpactNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [newsAnalysis, setNewsAnalysis] = useState<NewsAnalysis>({});
+  const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -111,35 +117,106 @@ const News = () => {
     });
   };
 
-  const NewsCard = ({ item, isHighImpact }: { item: NewsItem; isHighImpact: boolean }) => (
-    <Card className={`p-4 border-l-4 ${isHighImpact ? 'border-l-danger' : 'border-l-warning'}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${
-              isHighImpact 
-                ? 'bg-danger/20 text-danger border border-danger/30' 
-                : 'bg-warning/20 text-warning border border-warning/30'
-            }`}>
-              {item.currency}
-            </span>
-            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${
-              isHighImpact ? 'text-danger' : 'text-warning'
-            }`}>
-              {isHighImpact ? <AlertCircle className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}
-              {item.impact} Impact
-            </span>
+  const analyzeNewsImpact = async (item: NewsItem) => {
+    if (analyzingIds.has(item.id)) return;
+
+    setAnalyzingIds(prev => new Set(prev).add(item.id));
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-news-impact', {
+        body: { newsItem: item }
+      });
+
+      if (error) throw error;
+
+      setNewsAnalysis(prev => ({
+        ...prev,
+        [item.id]: data.analysis
+      }));
+    } catch (error) {
+      console.error('Error analyzing news:', error);
+      toast({
+        title: "Analysis Error",
+        description: "Failed to generate trading expectations.",
+        variant: "destructive",
+      });
+    } finally {
+      setAnalyzingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
+    }
+  };
+
+  const NewsCard = ({ item, isHighImpact }: { item: NewsItem; isHighImpact: boolean }) => {
+    const isAnalyzing = analyzingIds.has(item.id);
+    const analysis = newsAnalysis[item.id];
+
+    return (
+      <Card className={`p-4 border-l-4 ${isHighImpact ? 'border-l-danger' : 'border-l-warning'}`}>
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${
+                  isHighImpact 
+                    ? 'bg-danger/20 text-danger border border-danger/30' 
+                    : 'bg-warning/20 text-warning border border-warning/30'
+                }`}>
+                  {item.currency}
+                </span>
+                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${
+                  isHighImpact ? 'text-danger' : 'text-warning'
+                }`}>
+                  {isHighImpact ? <AlertCircle className="h-3 w-3" /> : <Calendar className="h-3 w-3" />}
+                  {item.impact} Impact
+                </span>
+              </div>
+              <h3 className="font-semibold text-foreground">{item.title}</h3>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>{formatDate(item.event_time)}</span>
+                {item.forecast && <span>Forecast: {item.forecast}</span>}
+                {item.previous && <span>Previous: {item.previous}</span>}
+              </div>
+            </div>
           </div>
-          <h3 className="font-semibold text-foreground">{item.title}</h3>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>{formatDate(item.event_time)}</span>
-            {item.forecast && <span>Forecast: {item.forecast}</span>}
-            {item.previous && <span>Previous: {item.previous}</span>}
-          </div>
+
+          {isHighImpact && (
+            <div className="pt-3 border-t border-border">
+              {!analysis && !isAnalyzing && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => analyzeNewsImpact(item)}
+                  className="w-full"
+                >
+                  Get Trading Expectations
+                </Button>
+              )}
+              {isAnalyzing && (
+                <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Analyzing market impact...
+                </div>
+              )}
+              {analysis && (
+                <div className="bg-muted/50 rounded-md p-3 space-y-2">
+                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-primary" />
+                    Trading Expectations
+                  </h4>
+                  <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                    {analysis}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </div>
-    </Card>
-  );
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-trading">
