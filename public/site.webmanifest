@@ -1,6 +1,6 @@
 {
-  "name": "TradeAdvisor",
-  "short_name": "Signal",
+  "name": "ProTradeAdvisor",
+  "short_name": "ProTrade",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

@@ -36,50 +36,6 @@ export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalPro
   const priceDecimals = getDecimals(signal.entry);
   const formatPrice = (n: number) => n.toFixed(priceDecimals);
 
-  const handleAcceptTrade = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to accept trades.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase.from("trades").insert({
-        user_id: session.user.id,
-        symbol: signal.symbol,
-        direction: signal.direction,
-        timeframe: signal.timeframe,
-        entry: signal.entry,
-        stop_loss: signal.stopLoss,
-        take_profit: signal.takeProfit,
-        confidence: signal.confidence,
-        risk_amount: riskAmount,
-        reward_amount: rewardAmount,
-        rationale: signal.rationale,
-        news_items: signal.newsItems,
-        invalidation: signal.invalidation,
-        status: "pending",
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Trade Accepted",
-        description: `${signal.direction} trade for ${signal.symbol} has been saved to your history.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error Saving Trade",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleDownloadTicket = () => {
     const doc = new jsPDF();
@@ -87,7 +43,7 @@ export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalPro
     // Header
     doc.setFontSize(20);
     doc.setTextColor(40);
-    doc.text("ForexAdvisor Trade Ticket", 20, 20);
+    doc.text("ProTradeAdvisor Trade Ticket", 20, 20);
     
     // Signal details
     doc.setFontSize(12);
@@ -254,11 +210,7 @@ export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalPro
           <p className="text-sm text-foreground">{signal.invalidation}</p>
         </div>
 
-        <div className="pt-2 space-y-3">
-          <Button variant="default" className="w-full" onClick={handleAcceptTrade}>
-            Accept Trade
-          </Button>
-          
+        <div className="pt-2">
           <Button variant="outline" className="w-full" onClick={handleDownloadTicket}>
             <Download className="h-4 w-4 mr-2" />
             Download Ticket
