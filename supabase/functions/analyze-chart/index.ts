@@ -71,7 +71,6 @@ serve(async (req) => {
     }
 
     const riskAmount = (accountSize * riskPercent) / 100;
-    const rewardAmount = riskAmount * 3;
     const isPendingOrder = tradeType === 'pending';
 
     const systemPrompt = `You are an expert forex trading analyst specializing in technical analysis and trade signal generation. 
@@ -82,7 +81,6 @@ CRITICAL: First, identify the trading symbol (currency pair, gold, etc.) from th
 User Configuration:
 - Account Size: $${accountSize}
 - Risk per Trade: ${riskPercent}% ($${riskAmount.toFixed(2)})
-- Target Reward (1:3 R:R): $${rewardAmount.toFixed(2)})
 - Trade Type: ${isPendingOrder ? 'PENDING ORDER' : 'IMMEDIATE ENTRY'}
 - Number of charts provided: ${files.length} (multiple timeframes for confluence)
 
@@ -110,8 +108,8 @@ Analyze the provided chart(s) and return a JSON object with this exact structure
   "timeframes": ["1H", "4H"] (list the timeframes visible in the charts),
   "direction": "LONG" or "SHORT",
   "entry": number (entry price - MUST include all decimal places visible on chart, e.g., 13517.135 not 13517),
-  "stopLoss": number (stop loss price - will be recalculated, but provide your suggested level),
-  "takeProfit": number (take profit price - will be recalculated, but provide your suggested level),
+  "stopLoss": number (stop loss price - will be recalculated based on risk amount),
+  "takeProfit": number (CRITICAL: This is the most realistic price target based on technical analysis - nearest resistance for LONG, nearest support for SHORT),
   "confidence": number (0-100, your confidence level - higher with multiple timeframe confluence),
   "rationale": [
     "Symbol identified: [symbol name]",
@@ -120,6 +118,7 @@ Analyze the provided chart(s) and return a JSON object with this exact structure
     "Technical reason 2",
     "Technical reason 3",
     "Technical reason 4",
+    "Take profit reasoning: [explain why this is the most realistic target - nearest structure, Fibonacci level, previous high/low, etc.]",
     "Risk consideration"
   ],
   "invalidation": "Clear condition that would invalidate this trade"
@@ -133,7 +132,13 @@ Key requirements:
 ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Major fair value gap, order block, supply/demand, or Fibonacci levels visible on the SMALLEST timeframe
 - Entry should be viable (not too far from current price) and offer minimal drawdown` : ''}
 - Entry price must include all visible decimals from the chart
-- Stop loss and take profit will be calculated automatically based on the points configuration
+- CRITICAL FOR TAKE PROFIT: Identify the MOST REALISTIC price target where price is HIGHLY LIKELY to reach:
+  * For LONG: Look for the nearest significant resistance level, previous swing high, round number, or key Fibonacci level
+  * For SHORT: Look for the nearest significant support level, previous swing low, round number, or key Fibonacci level
+  * Take profit should be achievable based on current market structure - not too far
+  * Consider typical price movements and market volatility
+  * Avoid unrealistic targets that are unlikely to be hit before reversal
+- Stop loss will be calculated based on the configured risk amount
 - Base your analysis on visible technical patterns, fair value gap, order block, support/resistance, trend, and price action
 - Be specific and precise with price levels including all decimals
 - Provide clear, actionable rationale mentioning timeframe confluence if applicable
@@ -209,18 +214,23 @@ ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Majo
 
     const entryPoints = Math.round(signalData.entry * scale);
     const riskPoints = Math.round(pointsPerUsd * riskAmount);
-    const rewardPoints = Math.round(pointsPerUsd * rewardAmount);
 
+    // Calculate stop loss based on risk amount
     const stopLossPoints = isLong ? entryPoints - riskPoints : entryPoints + riskPoints;
-    const takeProfitPoints = isLong ? entryPoints + rewardPoints : entryPoints - rewardPoints;
-
     const calculatedStopLoss = stopLossPoints / scale;
-    const calculatedTakeProfit = takeProfitPoints / scale;
+
+    // Use AI's suggested take profit (most realistic target)
+    const aiTakeProfit = signalData.takeProfit;
+    
+    // Calculate actual reward amount based on AI's take profit
+    const takeProfitPoints = Math.round(aiTakeProfit * scale);
+    const actualRewardPoints = Math.abs(takeProfitPoints - entryPoints);
+    const rewardAmount = actualRewardPoints / pointsPerUsd;
 
     const result = {
       ...signalData,
       stopLoss: calculatedStopLoss,
-      takeProfit: calculatedTakeProfit,
+      takeProfit: aiTakeProfit,
       riskAmount,
       rewardAmount,
       newsItems: [],

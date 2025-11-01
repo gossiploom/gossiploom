@@ -72,7 +72,7 @@ export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalPro
     yPos += lineHeight;
     doc.text(`Potential Reward: $${rewardAmount.toFixed(2)}`, 20, yPos);
     yPos += lineHeight;
-    doc.text(`Risk/Reward Ratio: 1:3`, 20, yPos);
+    doc.text(`Risk/Reward Ratio: 1:${(rewardAmount / riskAmount).toFixed(2)}`, 20, yPos);
     yPos += lineHeight * 1.5;
     
     doc.text("Trade Rationale:", 20, yPos);
@@ -156,7 +156,7 @@ export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalPro
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Risk/Reward Ratio:</span>
-            <span className="font-semibold text-primary">1:3</span>
+            <span className="font-semibold text-primary">1:{(rewardAmount / riskAmount).toFixed(2)}</span>
           </div>
         </div>
 
