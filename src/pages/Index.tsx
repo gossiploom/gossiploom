@@ -142,7 +142,7 @@ const Index = () => {
 
     toast({
       title: "Analyzing Charts",
-      description: `Trade Advisor is Processing ${uploadedFiles.length} chart(s) Be Patient for the Signal...`,
+      description: `Pro Trade Advisor is Processing ${uploadedFiles.length} chart(s) Be Patient for the Signal...`,
     });
 
     try {
@@ -323,13 +323,13 @@ const Index = () => {
                 <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/10">
                   <p className="text-sm font-medium">Trade Type: Day Trading</p>
                   <p className="text-xs text-muted-foreground mt-1">Pending orders at key levels</p>
-                  <p className="text-xs text-muted-foreground mt-2">📊 Recommended: Upload 4H, Daily, or Weekly timeframe charts for best results</p>
+                  <p className="text-xs text-muted-foreground mt-2">📊 Recommended: Upload 1H, 4H, 12H Daily, and Weekly timeframe charts for best results</p>
                 </div>
               ) : (
                 <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/10">
                   <p className="text-sm font-medium">Trade Type: Scalping</p>
                   <p className="text-xs text-muted-foreground mt-1">Immediate entries near current price</p>
-                  <p className="text-xs text-muted-foreground mt-2">⚡ Recommended: Upload 1m, 5m, 15m, 30m, or 1H timeframe charts for best scalping signals</p>
+                  <p className="text-xs text-muted-foreground mt-2">⚡ Recommended: Upload 5m, 15m, 30m, 1H and 4H timeframe charts for best scalping signals</p>
                 </div>
               )}
             </div>
@@ -374,7 +374,7 @@ const Index = () => {
                     Analyzing Chart...
                   </h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    Trade Advisor is analyzing your chart and generating trade signals. This may take a moment.
+                    Pro Trade Advisor is analyzing your charts and generating trade signals. This may take a moment.
                   </p>
                 </div>
               </div>
