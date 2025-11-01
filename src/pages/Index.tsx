@@ -16,33 +16,39 @@ const Index = () => {
   const [symbolPreset, setSymbolPreset] = useState("xauusd");
   const [pointsPerUsd, setPointsPerUsd] = useState(100);
   const [tradeType, setTradeType] = useState<"pending" | "immediate">("pending");
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [signal, setSignal] = useState<any>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisCount, setAnalysisCount] = useState(0);
-  const [analysisLimit, setAnalysisLimit] = useState(30);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [signal, setSignal] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisCount, setAnalysisCount] = useState(0);
+  const [analysisLimit, setAnalysisLimit] = useState(30);
+  const [tradingStyle, setTradingStyle] = useState<"scalp" | "day">("day");
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  useEffect(() => {
-    // Check authentication and load analysis count
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
+  useEffect(() => {
+    // Check authentication and load analysis count
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
 
-      // Load user settings and count analyses
-      try {
-        const { data: settings } = await supabase
-          .from("user_settings")
-          .select("analysis_limit")
-          .eq("user_id", session.user.id)
-          .single();
+      // Load user settings and count analyses
+      try {
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("analysis_limit, trading_style")
+          .eq("user_id", session.user.id)
+          .single();
 
-        if (settings) {
-          setAnalysisLimit(settings.analysis_limit);
-        }
+        if (settings) {
+          setAnalysisLimit(settings.analysis_limit);
+          if (settings.trading_style) {
+            setTradingStyle(settings.trading_style as "scalp" | "day");
+            // Set trade type based on trading style
+            setTradeType(settings.trading_style === "scalp" ? "immediate" : "pending");
+          }
+        }
 
         const { count } = await supabase
           .from("trades")
@@ -145,10 +151,11 @@ const Index = () => {
         formData.append(`file${index}`, file);
       });
       formData.append('fileCount', uploadedFiles.length.toString());
-      formData.append('accountSize', accountSize.toString());
-      formData.append('riskPercent', riskPercent.toString());
-      formData.append('pointsPerUsd', pointsPerUsd.toString());
-      formData.append('tradeType', tradeType);
+      formData.append('accountSize', accountSize.toString());
+      formData.append('riskPercent', riskPercent.toString());
+      formData.append('pointsPerUsd', pointsPerUsd.toString());
+      formData.append('tradeType', tradeType);
+      formData.append('tradingStyle', tradingStyle);
 
       const { data, error } = await supabase.functions.invoke('analyze-chart', {
         body: formData,
@@ -294,24 +301,38 @@ const Index = () => {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Upload & Settings */}
           <div className="lg:col-span-1 space-y-6">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-primary" />
-                Step 1: Account Configuration
-              </h2>
-              <AccountSettings
-                accountSize={accountSize}
-                riskPercent={riskPercent}
-                symbolPreset={symbolPreset}
-                pointsPerUsd={pointsPerUsd}
-                tradeType={tradeType}
-                onAccountSizeChange={setAccountSize}
-                onRiskPercentChange={setRiskPercent}
-                onSymbolPresetChange={setSymbolPreset}
-                onPointsPerUsdChange={setPointsPerUsd}
-                onTradeTypeChange={setTradeType}
-              />
-            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                Step 1: Account Configuration
+              </h2>
+              <AccountSettings
+                accountSize={accountSize}
+                riskPercent={riskPercent}
+                symbolPreset={symbolPreset}
+                pointsPerUsd={pointsPerUsd}
+                tradeType={tradeType}
+                onAccountSizeChange={setAccountSize}
+                onRiskPercentChange={setRiskPercent}
+                onSymbolPresetChange={setSymbolPreset}
+                onPointsPerUsdChange={setPointsPerUsd}
+                onTradeTypeChange={setTradeType}
+              />
+              
+              {tradingStyle === "day" ? (
+                <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/10">
+                  <p className="text-sm font-medium">Trade Type: Day Trading</p>
+                  <p className="text-xs text-muted-foreground mt-1">Pending orders at key levels</p>
+                  <p className="text-xs text-muted-foreground mt-2">📊 Recommended: Upload 4H, Daily, or Weekly timeframe charts for best results</p>
+                </div>
+              ) : (
+                <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/10">
+                  <p className="text-sm font-medium">Trade Type: Scalping</p>
+                  <p className="text-xs text-muted-foreground mt-1">Immediate entries near current price</p>
+                  <p className="text-xs text-muted-foreground mt-2">⚡ Recommended: Upload 1m, 5m, 15m, 30m, or 1H timeframe charts for best scalping signals</p>
+                </div>
+              )}
+            </div>
 
             <div>
               <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">

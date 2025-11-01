@@ -127,6 +127,7 @@ export type Database = {
           analysis_limit: number | null
           created_at: string
           id: string
+          trading_style: string | null
           updated_at: string
           user_id: string
         }
@@ -134,6 +135,7 @@ export type Database = {
           analysis_limit?: number | null
           created_at?: string
           id?: string
+          trading_style?: string | null
           updated_at?: string
           user_id: string
         }
@@ -141,6 +143,7 @@ export type Database = {
           analysis_limit?: number | null
           created_at?: string
           id?: string
+          trading_style?: string | null
           updated_at?: string
           user_id?: string
         }

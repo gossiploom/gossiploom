@@ -18,6 +18,7 @@ serve(async (req) => {
     const riskPercent = Number(formData.get('riskPercent'));
     const pointsPerUsd = Number(formData.get('pointsPerUsd'));
     const tradeType = formData.get('tradeType') || 'pending';
+    const tradingStyle = formData.get('tradingStyle') || 'day';
 
     const files: File[] = [];
     for (let i = 0; i < fileCount; i++) {
@@ -72,6 +73,7 @@ serve(async (req) => {
 
     const riskAmount = (accountSize * riskPercent) / 100;
     const isPendingOrder = tradeType === 'pending';
+    const isScalping = tradingStyle === 'scalp';
 
     const systemPrompt = `You are an expert forex trading analyst specializing in technical analysis and trade signal generation. 
 Your task is to analyze trading charts and provide precise trade recommendations in a JSON format.
@@ -81,17 +83,30 @@ CRITICAL: First, identify the trading symbol (currency pair, gold, etc.) from th
 User Configuration:
 - Account Size: $${accountSize}
 - Risk per Trade: ${riskPercent}% ($${riskAmount.toFixed(2)})
-- Trade Type: ${isPendingOrder ? 'PENDING ORDER' : 'IMMEDIATE ENTRY'}
+- Trading Style: ${isScalping ? 'SCALPING' : 'DAY TRADING'}
+- Trade Type: ${isScalping ? 'IMMEDIATE ENTRY (Scalping)' : 'PENDING ORDER (Day Trading)'}
 - Number of charts provided: ${files.length} (multiple timeframes for confluence)
 
-${isPendingOrder ? `
-PENDING ORDER STRATEGY:
+${isScalping ? `
+SCALPING STRATEGY:
+- Entry must be NEAR CURRENT PRICE for quick execution
+- Look for immediate retracement opportunities on small timeframes
+- Entry should be at the most likely price level where price will briefly retrace within minutes/hours
+- Focus on 1-minute, 5-minute, 15-minute, 30-minute, or 1-hour charts
+- Entry should offer minimal drawdown and quick profit potential
+- Look for micro support/resistance levels, small fair value gaps, or minor pullback zones
+- Take profit should be realistic and achievable within a short timeframe (minutes to hours)
+- ADVICE: Recommend using 1m, 5m, 15m, 30m, or 1h timeframes for best scalping results
+- In your rationale, specify: "Scalping entry near current price at [describe the level type]"
+` : `
+DAY TRADING STRATEGY:
 - Entry must be at a key liquidity zone, supply/demand level, or Fibonacci retracement level
 - Use the SMALLEST timeframe provided to determine precise entry point
 - Entry should be VIABLE and not too far from current price
 - Look for areas where price is likely to react (previous support/resistance, consolidation zones)
 - Entry should offer minimal drawdown before price moves in favor
 - Consider institutional order blocks and fair value gaps
+- ADVICE: Recommend using 4-hour, daily, or weekly charts for best day trading signals
 - CRITICAL: In your rationale, you MUST specify the entry level type using one of these labels:
   * "Supply Zone" - if entering at a supply/resistance area
   * "Demand Zone" - if entering at a demand/support area
@@ -100,7 +115,7 @@ PENDING ORDER STRATEGY:
   * "Liquidity Zone" - if entering at liquidity sweep/collection area
   * "50% Fibonacci Retracement" - if entering at 50% Fib level
   * Other specific Fibonacci levels (38.2%, 61.8%, etc.) if applicable
-` : ''}
+`}
 
 Analyze the provided chart(s) and return a JSON object with this exact structure:
 {
@@ -129,8 +144,11 @@ Key requirements:
 - CRITICAL: Read price levels with ALL decimal places shown on the chart (e.g., 13517.135 not 13517)
 - If multiple charts are provided, analyze them for multi-timeframe confluence
 - Higher timeframe should confirm the trend, lower timeframe for precise entry
-${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Major fair value gap, order block, supply/demand, or Fibonacci levels visible on the SMALLEST timeframe
-- Entry should be viable (not too far from current price) and offer minimal drawdown` : ''}
+${isScalping ? `- For SCALPING: Entry must be NEAR current price at micro levels where quick retracements are likely
+- Entry should be executable immediately with minimal slippage and offer quick profit potential
+- Recommend specific small timeframes (1m, 5m, 15m, 30m, 1h) for best results` : `- For DAY TRADING: Entry must be at liquidity zones, Major fair value gap, order block, supply/demand, or Fibonacci levels visible on the SMALLEST timeframe
+- Entry should be viable (not too far from current price) and offer minimal drawdown
+- Recommend specific larger timeframes (4h, daily, weekly) for best results`}
 - Entry price must include all visible decimals from the chart
 - CRITICAL FOR TAKE PROFIT: Identify the MOST REALISTIC price target where price is HIGHLY LIKELY to reach:
   * For LONG: Look for the nearest significant resistance level, previous swing high, round number, or key Fibonacci level
@@ -149,14 +167,14 @@ ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Majo
 
     if (imageParts.length > 0) {
       const userText = files.length > 1 
-            ? `Analyze these ${files.length} charts (different timeframes of the same symbol). Identify the symbol and provide a trade signal with multi-timeframe confluence.`
-            : `Analyze this chart. First identify the symbol from the chart, then provide a trade signal.`;
+            ? `Analyze these ${files.length} charts (different timeframes of the same symbol). Identify the symbol and provide a ${isScalping ? 'scalping' : 'day trading'} signal with multi-timeframe confluence.`
+            : `Analyze this chart. First identify the symbol from the chart, then provide a ${isScalping ? 'scalping' : 'day trading'} signal.`;
       parts.push({ text: userText });
       parts.push(...imageParts);
       parts.push({ text: systemPrompt });
       contents.push({ parts });
     } else if (csvData) {
-       parts.push({ text: `Here is the OHLC CSV data:\n\n${csvData}\n\nIdentify the symbol and timeframe(s), then analyze this data and provide a trade signal.` });
+       parts.push({ text: `Here is the OHLC CSV data:\n\n${csvData}\n\nIdentify the symbol and timeframe(s), then analyze this data and provide a ${isScalping ? 'scalping' : 'day trading'} signal.` });
        parts.push({ text: systemPrompt });
        contents.push({ parts });
     } else {

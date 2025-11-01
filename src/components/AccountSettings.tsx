@@ -133,32 +133,9 @@ export const AccountSettings = ({
         )}
       </div>
 
-      <div className="space-y-3">
-        <Label className="flex items-center gap-2 text-foreground">
-          <Zap className="h-4 w-4 text-primary" />
-          Trade Entry Type
-        </Label>
-        <RadioGroup value={tradeType} onValueChange={onTradeTypeChange}>
-          <div className="flex items-center space-x-2 bg-secondary rounded-lg p-3 border border-border">
-            <RadioGroupItem value="immediate" id="immediate" />
-            <Label htmlFor="immediate" className="cursor-pointer flex-1">
-              <span className="font-medium">Immediate Entry</span>
-              <p className="text-xs text-muted-foreground">Enter trade at current market price</p>
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2 bg-secondary rounded-lg p-3 border border-border">
-            <RadioGroupItem value="pending" id="pending" />
-            <Label htmlFor="pending" className="cursor-pointer flex-1">
-              <span className="font-medium">Pending Order</span>
-              <p className="text-xs text-muted-foreground">Wait for price to reach entry level</p>
-            </Label>
-          </div>
-        </RadioGroup>
-      </div>
-
       <div className="pt-2 border-t border-border">
         <p className="text-xs text-muted-foreground">
-          Default: 1:3 Risk/Reward Ratio • All calculations update automatically
+          All calculations update automatically based on your settings
         </p>
       </div>
     </Card>
