@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChartUpload } from "@/components/ChartUpload";
 import { AccountSettings } from "@/components/AccountSettings";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ForexNewsBanner } from "@/components/ForexNewsBanner";
 
 const Index = () => {
+  const signalRef = useRef<HTMLDivElement>(null);
   const [accountSize, setAccountSize] = useState(1000);
   const [riskPercent, setRiskPercent] = useState(1);
   const [symbolPreset, setSymbolPreset] = useState("xauusd");
@@ -162,9 +163,14 @@ const Index = () => {
         throw new Error(data.error);
       }
 
-      setSignal(data);
-      // Correctly saving signal AFTER a successful analysis response
-      localStorage.setItem("currentSignal", JSON.stringify(data));
+      setSignal(data);
+      // Correctly saving signal AFTER a successful analysis response
+      localStorage.setItem("currentSignal", JSON.stringify(data));
+      
+      // Scroll to signal after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        signalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
       
       // Save the analysis to the database
       const { data: { session } } = await supabase.auth.getSession();
@@ -351,18 +357,18 @@ const Index = () => {
                   </p>
                 </div>
               </div>
-            ) : signal ? (
-              <div>
-                <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                  Trade Signal Generated
-                </h2>
-                <TradeSignal
-                  signal={signal}
-                  riskAmount={riskAmount}
-                  rewardAmount={rewardAmount}
-                />
-              </div>
+            ) : signal ? (
+              <div ref={signalRef}>
+                <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                  Trade Signal Generated
+                </h2>
+                <TradeSignal
+                  signal={signal}
+                  riskAmount={riskAmount}
+                  rewardAmount={rewardAmount}
+                />
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full min-h-[500px]">
                 <div className="text-center space-y-4 p-8">
