@@ -126,6 +126,7 @@ export type Database = {
         Row: {
           analysis_limit: number | null
           created_at: string
+          display_user_id: string | null
           id: string
           trading_style: string | null
           updated_at: string
@@ -134,6 +135,7 @@ export type Database = {
         Insert: {
           analysis_limit?: number | null
           created_at?: string
+          display_user_id?: string | null
           id?: string
           trading_style?: string | null
           updated_at?: string
@@ -142,6 +144,7 @@ export type Database = {
         Update: {
           analysis_limit?: number | null
           created_at?: string
+          display_user_id?: string | null
           id?: string
           trading_style?: string | null
           updated_at?: string
@@ -154,7 +157,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_display_user_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
