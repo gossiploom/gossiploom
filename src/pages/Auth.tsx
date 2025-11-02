@@ -85,113 +85,128 @@ const Auth = () => {
         <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
       </div>
 
-      <div className="w-full max-w-6xl mx-auto px-4 py-8 mt-16 mb-16">
-        {/* Hero Section */}
-        <div className="text-center space-y-6 mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            ProTradeAdvisor
-          </h1>
-          <p className="text-xl md:text-2xl text-foreground font-medium max-w-3xl mx-auto">
-            Gain Your Edge in the Market with Professional Trade Analysis
-          </p>
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-            TradeAdvisor provides professional-grade trade analysis. Upload your trading chart and receive precise entry points, stop-loss, and take-profit levels.
-          </p>
-        </div>
+      <div className="w-full max-w-7xl mx-auto px-4 py-8 mt-16 mb-16">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          {/* Left Side - Marketing Content */}
+          <div className="space-y-8">
+            {/* Hero Section */}
+            <div className="space-y-4">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                ProTradeAdvisor
+              </h1>
+              <p className="text-lg md:text-xl text-foreground font-medium">
+                Gain Your Edge in the Market with Professional Trade Analysis
+              </p>
+              <p className="text-sm md:text-base text-muted-foreground">
+                TradeAdvisor provides professional-grade trade analysis. Upload your trading chart and receive precise entry points, stop-loss, and take-profit levels.
+              </p>
+            </div>
 
-        {/* Features Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <div className="text-center p-6 rounded-lg bg-card border border-border">
-            <div className="text-3xl mb-3">📊</div>
-            <h3 className="font-semibold mb-2">Professional Chart Analysis</h3>
-            <p className="text-sm text-muted-foreground">Our sophisticated system analyzes your trading charts.</p>
-          </div>
-          
-          <div className="text-center p-6 rounded-lg bg-card border border-border">
-            <div className="text-3xl mb-3">🎯</div>
-            <h3 className="font-semibold mb-2">Precise Trade Signals</h3>
-            <p className="text-sm text-muted-foreground">Get exact price levels for entry, stop-loss, and take-profit.</p>
-          </div>
-          
-          <div className="text-center p-6 rounded-lg bg-card border border-border">
-            <div className="text-3xl mb-3">⏰</div>
-            <h3 className="font-semibold mb-2">Multi-Timeframe Confluence</h3>
-            <p className="text-sm text-muted-foreground">We confirm trends on higher timeframes for higher probability trades.</p>
-          </div>
-          
-          <div className="text-center p-6 rounded-lg bg-card border border-border">
-            <div className="text-3xl mb-3">💡</div>
-            <h3 className="font-semibold mb-2">Detailed Rationale & Confidence Score</h3>
-            <p className="text-sm text-muted-foreground">Understand the 'why' behind every trade and gauge the signal's strength.</p>
-          </div>
-        </div>
-
-        {/* Limited Offer Banner */}
-        <div className="mb-12 p-6 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 text-center">
-          <h3 className="text-xl md:text-2xl font-bold mb-2">Limited Time Offer!</h3>
-          <p className="text-muted-foreground">
-            First-time users are provided with five free signals. Contact us to get started and claim your bonus!
-          </p>
-        </div>
-
-        {/* Trading Style Selection */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold mb-3">Choose Your Trading Style</h2>
-          <p className="text-muted-foreground">Select the trading approach that matches your strategy</p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <Card 
-            className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
-            onClick={() => handleTradingStyleSelect("scalp")}
-          >
-            <CardHeader className="text-center space-y-4">
-              <div className="mx-auto p-4 rounded-full bg-primary/10 w-fit">
-                <Zap className="w-12 h-12 text-primary" />
+            {/* Features Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-card border border-border">
+                <div className="text-2xl mb-2">📊</div>
+                <h3 className="font-semibold mb-1 text-sm">Professional Chart Analysis</h3>
+                <p className="text-xs text-muted-foreground">Our sophisticated system analyzes your trading charts.</p>
               </div>
-              <CardTitle className="text-2xl">Scalp Trading</CardTitle>
-              <CardDescription className="text-base">
-                Quick trades, immediate entries, small timeframes
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✓ Immediate entry signals</p>
-                <p>✓ Near-price entry points</p>
-                <p>✓ 1m, 5m, 30m, 1h timeframes</p>
-                <p>✓ Quick profit targets</p>
+              
+              <div className="p-4 rounded-lg bg-card border border-border">
+                <div className="text-2xl mb-2">🎯</div>
+                <h3 className="font-semibold mb-1 text-sm">Precise Trade Signals</h3>
+                <p className="text-xs text-muted-foreground">Get exact price levels for entry, stop-loss, and take-profit.</p>
               </div>
-              <Button className="w-full mt-4">
-                Start Scalping
-              </Button>
-            </CardContent>
-          </Card>
+              
+              <div className="p-4 rounded-lg bg-card border border-border">
+                <div className="text-2xl mb-2">⏰</div>
+                <h3 className="font-semibold mb-1 text-sm">Multi-Timeframe Confluence</h3>
+                <p className="text-xs text-muted-foreground">We confirm trends on higher timeframes for higher probability trades.</p>
+              </div>
+              
+              <div className="p-4 rounded-lg bg-card border border-border">
+                <div className="text-2xl mb-2">💡</div>
+                <h3 className="font-semibold mb-1 text-sm">Detailed Rationale & Confidence Score</h3>
+                <p className="text-xs text-muted-foreground">Understand the 'why' behind every trade and gauge the signal's strength.</p>
+              </div>
+            </div>
 
-          <Card 
-            className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
-            onClick={() => handleTradingStyleSelect("day")}
-          >
-            <CardHeader className="text-center space-y-4">
-              <div className="mx-auto p-4 rounded-full bg-primary/10 w-fit">
-                <Clock className="w-12 h-12 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">Day Trading</CardTitle>
-              <CardDescription className="text-base">
-                Strategic entries at key levels, larger timeframes
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✓ Pending order signals</p>
-                <p>✓ Key level entry points</p>
-                <p>✓ 4h, daily, weekly timeframes</p>
-                <p>✓ Strategic profit targets</p>
-              </div>
-              <Button className="w-full mt-4">
-                Start Day Trading
-              </Button>
-            </CardContent>
-          </Card>
+            {/* Limited Offer Banner */}
+            <div className="p-5 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+              <h3 className="text-lg md:text-xl font-bold mb-2">Limited Time Offer!</h3>
+              <p className="text-sm text-muted-foreground">
+                First-time users are provided with five free signals. Contact us to get started and claim your bonus!
+              </p>
+            </div>
+          </div>
+
+          {/* Right Side - Trading Style Selection */}
+          <div className="space-y-6">
+            <div className="text-center lg:text-left">
+              <h2 className="text-2xl md:text-3xl font-bold mb-2">Choose Your Trading Style</h2>
+              <p className="text-sm text-muted-foreground">Select the trading approach that matches your strategy</p>
+            </div>
+
+            <div className="space-y-4">
+              <Card 
+                className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
+                onClick={() => handleTradingStyleSelect("scalp")}
+              >
+                <CardHeader className="space-y-3 pb-4">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-full bg-primary/10 shrink-0">
+                      <Zap className="w-8 h-8 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-xl mb-1">Scalp Trading</CardTitle>
+                      <CardDescription className="text-sm">
+                        Quick trades, immediate entries, small timeframes
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-0">
+                  <div className="space-y-1.5 text-sm text-muted-foreground">
+                    <p>✓ Immediate entry signals</p>
+                    <p>✓ Near-price entry points</p>
+                    <p>✓ 1m, 5m, 30m, 1h timeframes</p>
+                    <p>✓ Quick profit targets</p>
+                  </div>
+                  <Button className="w-full">
+                    Start Scalping
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card 
+                className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
+                onClick={() => handleTradingStyleSelect("day")}
+              >
+                <CardHeader className="space-y-3 pb-4">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-full bg-primary/10 shrink-0">
+                      <Clock className="w-8 h-8 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-xl mb-1">Day Trading</CardTitle>
+                      <CardDescription className="text-sm">
+                        Strategic entries at key levels, larger timeframes
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-0">
+                  <div className="space-y-1.5 text-sm text-muted-foreground">
+                    <p>✓ Pending order signals</p>
+                    <p>✓ Key level entry points</p>
+                    <p>✓ 4h, daily, weekly timeframes</p>
+                    <p>✓ Strategic profit targets</p>
+                  </div>
+                  <Button className="w-full">
+                    Start Day Trading
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
 
