@@ -298,9 +298,9 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-[400px_1fr] gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[450px_1fr] gap-6">
           {/* Left Column - Upload & Settings */}
-          <div className="space-y-6 order-1">
+          <div className="space-y-6">
             <div>
               <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-primary" />
@@ -363,7 +363,7 @@ const Index = () => {
           </div>
 
           {/* Right Column - Signal */}
-          <div className="order-2">
+          <div className="xl:sticky xl:top-[180px] xl:h-fit">
             {isAnalyzing ? (
               <div className="flex items-center justify-center h-full min-h-[500px]">
                 <div className="text-center space-y-4 p-8">
