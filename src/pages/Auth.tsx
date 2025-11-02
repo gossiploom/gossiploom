@@ -85,17 +85,62 @@ const Auth = () => {
         <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
       </div>
 
-      <div className="w-full max-w-4xl mx-auto px-4 py-8 mt-16 mb-16">
-        <div className="text-center space-y-4 mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+      <div className="w-full max-w-6xl mx-auto px-4 py-8 mt-16 mb-16">
+        {/* Hero Section */}
+        <div className="text-center space-y-6 mb-12">
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             ProTradeAdvisor
           </h1>
-          <p className="text-xl text-muted-foreground">
-            Choose Your Trading Style
+          <p className="text-xl md:text-2xl text-foreground font-medium max-w-3xl mx-auto">
+            Gain Your Edge in the Market with Professional Trade Analysis
+          </p>
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+            TradeAdvisor provides professional-grade trade analysis. Upload your trading chart and receive precise entry points, stop-loss, and take-profit levels.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        {/* Features Grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="text-center p-6 rounded-lg bg-card border border-border">
+            <div className="text-3xl mb-3">📊</div>
+            <h3 className="font-semibold mb-2">Professional Chart Analysis</h3>
+            <p className="text-sm text-muted-foreground">Our sophisticated system analyzes your trading charts.</p>
+          </div>
+          
+          <div className="text-center p-6 rounded-lg bg-card border border-border">
+            <div className="text-3xl mb-3">🎯</div>
+            <h3 className="font-semibold mb-2">Precise Trade Signals</h3>
+            <p className="text-sm text-muted-foreground">Get exact price levels for entry, stop-loss, and take-profit.</p>
+          </div>
+          
+          <div className="text-center p-6 rounded-lg bg-card border border-border">
+            <div className="text-3xl mb-3">⏰</div>
+            <h3 className="font-semibold mb-2">Multi-Timeframe Confluence</h3>
+            <p className="text-sm text-muted-foreground">We confirm trends on higher timeframes for higher probability trades.</p>
+          </div>
+          
+          <div className="text-center p-6 rounded-lg bg-card border border-border">
+            <div className="text-3xl mb-3">💡</div>
+            <h3 className="font-semibold mb-2">Detailed Rationale & Confidence Score</h3>
+            <p className="text-sm text-muted-foreground">Understand the 'why' behind every trade and gauge the signal's strength.</p>
+          </div>
+        </div>
+
+        {/* Limited Offer Banner */}
+        <div className="mb-12 p-6 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 text-center">
+          <h3 className="text-xl md:text-2xl font-bold mb-2">Limited Time Offer!</h3>
+          <p className="text-muted-foreground">
+            First-time users are provided with five free signals. Contact us to get started and claim your bonus!
+          </p>
+        </div>
+
+        {/* Trading Style Selection */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold mb-3">Choose Your Trading Style</h2>
+          <p className="text-muted-foreground">Select the trading approach that matches your strategy</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           <Card 
             className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
             onClick={() => handleTradingStyleSelect("scalp")}
