@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, TrendingUp, TrendingDown, Download } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Download, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
@@ -15,6 +15,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
 
 interface Trade {
   id: string;
@@ -33,11 +40,14 @@ interface Trade {
   trade_type: string;
   activated: boolean | null;
   invalidation: string;
+  rationale: any;
+  news_items: any;
 }
 
 const History = () => {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -385,6 +395,7 @@ const History = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]"></TableHead>
                   <TableHead className="w-[130px]">Date & Time</TableHead>
                   <TableHead>Symbol</TableHead>
                   <TableHead>Direction</TableHead>
@@ -402,6 +413,16 @@ const History = () => {
               <TableBody>
                 {trades.map((trade) => (
                   <TableRow key={trade.id}>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedTrade(trade)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                     <TableCell className="font-medium text-muted-foreground text-xs">
                       {new Date(trade.created_at).toLocaleDateString()}<br />
                       <span className="text-xs">{new Date(trade.created_at).toLocaleTimeString()}</span>
@@ -517,7 +538,7 @@ const History = () => {
                   </TableRow>
                 ))}
                 <TableRow className="bg-muted/50 font-bold border-t-2">
-                  <TableCell colSpan={11} className="text-right text-lg">
+                  <TableCell colSpan={12} className="text-right text-lg">
                     Total Profit/Loss:
                   </TableCell>
                   <TableCell className="text-right text-lg">
@@ -532,6 +553,151 @@ const History = () => {
           </div>
         )}
       </main>
+
+      {/* Trade Signal Dialog */}
+      <Dialog open={!!selectedTrade} onOpenChange={(open) => !open && setSelectedTrade(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Trade Signal Generated</DialogTitle>
+          </DialogHeader>
+          
+          {selectedTrade && (
+            <Card className="p-6 border-2 border-primary/20">
+              {/* Signal Header */}
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  {selectedTrade.direction === "LONG" ? (
+                    <TrendingUp className="h-8 w-8 text-success" />
+                  ) : (
+                    <TrendingDown className="h-8 w-8 text-danger" />
+                  )}
+                  <div>
+                    <h2 className={`text-3xl font-bold ${selectedTrade.direction === "LONG" ? "text-success" : "text-danger"}`}>
+                      {selectedTrade.direction} Signal
+                    </h2>
+                    <p className="text-muted-foreground">{selectedTrade.symbol}</p>
+                  </div>
+                </div>
+                <Badge 
+                  variant={selectedTrade.direction === "LONG" ? "default" : "destructive"}
+                  className="text-lg px-4 py-2"
+                >
+                  {selectedTrade.confidence}% Confidence
+                </Badge>
+              </div>
+
+              {/* Price Levels */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="p-4 rounded-lg border border-border bg-secondary/50">
+                  <p className="text-xs text-muted-foreground mb-1 flex items-center gap-2">
+                    <TrendingUp className="h-3 w-3" />
+                    ENTRY
+                  </p>
+                  <p className="text-2xl font-bold text-foreground">
+                    ${formatPrice(Number(selectedTrade.entry))}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg border border-danger/50 bg-danger/5">
+                  <p className="text-xs text-danger mb-1 flex items-center gap-2">
+                    <TrendingDown className="h-3 w-3" />
+                    STOP LOSS
+                  </p>
+                  <p className="text-2xl font-bold text-danger">
+                    ${formatPrice(Number(selectedTrade.stop_loss))}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg border border-success/50 bg-success/5">
+                  <p className="text-xs text-success mb-1 flex items-center gap-2">
+                    <TrendingUp className="h-3 w-3" />
+                    TAKE PROFIT
+                  </p>
+                  <p className="text-2xl font-bold text-success">
+                    ${formatPrice(Number(selectedTrade.take_profit))}
+                  </p>
+                </div>
+              </div>
+
+              {/* Risk/Reward Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 rounded-lg bg-muted/30">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Risk Amount</p>
+                  <p className="text-lg font-bold text-danger">${selectedTrade.risk_amount.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Potential Reward</p>
+                  <p className="text-lg font-bold text-success">${selectedTrade.reward_amount.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Risk/Reward Ratio</p>
+                  <p className="text-lg font-bold text-foreground">
+                    1:{(selectedTrade.reward_amount / selectedTrade.risk_amount).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Trade Rationale */}
+              {selectedTrade.rationale && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <span className="text-primary">●</span> Trade Rationale
+                  </h3>
+                  <div className="space-y-2 pl-5">
+                    {Array.isArray(selectedTrade.rationale) ? (
+                      selectedTrade.rationale.map((item: string, index: number) => (
+                        <p key={index} className="text-sm text-muted-foreground leading-relaxed">
+                          • {item}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {selectedTrade.rationale}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Supporting News */}
+              {selectedTrade.news_items && selectedTrade.news_items.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <span className="text-primary">●</span> Supporting News
+                  </h3>
+                  <div className="space-y-2 pl-5">
+                    {selectedTrade.news_items.map((item: any, index: number) => (
+                      <div key={index}>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline"
+                        >
+                          {item.title}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Trade Invalidation */}
+              <div className="p-4 bg-danger/10 border border-danger/50 rounded-lg">
+                <h3 className="text-sm font-semibold text-danger mb-2">Trade Invalidation:</h3>
+                <p className="text-sm text-foreground">{selectedTrade.invalidation}</p>
+              </div>
+
+              {/* Disclaimer */}
+              <div className="mt-6 p-3 bg-muted/50 rounded-lg border border-border">
+                <p className="text-xs text-muted-foreground flex items-center gap-2">
+                  ⚠️ This is informational only and not financial advice. Trade at your own risk.
+                </p>
+              </div>
+            </Card>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
