@@ -4,24 +4,32 @@ import { ChartUpload } from "@/components/ChartUpload";
 import { AccountSettings } from "@/components/AccountSettings";
 import { TradeSignal } from "@/components/TradeSignal";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Settings2, FileText, Loader2, LogOut, Newspaper } from "lucide-react";
+import { TrendingUp, Settings2, FileText, Loader2, LogOut, Newspaper, Menu } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ForexNewsBanner } from "@/components/ForexNewsBanner";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Index = () => {
   const signalRef = useRef<HTMLDivElement>(null);
-  const [accountSize, setAccountSize] = useState(1000);
-  const [riskPercent, setRiskPercent] = useState(1);
-  const [symbolPreset, setSymbolPreset] = useState("xauusd");
-  const [pointsPerUsd, setPointsPerUsd] = useState(100);
-  const [tradeType, setTradeType] = useState<"pending" | "immediate">("pending");
+  const [accountSize, setAccountSize] = useState(1000);
+  const [riskPercent, setRiskPercent] = useState(1);
+  const [symbolPreset, setSymbolPreset] = useState("xauusd");
+  const [pointsPerUsd, setPointsPerUsd] = useState(100);
+  const [tradeType, setTradeType] = useState<"pending" | "immediate">("pending");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [signal, setSignal] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisCount, setAnalysisCount] = useState(0);
   const [analysisLimit, setAnalysisLimit] = useState(30);
   const [tradingStyle, setTradingStyle] = useState<"scalp" | "day">("day");
+  const [isNewsMenuOpen, setIsNewsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -250,18 +258,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-trading pb-[60px]">
-      {/* Top News Banner - Fixed */}
-      <div className="fixed top-0 left-0 right-0 z-[60]">
-        <ForexNewsBanner dateFilter="today" impactFilter="High" />
-      </div>
-      
-      {/* Bottom News Banner - Fixed */}
-      <div className="fixed bottom-0 left-0 right-0 z-[60]">
-        <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
-      </div>
-      
-      {/* Header - adjusted for fixed banners */}
+    <div className="min-h-screen bg-gradient-trading">
+      {/* Header */}
       <header className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -275,10 +273,29 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigate("/news")}>
-                <Newspaper className="h-4 w-4 mr-2" />
-                News
-              </Button>
+              <Sheet open={isNewsMenuOpen} onOpenChange={setIsNewsMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Menu className="h-4 w-4 mr-2" />
+                    News
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[400px] sm:w-[500px] overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>Forex News</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6 space-y-6">
+                    <div>
+                      <h3 className="text-sm font-semibold mb-3 text-foreground">Today's High Impact News</h3>
+                      <ForexNewsBanner dateFilter="today" impactFilter="High" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold mb-3 text-foreground">Tomorrow's High Impact News</h3>
+                      <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
               <Button variant="outline" size="sm" onClick={() => navigate("/settings")}>
                 <Settings2 className="h-4 w-4 mr-2" />
                 Settings
