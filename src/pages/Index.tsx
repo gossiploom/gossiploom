@@ -252,12 +252,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-trading pb-[60px]">
       {/* Top News Banner - Fixed */}
-      <div className="fixed top-0 left-0 right-0 z-50">
+      <div className="fixed top-0 left-0 right-0 z-[60]">
         <ForexNewsBanner dateFilter="today" impactFilter="High" />
       </div>
       
       {/* Bottom News Banner - Fixed */}
-      <div className="fixed bottom-0 left-0 right-0 z-50">
+      <div className="fixed bottom-0 left-0 right-0 z-[60]">
         <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
       </div>
       
