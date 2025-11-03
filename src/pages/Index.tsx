@@ -252,7 +252,76 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-trading pb-[60px]">
-      {/* Top News Banner - Fixed */}
+      {/* Menu Button - Fixed top-right corner */}
+      <div className="fixed top-4 right-4 z-[70]">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setIsHeaderOpen(!isHeaderOpen)}
+          className="gap-2 bg-background/95 backdrop-blur-sm"
+        >
+          {isHeaderOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          Menu
+        </Button>
+      </div>
+
+      {/* Collapsible Menu Panel */}
+      {isHeaderOpen && (
+        <div className="fixed top-16 right-4 z-[70] bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-4 animate-in slide-in-from-top-2">
+          <div className="flex flex-col gap-2 min-w-[150px]">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                navigate("/news");
+                setIsHeaderOpen(false);
+              }}
+              className="justify-start"
+            >
+              <Newspaper className="h-4 w-4 mr-2" />
+              News
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                navigate("/settings");
+                setIsHeaderOpen(false);
+              }}
+              className="justify-start"
+            >
+              <Settings2 className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                navigate("/history");
+                setIsHeaderOpen(false);
+              }}
+              className="justify-start"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              History
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                handleSignOut();
+                setIsHeaderOpen(false);
+              }}
+              className="justify-start"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {/* Top News Banner - Fixed below menu button */}
       <div className="fixed top-0 left-0 right-0 z-[60]">
         <ForexNewsBanner dateFilter="today" impactFilter="High" />
       </div>
@@ -262,10 +331,10 @@ const Index = () => {
         <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
       </div>
       
-      {/* Header - adjusted for fixed banners */}
-      <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
+      {/* Header */}
+      <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50 mt-[40px]">
         <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
                 <TrendingUp className="h-6 w-6 text-primary" />
@@ -275,68 +344,9 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">Professional Trade Analysis</p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setIsHeaderOpen(!isHeaderOpen)}
-              className="gap-2"
-            >
-              {isHeaderOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-              Menu
-            </Button>
           </div>
-          
-          {/* Collapsible Menu */}
-          {isHeaderOpen && (
-            <div className="mt-4 pt-4 border-t border-border flex items-center gap-2 flex-wrap">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  navigate("/news");
-                  setIsHeaderOpen(false);
-                }}
-              >
-                <Newspaper className="h-4 w-4 mr-2" />
-                News
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  navigate("/settings");
-                  setIsHeaderOpen(false);
-                }}
-              >
-                <Settings2 className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  navigate("/history");
-                  setIsHeaderOpen(false);
-                }}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                History
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  handleSignOut();
-                  setIsHeaderOpen(false);
-                }}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </div>
-          )}
         </div>
-      </header>
+      </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
