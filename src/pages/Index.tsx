@@ -245,18 +245,27 @@ const Index = () => {
           });
         }, 2000);
       }
-    } catch (error) {
-      console.error('Error analyzing chart:', error);
-      // Clear localStorage if analysis fails to prevent loading bad data on refresh
-      localStorage.removeItem("currentSignal"); 
-      toast({
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze charts. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
+    } catch (error) {
+      console.error('Error analyzing chart:', error);
+      // Clear localStorage if analysis fails to prevent loading bad data on refresh
+      localStorage.removeItem("currentSignal");
+      
+      // Check if it's a rate limit error
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isRateLimitError = errorMessage.includes('429') || 
+                               errorMessage.toLowerCase().includes('rate limit') ||
+                               errorMessage.toLowerCase().includes('too many requests');
+      
+      toast({
+        title: isRateLimitError ? "Service Busy" : "Analysis Failed",
+        description: isRateLimitError 
+          ? "The AI service is currently busy. Please wait 10-15 seconds and try again."
+          : errorMessage || "Failed to analyze charts. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (

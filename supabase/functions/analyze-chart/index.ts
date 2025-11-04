@@ -183,32 +183,68 @@ ${isScalping ? `- For SCALPING: Entry must be NEAR current price at micro levels
 
     console.log('Calling Gemini AI for chart analysis...');
 
-    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: contents,
-        generationConfig: {
-            "temperature": 0.3,
-            "responseMimeType": "application/json",
-        }
-      }),
-    });
+    // Retry logic with exponential backoff for rate limiting
+    const maxRetries = 3;
+    let aiResponse;
+    let lastError;
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('AI API error:', aiResponse.status, errorText);
-      
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        if (attempt > 0) {
+          const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 8000); // 1s, 2s, 4s max
+          console.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delayMs}ms delay...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+
+        aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: contents,
+            generationConfig: {
+                "temperature": 0.3,
+                "responseMimeType": "application/json",
+            }
+          }),
+        });
+
+        if (aiResponse.ok) {
+          break; // Success, exit retry loop
+        }
+
+        const errorText = await aiResponse.text();
+        
+        if (aiResponse.status === 429) {
+          lastError = { status: 429, text: errorText };
+          console.error(`Rate limit hit on attempt ${attempt + 1}:`, errorText);
+          if (attempt === maxRetries - 1) {
+            return new Response(
+              JSON.stringify({ 
+                error: 'The AI service is currently busy. Please wait a moment and try again.',
+                retryAfter: 10
+              }),
+              { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          continue; // Retry on 429
+        }
+
+        // Non-429 errors, throw immediately
+        console.error('AI API error:', aiResponse.status, errorText);
+        throw new Error(`AI API error: ${aiResponse.status} ${errorText}`);
+        
+      } catch (error) {
+        if (attempt === maxRetries - 1) {
+          throw error;
+        }
+        lastError = error;
       }
-      
-      throw new Error(`AI API error: ${aiResponse.status} ${errorText}`);
+    }
+
+    if (!aiResponse || !aiResponse.ok) {
+      throw new Error(`Failed after ${maxRetries} attempts: ${lastError}`);
     }
 
     const aiData = await aiResponse.json();
