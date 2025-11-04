@@ -8,15 +8,19 @@ interface NewsItem {
   currency: string;
   impact: string;
   event_time: string;
+  actual?: string;
+  forecast?: string;
+  previous?: string;
 }
 
 interface ForexNewsBannerProps {
-  dateFilter?: "today" | "tomorrow";
-  impactFilter?: "High" | "Low";
+   position: "top" | "bottom";
+  showNextDay?: boolean;
 }
 
 export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }: ForexNewsBannerProps) => {
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchNews();
@@ -88,42 +92,74 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
   const repeatedNews = Array(minRepetitions).fill(news).flat();
 
   return (
-    <div className="w-full bg-card border-t border-b border-primary/20 overflow-hidden py-3">
-      <div className="flex items-center gap-2 px-4 mb-2">
-        {impactFilter === "High" ? (
-          <AlertCircle className={`h-4 w-4 ${impactColor} flex-shrink-0`} />
-        ) : (
-          <Calendar className={`h-4 w-4 ${impactColor} flex-shrink-0`} />
-        )}
-        <span className="text-sm font-semibold text-foreground">
-          {impactFilter} Impact Forex News - {dateLabel}
-        </span>
-      </div>
-      
-      <div className="relative overflow-hidden">
-        <div className="animate-scroll flex gap-8">
-          {repeatedNews.map((item, index) => (
-            <div 
-              key={`${item.id}-${index}`}
-              className="flex items-center gap-3 whitespace-nowrap px-4"
-            >
-              <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold ${impactBg} ${impactColor} border`}>
-                {item.currency}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {new Date(item.event_time).toLocaleString([], { 
-                  hour: '2-digit', 
-                  minute: '2-digit',
-                  month: 'short',
-                  day: 'numeric',
-                  hour12: true
-                })}
-              </span>
-              <span className="text-sm font-medium text-foreground">
-                {item.title}
-              </span>
-            </div>
-          ))}
+    <div className={`fixed left-0 right-0 ${positionClasses} bg-card/95 backdrop-blur-sm z-50 overflow-hidden border-border`}>
+      <div className="py-1 px-4">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-semibold text-card-foreground">{bannerLabel}</span>
+        </div>
+        <div className="relative flex overflow-hidden">
+          <div className="flex animate-scroll-slow gap-8 whitespace-nowrap">
+            {news.map((item, index) => {
+              const isPassed = isEventPassed(item.event_time);
+              return (
+                <div
+                  key={`${item.id}-${index}`}
+                  className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                    isPassed 
+                      ? 'bg-muted text-muted-foreground' 
+                      : item.impact === 'high' 
+                        ? 'bg-destructive/20 text-foreground border border-destructive/40' 
+                        : 'bg-primary/20 text-foreground border border-primary/40'
+                  }`}
+                >
+                  <span className="font-mono text-sm font-semibold text-foreground">{formatEventTime(item.event_time)}</span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                    item.impact === 'high' 
+                      ? 'bg-destructive text-destructive-foreground' 
+                      : 'bg-primary text-primary-foreground'
+                  }`}>
+                    {item.impact.toUpperCase()}
+                  </span>
+                  <span className="font-bold text-foreground">{item.currency}</span>
+                  <span className="font-medium text-foreground">{item.title}</span>
+                  {item.forecast && (
+                    <span className="text-sm text-foreground/80">F: {item.forecast}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex animate-scroll-slow gap-8 whitespace-nowrap" aria-hidden="true">
+            {news.map((item, index) => {
+              const isPassed = isEventPassed(item.event_time);
+              return (
+                <div
+                  key={`${item.id}-duplicate-${index}`}
+                  className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                    isPassed 
+                      ? 'bg-muted text-muted-foreground' 
+                      : item.impact === 'high' 
+                        ? 'bg-destructive/20 text-foreground border border-destructive/40' 
+                        : 'bg-primary/20 text-foreground border border-primary/40'
+                  }`}
+                >
+                  <span className="font-mono text-sm font-semibold text-foreground">{formatEventTime(item.event_time)}</span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                    item.impact === 'high' 
+                      ? 'bg-destructive text-destructive-foreground' 
+                      : 'bg-primary text-primary-foreground'
+                  }`}>
+                    {item.impact.toUpperCase()}
+                  </span>
+                  <span className="font-bold text-foreground">{item.currency}</span>
+                  <span className="font-medium text-foreground">{item.title}</span>
+                  {item.forecast && (
+                    <span className="text-sm text-foreground/80">F: {item.forecast}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
