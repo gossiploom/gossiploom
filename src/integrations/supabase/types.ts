@@ -56,6 +56,7 @@ export type Database = {
           confidence: number
           created_at: string
           direction: string
+          display_user_id: string | null
           entry: number
           id: string
           invalidation: string
@@ -79,6 +80,7 @@ export type Database = {
           confidence: number
           created_at?: string
           direction: string
+          display_user_id?: string | null
           entry: number
           id?: string
           invalidation: string
@@ -102,6 +104,7 @@ export type Database = {
           confidence?: number
           created_at?: string
           direction?: string
+          display_user_id?: string | null
           entry?: number
           id?: string
           invalidation?: string
@@ -120,7 +123,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_trades_display_user_id"
+            columns: ["display_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings"
+            referencedColumns: ["display_user_id"]
+          },
+        ]
       }
       user_settings: {
         Row: {
@@ -158,6 +169,7 @@ export type Database = {
     }
     Functions: {
       generate_display_user_id: { Args: never; Returns: string }
+      get_current_display_user_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

@@ -38,7 +38,7 @@ const Index = () => {
       try {
         const { data: settings } = await supabase
           .from("user_settings")
-          .select("analysis_limit, trading_style")
+          .select("analysis_limit, trading_style, display_user_id")
           .eq("user_id", session.user.id)
           .single();
 
@@ -51,12 +51,11 @@ const Index = () => {
           }
         }
 
-        const { count } = await supabase
-          .from("trades")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", session.user.id);
+        const { count } = await supabase
+          .from("trades")
+          .select("*", { count: "exact", head: true });
 
-        setAnalysisCount(count || 0);
+        setAnalysisCount(count || 0);
 
         // Show warning if running low
         const remaining = (settings?.analysis_limit || 25) - (count || 0);
@@ -180,39 +179,49 @@ const Index = () => {
         signalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 300);
       
-      // Save the analysis to the database
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { error: insertError } = await supabase
-          .from("trades")
-          .insert({
-            user_id: session.user.id,
-            symbol: data.symbol,
-            direction: data.direction,
-            timeframe: Array.isArray(data.timeframes) ? data.timeframes.join(", ") : data.timeframe || "N/A",
-            entry: data.entry,
-            stop_loss: data.stopLoss,
-            take_profit: data.takeProfit,
-            confidence: data.confidence,
-            risk_amount: data.riskAmount,
-            reward_amount: data.rewardAmount,
-            rationale: data.rationale || [],
-            invalidation: data.invalidation || "",
-            news_items: data.newsItems || [],
-            status: data.status || 'pending',
-            trade_type: tradeType,
-            activated: tradeType === 'pending' ? false : null
-          });
+      // Save the analysis to the database
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Get user's display_user_id
+        const { data: userSettings } = await supabase
+          .from("user_settings")
+          .select("display_user_id")
+          .eq("user_id", session.user.id)
+          .single();
 
-        if (insertError) {
-          console.error("Error saving analysis:", insertError);
-          toast({
-            title: "Warning",
-            description: "Analysis completed but couldn't save to history.",
-            variant: "default",
-          });
-        }
-      }
+        if (userSettings) {
+          const { error: insertError } = await supabase
+            .from("trades")
+            .insert({
+              user_id: session.user.id,
+              display_user_id: userSettings.display_user_id,
+              symbol: data.symbol,
+              direction: data.direction,
+              timeframe: Array.isArray(data.timeframes) ? data.timeframes.join(", ") : data.timeframe || "N/A",
+              entry: data.entry,
+              stop_loss: data.stopLoss,
+              take_profit: data.takeProfit,
+              confidence: data.confidence,
+              risk_amount: data.riskAmount,
+              reward_amount: data.rewardAmount,
+              rationale: data.rationale || [],
+              invalidation: data.invalidation || "",
+              news_items: data.newsItems || [],
+              status: data.status || 'pending',
+              trade_type: tradeType,
+              activated: tradeType === 'pending' ? false : null
+            });
+
+          if (insertError) {
+            console.error("Error saving analysis:", insertError);
+            toast({
+              title: "Warning",
+              description: "Analysis completed but couldn't save to history.",
+              variant: "default",
+            });
+          }
+        }
+      }
       
       // Increment count
       const newCount = analysisCount + 1;
