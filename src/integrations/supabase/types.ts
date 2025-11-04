@@ -72,7 +72,7 @@ export type Database = {
           timeframe: string
           trade_type: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           activated?: boolean | null
@@ -95,7 +95,7 @@ export type Database = {
           timeframe: string
           trade_type?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           activated?: boolean | null
@@ -118,7 +118,7 @@ export type Database = {
           timeframe?: string
           trade_type?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -126,29 +126,29 @@ export type Database = {
         Row: {
           analysis_limit: number | null
           created_at: string
-          display_user_id: string | null
+          display_user_id: string
           id: string
           trading_style: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           analysis_limit?: number | null
           created_at?: string
-          display_user_id?: string | null
+          display_user_id: string
           id?: string
           trading_style?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           analysis_limit?: number | null
           created_at?: string
-          display_user_id?: string | null
+          display_user_id?: string
           id?: string
           trading_style?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

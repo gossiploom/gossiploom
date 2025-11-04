@@ -51,8 +51,9 @@ const Auth = () => {
           .from('user_settings')
           .upsert({ 
             user_id: data.user.id, 
+            display_user_id: data.user.id.slice(0, 4),
             trading_style: tradingStyle 
-          }, { 
+          } as any, { 
             onConflict: 'user_id' 
           });
 
