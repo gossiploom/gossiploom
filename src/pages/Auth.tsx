@@ -45,13 +45,13 @@ const Auth = () => {
 
       if (error) throw error;
 
-      // Update user's trading style preference
+      // Update user's trading style preference (or create if first time)
+      // display_user_id will be auto-assigned by trigger on first insert (0001-9999)
       if (data.user) {
         const { error: updateError } = await supabase
           .from('user_settings')
           .upsert({ 
-            user_id: data.user.id, 
-            display_user_id: data.user.id.slice(0, 4),
+            user_id: data.user.id,
             trading_style: tradingStyle 
           } as any, { 
             onConflict: 'user_id' 

@@ -141,7 +141,7 @@ export type Database = {
           id: string
           trading_style: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           analysis_limit?: number | null
@@ -150,7 +150,7 @@ export type Database = {
           id?: string
           trading_style?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           analysis_limit?: number | null
@@ -159,7 +159,7 @@ export type Database = {
           id?: string
           trading_style?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
