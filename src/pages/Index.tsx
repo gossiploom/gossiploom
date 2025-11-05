@@ -34,6 +34,23 @@ const Index = () => {
         return;
       }
 
+      // Check if profile is completed
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("profile_completed")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (profile && !profile.profile_completed) {
+        toast({
+          title: "Complete Your Profile",
+          description: "Please complete your profile before using the platform.",
+          variant: "destructive",
+        });
+        navigate("/settings");
+        return;
+      }
+
       // Load user settings and count analyses
       try {
         const { data: settings } = await supabase
@@ -57,19 +74,19 @@ const Index = () => {
 
         setAnalysisCount(count || 0);
 
-        // Show warning if running low
-        const remaining = (settings?.analysis_limit || 25) - (count || 0);
-        if (remaining > 0 && remaining <= 15) {
-          toast({
-            title: "Analysis Slots Running Low",
-            description: `You have ${remaining} analysis slots remaining out of ${settings?.analysis_limit || 25}.`,
-            variant: "default",
-          });
-        }
-      } catch (error) {
-        console.error("Error loading analysis count:", error);
-      }
-    });
+        // Show warning if running low
+        const remaining = (settings?.analysis_limit || 25) - (count || 0);
+        if (remaining > 0 && remaining <= 15) {
+          toast({
+            title: "Analysis Slots Running Low",
+            description: `You have ${remaining} analysis slots remaining out of ${settings?.analysis_limit || 25}.`,
+            variant: "default",
+          });
+        }
+      } catch (error) {
+        console.error("Error loading analysis count:", error);
+      }
+    });
 
     // Load saved settings
     const savedAccountSize = localStorage.getItem("accountSize");
