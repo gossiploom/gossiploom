@@ -341,12 +341,12 @@ const Index = () => {
       
       {/* Top News Banner - Fixed below menu button */}
       <div className="fixed top-0 left-0 right-0 z-[60]">
-        <ForexNewsBanner dateFilter="today" impactFilter="High" />
+        <ForexNewsBanner dateFilter="today" />
       </div>
       
       {/* Bottom News Banner - Fixed */}
       <div className="fixed bottom-0 left-0 right-0 z-[60]">
-        <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
+        <ForexNewsBanner dateFilter="tomorrow" />
       </div>
       
       {/* Header */}

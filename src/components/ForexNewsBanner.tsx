@@ -15,10 +15,9 @@ interface NewsItem {
 
 interface ForexNewsBannerProps {
   dateFilter?: "today" | "tomorrow";
-  impactFilter?: "High" | "Medium";
 }
 
-export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }: ForexNewsBannerProps) => {
+export const ForexNewsBanner = ({ dateFilter = "today" }: ForexNewsBannerProps) => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +34,7 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
     });
 
     return () => clearInterval(interval);
-  }, [dateFilter, impactFilter]);
+  }, [dateFilter]);
 
   const fetchNews = async () => {
     // Calculate date range based on filter
@@ -61,11 +60,10 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
     const { data, error } = await supabase
       .from('forex_news')
       .select('*')
-      .eq('impact', impactFilter)
       .gte('event_time', startDate.toISOString())
       .lt('event_time', endDate.toISOString())
       .order('event_time', { ascending: true })
-      .limit(50);
+      .limit(100);
 
     if (error) {
       console.error('Error fetching news:', error);
@@ -95,11 +93,11 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
   }
   
   const positionClasses = dateFilter === "today" ? "top-0 border-b" : "bottom-0 border-t";
-  const bannerLabel = `${dateLabel} - ${impactFilter} Impact Forex News`;
+  const bannerLabel = dateFilter === "today" ? "Today's News" : "Tomorrow's News";
 
   return (
     <div className={`fixed left-0 right-0 ${positionClasses} bg-card/95 backdrop-blur-sm z-50 overflow-hidden border-border`}>
-      <div className="py-1 px-4">
+      <div className="py-1.5 px-4">
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs font-semibold text-card-foreground">{bannerLabel}</span>
         </div>

@@ -80,10 +80,10 @@ const Auth = () => {
   return (
     <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-background via-background/95 to-primary/5">
       <div className="fixed top-0 left-0 right-0 z-50">
-        <ForexNewsBanner dateFilter="today" impactFilter="High" />
+        <ForexNewsBanner dateFilter="today" />
       </div>
       <div className="fixed bottom-0 left-0 right-0 z-50">
-        <ForexNewsBanner dateFilter="tomorrow" impactFilter="High" />
+        <ForexNewsBanner dateFilter="tomorrow" />
       </div>
 
       <div className="w-full max-w-7xl mx-auto px-4 py-8 mt-16 mb-16">
