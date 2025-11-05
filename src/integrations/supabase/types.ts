@@ -50,13 +50,46 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          broker_name: string | null
+          created_at: string
+          id: string
+          name: string | null
+          phone_number: string | null
+          profile_completed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          broker_name?: string | null
+          created_at?: string
+          id?: string
+          name?: string | null
+          phone_number?: string | null
+          profile_completed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          broker_name?: string | null
+          created_at?: string
+          id?: string
+          name?: string | null
+          phone_number?: string | null
+          profile_completed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           activated: boolean | null
           confidence: number
           created_at: string
           direction: string
-          display_user_id: string | null
+          display_user_id: string
           entry: number
           id: string
           invalidation: string
@@ -80,7 +113,7 @@ export type Database = {
           confidence: number
           created_at?: string
           direction: string
-          display_user_id?: string | null
+          display_user_id: string
           entry: number
           id?: string
           invalidation: string
@@ -104,7 +137,7 @@ export type Database = {
           confidence?: number
           created_at?: string
           direction?: string
-          display_user_id?: string | null
+          display_user_id?: string
           entry?: number
           id?: string
           invalidation?: string

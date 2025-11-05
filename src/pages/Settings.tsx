@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, LogOut, TrendingUp } from "lucide-react";
 import { AccountSettings } from "@/components/AccountSettings";
+import { PersonalInfoForm } from "@/components/PersonalInfoForm";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,31 +15,53 @@ const Settings = () => {
   const [pointsPerUsd, setPointsPerUsd] = useState(100);
   const [tradeType, setTradeType] = useState<"pending" | "immediate">("pending");
   const [userEmail, setUserEmail] = useState("");
+  const [name, setName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [brokerName, setBrokerName] = useState("");
+  const [profileCompleted, setProfileCompleted] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check authentication
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const loadUserData = async () => {
+      // Check authentication
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
-      } else {
-        setUserEmail(session.user.email || "");
+        return;
       }
-    });
+      
+      setUserEmail(session.user.email || "");
 
-    // Load saved settings from localStorage
-    const savedAccountSize = localStorage.getItem("accountSize");
-    const savedRiskPercent = localStorage.getItem("riskPercent");
-    const savedSymbolPreset = localStorage.getItem("symbolPreset");
-    const savedPointsPerUsd = localStorage.getItem("pointsPerUsd");
-    const savedTradeType = localStorage.getItem("tradeType");
-    
-    if (savedAccountSize) setAccountSize(Number(savedAccountSize));
-    if (savedRiskPercent) setRiskPercent(Number(savedRiskPercent));
-    if (savedSymbolPreset) setSymbolPreset(savedSymbolPreset);
-    if (savedPointsPerUsd) setPointsPerUsd(Number(savedPointsPerUsd));
-    if (savedTradeType) setTradeType(savedTradeType as "pending" | "immediate");
+      // Load profile data
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (profile) {
+        setName(profile.name || "");
+        setPhoneNumber(profile.phone_number || "");
+        setBrokerName(profile.broker_name || "");
+        setProfileCompleted(profile.profile_completed || false);
+      }
+
+      // Load saved settings from localStorage
+      const savedAccountSize = localStorage.getItem("accountSize");
+      const savedRiskPercent = localStorage.getItem("riskPercent");
+      const savedSymbolPreset = localStorage.getItem("symbolPreset");
+      const savedPointsPerUsd = localStorage.getItem("pointsPerUsd");
+      const savedTradeType = localStorage.getItem("tradeType");
+      
+      if (savedAccountSize) setAccountSize(Number(savedAccountSize));
+      if (savedRiskPercent) setRiskPercent(Number(savedRiskPercent));
+      if (savedSymbolPreset) setSymbolPreset(savedSymbolPreset);
+      if (savedPointsPerUsd) setPointsPerUsd(Number(savedPointsPerUsd));
+      if (savedTradeType) setTradeType(savedTradeType as "pending" | "immediate");
+    };
+
+    loadUserData();
   }, [navigate]);
 
   const handleSaveSettings = () => {
@@ -91,8 +114,40 @@ const Settings = () => {
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
+          {!profileCompleted && (
+            <Card className="p-6 border-destructive/50 bg-destructive/5">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="rounded-full bg-destructive/10 p-2">
+                  <TrendingUp className="h-5 w-5 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Complete Your Profile</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Please complete your personal information before using the platform.
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Account Configuration</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">Personal Information</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Manage your personal details and account security.
+            </p>
+            <PersonalInfoForm
+              name={name}
+              phoneNumber={phoneNumber}
+              brokerName={brokerName}
+              onNameChange={setName}
+              onPhoneNumberChange={setPhoneNumber}
+              onBrokerNameChange={setBrokerName}
+              onProfileComplete={() => setProfileCompleted(true)}
+            />
+          </Card>
+
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Trading Configuration</h2>
             <p className="text-sm text-muted-foreground mb-6">
               Configure your default trading parameters. These settings will be saved and used for all future analyses.
             </p>
@@ -109,7 +164,7 @@ const Settings = () => {
               onTradeTypeChange={setTradeType}
             />
             <Button onClick={handleSaveSettings} className="w-full mt-6">
-              Save Settings
+              Save Trading Settings
             </Button>
           </Card>
         </div>
