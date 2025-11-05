@@ -14,8 +14,8 @@ interface NewsItem {
 }
 
 interface ForexNewsBannerProps {
-   position: "top" | "bottom";
-  showNextDay?: boolean;
+  dateFilter?: "today" | "tomorrow";
+  impactFilter?: "High" | "Medium";
 }
 
 export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }: ForexNewsBannerProps) => {
@@ -73,6 +73,16 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
     }
 
     setNews(data || []);
+    setLoading(false);
+  };
+
+  const formatEventTime = (eventTime: string) => {
+    const date = new Date(eventTime);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
+
+  const isEventPassed = (eventTime: string) => {
+    return new Date(eventTime) < new Date();
   };
 
   if (news.length === 0) return null;
@@ -84,12 +94,8 @@ export const ForexNewsBanner = ({ dateFilter = "today", impactFilter = "High" }:
     dateLabel = "Monday";
   }
   
-  const impactColor = impactFilter === "High" ? "text-danger" : "text-warning";
-  const impactBg = impactFilter === "High" ? "bg-danger/20 border-danger/30" : "bg-warning/20 border-warning/30";
-
-  // Repeat news items to ensure smooth scrolling even with few items
-  const minRepetitions = Math.max(5, Math.ceil(10 / news.length));
-  const repeatedNews = Array(minRepetitions).fill(news).flat();
+  const positionClasses = dateFilter === "today" ? "top-0 border-b" : "bottom-0 border-t";
+  const bannerLabel = `${dateLabel} - ${impactFilter} Impact Forex News`;
 
   return (
     <div className={`fixed left-0 right-0 ${positionClasses} bg-card/95 backdrop-blur-sm z-50 overflow-hidden border-border`}>
