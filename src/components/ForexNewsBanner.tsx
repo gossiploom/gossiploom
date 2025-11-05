@@ -105,23 +105,36 @@ export const ForexNewsBanner = ({ dateFilter = "today" }: ForexNewsBannerProps) 
           <div className="flex animate-scroll-slow gap-8 whitespace-nowrap">
             {news.map((item, index) => {
               const isPassed = isEventPassed(item.event_time);
+              const impactLower = item.impact.toLowerCase();
+              
+              // Color coding based on impact level
+              let impactBadgeClass = '';
+              let containerClass = '';
+              
+              if (impactLower === 'high') {
+                impactBadgeClass = 'bg-destructive text-destructive-foreground';
+                containerClass = isPassed 
+                  ? 'bg-muted text-muted-foreground' 
+                  : 'bg-destructive/20 text-foreground border border-destructive/40';
+              } else if (impactLower === 'medium') {
+                impactBadgeClass = 'bg-[hsl(38_90%_50%)] text-white';
+                containerClass = isPassed 
+                  ? 'bg-muted text-muted-foreground' 
+                  : 'bg-[hsl(38_90%_50%)]/20 text-foreground border border-[hsl(38_90%_50%)]/40';
+              } else {
+                impactBadgeClass = 'bg-primary text-primary-foreground';
+                containerClass = isPassed 
+                  ? 'bg-muted text-muted-foreground' 
+                  : 'bg-primary/20 text-foreground border border-primary/40';
+              }
+              
               return (
                 <div
                   key={`${item.id}-${index}`}
-                  className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                    isPassed 
-                      ? 'bg-muted text-muted-foreground' 
-                      : item.impact === 'high' 
-                        ? 'bg-destructive/20 text-foreground border border-destructive/40' 
-                        : 'bg-primary/20 text-foreground border border-primary/40'
-                  }`}
+                  className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${containerClass}`}
                 >
                   <span className="font-mono text-sm font-semibold text-foreground">{formatEventTime(item.event_time)}</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                    item.impact === 'high' 
-                      ? 'bg-destructive text-destructive-foreground' 
-                      : 'bg-primary text-primary-foreground'
-                  }`}>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${impactBadgeClass}`}>
                     {item.impact.toUpperCase()}
                   </span>
                   <span className="font-bold text-foreground">{item.currency}</span>
@@ -136,23 +149,36 @@ export const ForexNewsBanner = ({ dateFilter = "today" }: ForexNewsBannerProps) 
           <div className="flex animate-scroll-slow gap-8 whitespace-nowrap" aria-hidden="true">
             {news.map((item, index) => {
               const isPassed = isEventPassed(item.event_time);
+              const impactLower = item.impact.toLowerCase();
+              
+              // Color coding based on impact level
+              let impactBadgeClass = '';
+              let containerClass = '';
+              
+              if (impactLower === 'high') {
+                impactBadgeClass = 'bg-destructive text-destructive-foreground';
+                containerClass = isPassed 
+                  ? 'bg-muted text-muted-foreground' 
+                  : 'bg-destructive/20 text-foreground border border-destructive/40';
+              } else if (impactLower === 'medium') {
+                impactBadgeClass = 'bg-[hsl(38_90%_50%)] text-white';
+                containerClass = isPassed 
+                  ? 'bg-muted text-muted-foreground' 
+                  : 'bg-[hsl(38_90%_50%)]/20 text-foreground border border-[hsl(38_90%_50%)]/40';
+              } else {
+                impactBadgeClass = 'bg-primary text-primary-foreground';
+                containerClass = isPassed 
+                  ? 'bg-muted text-muted-foreground' 
+                  : 'bg-primary/20 text-foreground border border-primary/40';
+              }
+              
               return (
                 <div
                   key={`${item.id}-duplicate-${index}`}
-                  className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                    isPassed 
-                      ? 'bg-muted text-muted-foreground' 
-                      : item.impact === 'high' 
-                        ? 'bg-destructive/20 text-foreground border border-destructive/40' 
-                        : 'bg-primary/20 text-foreground border border-primary/40'
-                  }`}
+                  className={`inline-flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${containerClass}`}
                 >
                   <span className="font-mono text-sm font-semibold text-foreground">{formatEventTime(item.event_time)}</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                    item.impact === 'high' 
-                      ? 'bg-destructive text-destructive-foreground' 
-                      : 'bg-primary text-primary-foreground'
-                  }`}>
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${impactBadgeClass}`}>
                     {item.impact.toUpperCase()}
                   </span>
                   <span className="font-bold text-foreground">{item.currency}</span>
