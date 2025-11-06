@@ -1,15 +1,28 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 
 interface TradingViewWidgetProps {
   symbol?: string;
   interval?: string;
 }
 
-const TradingViewWidget = ({ 
+export interface TradingViewWidgetRef {
+  takeSnapshot: () => void;
+}
+
+const TradingViewWidget = forwardRef<TradingViewWidgetRef, TradingViewWidgetProps>(({ 
   symbol = "OANDA:XAUUSD", 
   interval = "D" 
-}: TradingViewWidgetProps) => {
+}, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const widgetRef = useRef<any>(null);
+
+  useImperativeHandle(ref, () => ({
+    takeSnapshot: () => {
+      if (widgetRef.current && widgetRef.current.takeScreenshot) {
+        widgetRef.current.takeScreenshot();
+      }
+    }
+  }));
 
   useEffect(() => {
     // Load TradingView script
@@ -18,7 +31,7 @@ const TradingViewWidget = ({
     script.async = true;
     script.onload = () => {
       if (containerRef.current && (window as any).TradingView) {
-        new (window as any).TradingView.widget({
+        const widget = new (window as any).TradingView.widget({
           autosize: true,
           symbol: symbol,
           interval: interval,
@@ -36,8 +49,9 @@ const TradingViewWidget = ({
             "STD;RSI",
           ],
           disabled_features: [],
-          enabled_features: ["study_templates"],
+          enabled_features: ["study_templates", "snapshot_trading_drawings"],
         });
+        widgetRef.current = widget;
       }
     };
     document.head.appendChild(script);
@@ -58,6 +72,8 @@ const TradingViewWidget = ({
       style={{ height: '100%', width: '100%' }}
     />
   );
-};
+});
+
+TradingViewWidget.displayName = 'TradingViewWidget';
 
 export default TradingViewWidget;

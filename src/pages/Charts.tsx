@@ -1,13 +1,22 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, TrendingUp } from "lucide-react";
+import { ArrowLeft, TrendingUp, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import TradingViewWidget from "@/components/TradingViewWidget";
+import TradingViewWidget, { TradingViewWidgetRef } from "@/components/TradingViewWidget";
+import { toast } from "sonner";
 
 const Charts = () => {
   const navigate = useNavigate();
   const [timeframe, setTimeframe] = useState("D");
+  const widgetRef = useRef<TradingViewWidgetRef>(null);
+
+  const handleSnapshot = () => {
+    if (widgetRef.current) {
+      widgetRef.current.takeSnapshot();
+      toast.success("Snapshot taken! Check your downloads folder.");
+    }
+  };
 
   // Map user-friendly labels to TradingView intervals
   const timeframeMap: Record<string, string> = {
@@ -50,6 +59,15 @@ const Charts = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSnapshot}
+                className="gap-2"
+              >
+                <Camera className="h-4 w-4" />
+                Snapshot
+              </Button>
               <span className="text-sm text-muted-foreground">Timeframe:</span>
               <Select value={timeframe} onValueChange={setTimeframe}>
                 <SelectTrigger className="w-[120px]">
@@ -71,7 +89,7 @@ const Charts = () => {
       {/* TradingView Chart - Full Page */}
       <main className="flex-1 overflow-hidden">
         <div className="h-full w-full">
-          <TradingViewWidget symbol="OANDA:XAUUSD" interval={timeframe} />
+          <TradingViewWidget ref={widgetRef} symbol="OANDA:XAUUSD" interval={timeframe} />
         </div>
       </main>
     </div>
