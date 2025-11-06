@@ -37,7 +37,7 @@ const Index = () => {
       // Check if profile is completed
       const { data: profile } = await supabase
         .from("profiles")
-        .select("profile_completed")
+        .select("profile_completed, name")
         .eq("user_id", session.user.id)
         .single();
 
@@ -49,6 +49,32 @@ const Index = () => {
         });
         navigate("/settings");
         return;
+      }
+
+      // Show welcome message
+      if (profile?.name) {
+        toast({
+          title: `Welcome back, ${profile.name}! 👋`,
+          description: "Ready to analyze the markets today?",
+          duration: 3000,
+        });
+      }
+
+      // Check for trades without outcomes
+      const { data: tradesWithoutOutcome, count } = await supabase
+        .from("trades")
+        .select("*", { count: "exact" })
+        .is("outcome", null);
+
+      if (count && count > 0) {
+        setTimeout(() => {
+          toast({
+            title: "⚠️ Trade Outcomes Pending",
+            description: `You have ${count} trade${count > 1 ? 's' : ''} without outcome. Please update them in the History page.`,
+            variant: "destructive",
+            duration: 8000,
+          });
+        }, 3500);
       }
 
       // Load user settings and count analyses

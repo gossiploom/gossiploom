@@ -203,7 +203,7 @@ const History = () => {
     }, 0);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (trades.length === 0) {
       toast({
         title: "No Data",
@@ -212,6 +212,31 @@ const History = () => {
       });
       return;
     }
+
+    // Fetch user profile data
+    const { data: { session } } = await supabase.auth.getSession();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("user_id", session?.user?.id)
+      .single();
+
+    const { data: settings } = await supabase
+      .from("user_settings")
+      .select("display_user_id")
+      .eq("user_id", session?.user?.id)
+      .single();
+
+    // Calculate trading period
+    const sortedTrades = [...trades].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    const firstTradeDate = sortedTrades.length > 0 
+      ? new Date(sortedTrades[0].created_at).toLocaleDateString()
+      : "";
+    const lastTradeDate = sortedTrades.length > 0 
+      ? new Date(sortedTrades[sortedTrades.length - 1].created_at).toLocaleDateString()
+      : "";
 
     const doc = new jsPDF({
       orientation: "landscape",
@@ -227,6 +252,11 @@ const History = () => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+    
+    // Add user information
+    doc.text(`Trader: ${profile?.name || "N/A"}`, 14, 27);
+    doc.text(`User ID: ${settings?.display_user_id || "N/A"}`, 14, 32);
+    doc.text(`Trading Period: ${firstTradeDate} - ${lastTradeDate}`, 14, 37);
 
     // Prepare table data
     const tableData = trades.map(trade => [
@@ -283,7 +313,7 @@ const History = () => {
         "Reward"
       ]],
       body: tableData,
-      startY: 28,
+      startY: 43,
       styles: { 
         fontSize: 7,
         cellPadding: 1.5
