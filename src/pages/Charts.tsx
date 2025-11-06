@@ -24,10 +24,10 @@ const Charts = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-trading flex flex-col">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
+      <header className="border-b border-border bg-background/95 backdrop-blur-sm z-50 shrink-0">
+        <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
@@ -69,8 +69,8 @@ const Charts = () => {
       </header>
 
       {/* TradingView Chart - Full Page */}
-      <main className="flex-1 container mx-auto p-4">
-        <div className="h-full w-full bg-background rounded-lg border border-border overflow-hidden">
+      <main className="flex-1 overflow-hidden">
+        <div className="h-full w-full">
           <TradingViewWidget symbol="OANDA:XAUUSD" interval={timeframe} />
         </div>
       </main>
