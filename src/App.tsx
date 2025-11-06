@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import History from "./pages/History";
 import News from "./pages/News";
+import Charts from "./pages/Charts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/settings" element={<Settings />} />
           <Route path="/history" element={<History />} />
           <Route path="/news" element={<News />} />
+          <Route path="/charts" element={<Charts />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -4,7 +4,7 @@ import { ChartUpload } from "@/components/ChartUpload";
 import { AccountSettings } from "@/components/AccountSettings";
 import { TradeSignal } from "@/components/TradeSignal";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Settings2, FileText, Loader2, LogOut, Newspaper, Menu, X } from "lucide-react";
+import { TrendingUp, Settings2, FileText, Loader2, LogOut, Newspaper, Menu, X, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ForexNewsBanner } from "@/components/ForexNewsBanner";
@@ -330,6 +330,18 @@ const Index = () => {
       {isHeaderOpen && (
         <div className="fixed top-16 right-4 z-[70] bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg p-4 animate-in slide-in-from-top-2">
           <div className="flex flex-col gap-2 min-w-[150px]">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                navigate("/charts");
+                setIsHeaderOpen(false);
+              }}
+              className="justify-start"
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Charts
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 
