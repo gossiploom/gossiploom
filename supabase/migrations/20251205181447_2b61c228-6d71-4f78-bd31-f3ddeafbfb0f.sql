@@ -1,0 +1,1 @@
+ALTER TABLE public.user_settings ALTER COLUMN analysis_limit SET DEFAULT 4;
