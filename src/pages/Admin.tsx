@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, TrendingUp, TrendingDown, Download, Eye } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Download, Eye, Users, Bell, CreditCard, UserPlus, Activity, Send, Check, X, Image, MessageSquare, Upload, Calendar } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SlideInMenu } from "@/components/SlideInMenu";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Bell, CreditCard, UserPlus, Activity, ArrowLeft, Send, Check, X, Image, MessageSquare, TrendingUp, Upload, Calendar } from "lucide-react";
+
 
 interface AccountRequest {
   id: string;
