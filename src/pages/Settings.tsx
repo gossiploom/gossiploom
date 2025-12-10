@@ -50,13 +50,21 @@ const Settings = () => {
         .select("*")
         .eq("user_id", session.user.id)
         .single();
+
+      const { data: settings } = await supabase
+        .from("user_settings")
+        .select("display_user_id")
+        .eq("user_id", session.user.id)
+        .single();
         
       if (profile) {
         setName(profile.name || "");
         setPhoneNumber(profile.phone_number || "");
         setBrokerName(profile.broker_name || "");
-        setUniqueIdentifier(profile.unique_identifier || "");
         setProfileCompleted(profile.profile_completed || false);
+      }
+      if (settings) {
+        setUniqueIdentifier(settings.display_user_id || "");
       }
       
       // Load saved settings from localStorage

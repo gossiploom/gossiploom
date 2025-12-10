@@ -105,13 +105,7 @@ const Auth = () => {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Update last login IP
-      if (userIp && data.user) {
-        await supabase
-          .from("profiles")
-          .update({ last_login_ip: userIp })
-          .eq("user_id", data.user.id);
-      }
+      // Login successful
 
       toast({ title: "Welcome back!", description: "Successfully logged in." });
       navigate("/");
