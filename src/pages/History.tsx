@@ -99,13 +99,21 @@ const History = () => {
       // Load user profile
       const { data: profile } = await supabase
         .from("profiles")
-        .select("name, unique_identifier")
+        .select("name")
+        .eq("user_id", session.user.id)
+        .single();
+
+      const { data: settings } = await supabase
+        .from("user_settings")
+        .select("display_user_id")
         .eq("user_id", session.user.id)
         .single();
 
       if (profile) {
         setUserName(profile.name);
-        setUserId(profile.unique_identifier);
+      }
+      if (settings) {
+        setUserId(settings.display_user_id);
       }
 
       const { data, error } = await supabase

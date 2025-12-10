@@ -15,14 +15,17 @@ export const useAdminCheck = () => {
           return;
         }
 
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "admin")
-          .maybeSingle();
-
-        setIsAdmin(!!data && !error);
+        // Admin check disabled - user_roles table doesn't exist yet
+        // When you create the user_roles table, uncomment this code:
+        // const { data, error } = await supabase
+        //   .from("user_roles")
+        //   .select("role")
+        //   .eq("user_id", user.id)
+        //   .eq("role", "admin")
+        //   .maybeSingle();
+        // setIsAdmin(!!data && !error);
+        
+        setIsAdmin(false);
       } catch (error) {
         console.error("Error checking admin status:", error);
         setIsAdmin(false);
