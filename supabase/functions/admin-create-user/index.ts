@@ -53,7 +53,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const payload: CreateUserPayload = await req.json();
-    const { email, password, fullName, phoneNumber, brokerName, initialSlots = 0 } = payload;
+    const { email, password, fullName, phoneNumber, brokerName, initialSlots = 1 } = payload;
 
     console.log("Admin creating user:", email);
 
