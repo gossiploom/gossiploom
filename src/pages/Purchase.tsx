@@ -239,12 +239,71 @@ const Purchase = () => {
   };
 
   const handleScreenshotUpload = async () => {
-    // USDT payments disabled - usdt_payments table doesn't exist yet
-    toast({
-      title: "Coming Soon",
-      description: "USDT payment verification is currently being set up. Please use M-Pesa or Card payment for now.",
-      variant: "default",
-    });
+    if (!screenshotFile || !selectedPackage) {
+      toast({ title: "Missing Information", description: "Please select a package and upload a screenshot", variant: "destructive" });
+      return;
+    }
+
+    setUploadingScreenshot(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ title: "Authentication Required", description: "Please log in to make a purchase", variant: "destructive" });
+        navigate("/auth");
+        return;
+      }
+
+      const fileExt = screenshotFile.name.split('.').pop();
+      const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('usdt-payments')
+        .upload(fileName, screenshotFile);
+
+      if (uploadError) throw uploadError;
+
+      const slots = getSelectedSlots();
+      const priceUSD = getSelectedPriceUSD();
+
+      // Record the payment
+      const { error: insertError } = await supabase
+        .from('usdt_payments')
+        .insert({
+          user_id: session.user.id,
+          amount_usd: priceUSD,
+          analysis_slots: slots,
+          package_type: selectedPackage.id,
+          screenshot_path: fileName,
+          status: 'pending'
+        });
+
+      if (insertError) throw insertError;
+
+      // Update user's analysis limit
+      const { error: updateError } = await supabase
+        .from('user_settings')
+        .update({ analysis_limit: currentLimit + slots })
+        .eq('user_id', session.user.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Payment Recorded!",
+        description: `${slots} analysis slots have been added to your account.`,
+      });
+
+      setScreenshotFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      fetchCurrentLimit();
+      setSelectedPackage(null);
+      setCustomSlots("");
+    } catch (error: any) {
+      console.error('Screenshot upload error:', error);
+      toast({ title: "Upload Failed", description: error.message || "Failed to upload screenshot.", variant: "destructive" });
+    } finally {
+      setUploadingScreenshot(false);
+    }
   };
 
   return (
