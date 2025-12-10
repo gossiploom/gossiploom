@@ -97,13 +97,13 @@ export const PersonalInfoForm = ({
 
     const { error } = await supabase
       .from("profiles")
-      .upsert({
-        user_id: user.id,
+      .update({
         name,
         phone_number: phoneNumber,
         broker_name: brokerName,
         profile_completed: true,
-      });
+      })
+      .eq("user_id", user.id);
 
     if (error) {
       toast({

@@ -56,6 +56,22 @@ export const TradeSignal = ({ signal, riskAmount }: TradeSignalProps) => {
         return;
       }
 
+      // Get user's display_user_id
+      const { data: userSettings } = await supabase
+        .from("user_settings")
+        .select("display_user_id")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (!userSettings?.display_user_id) {
+        toast({
+          title: "Error",
+          description: "User settings not found. Please refresh the page.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Check for existing unmarked trades for this symbol older than 2 days
       const twoDaysAgo = new Date();
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
@@ -75,6 +91,7 @@ export const TradeSignal = ({ signal, riskAmount }: TradeSignalProps) => {
 
       const { error } = await supabase.from("trades").insert([{
         user_id: session.user.id,
+        display_user_id: userSettings.display_user_id,
         symbol: signal.symbol,
         direction: signal.direction,
         timeframe: signal.timeframe,

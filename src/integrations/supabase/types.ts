@@ -14,114 +14,8 @@ export type Database = {
   }
   public: {
     Tables: {
-      account_requests: {
-        Row: {
-          created_at: string
-          email: string
-          full_name: string
-          id: string
-          phone_number: string
-          processed_at: string | null
-          processed_by: string | null
-          rejection_reason: string | null
-          request_ip: string | null
-          status: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          full_name: string
-          id?: string
-          phone_number: string
-          processed_at?: string | null
-          processed_by?: string | null
-          rejection_reason?: string | null
-          request_ip?: string | null
-          status?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          full_name?: string
-          id?: string
-          phone_number?: string
-          processed_at?: string | null
-          processed_by?: string | null
-          rejection_reason?: string | null
-          request_ip?: string | null
-          status?: string
-        }
-        Relationships: []
-      }
-      admin_notifications: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          duration_seconds: number
-          expires_at: string | null
-          id: string
-          is_global: boolean
-          message: string
-          target_user_id: string | null
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          duration_seconds?: number
-          expires_at?: string | null
-          id?: string
-          is_global?: boolean
-          message: string
-          target_user_id?: string | null
-          title: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          duration_seconds?: number
-          expires_at?: string | null
-          id?: string
-          is_global?: boolean
-          message?: string
-          target_user_id?: string | null
-          title?: string
-        }
-        Relationships: []
-      }
-      admin_signals: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          description: string | null
-          expires_at: string | null
-          id: string
-          image_path: string
-          title: string | null
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          expires_at?: string | null
-          id?: string
-          image_path: string
-          title?: string | null
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          expires_at?: string | null
-          id?: string
-          image_path?: string
-          title?: string | null
-        }
-        Relationships: []
-      }
       forex_news: {
         Row: {
-          actual: string | null
           created_at: string
           currency: string
           event_time: string
@@ -129,12 +23,10 @@ export type Database = {
           id: string
           impact: string
           previous: string | null
-          source: string | null
           title: string
           updated_at: string
         }
         Insert: {
-          actual?: string | null
           created_at?: string
           currency: string
           event_time: string
@@ -142,12 +34,10 @@ export type Database = {
           id?: string
           impact: string
           previous?: string | null
-          source?: string | null
           title: string
           updated_at?: string
         }
         Update: {
-          actual?: string | null
           created_at?: string
           currency?: string
           event_time?: string
@@ -155,112 +45,8 @@ export type Database = {
           id?: string
           impact?: string
           previous?: string | null
-          source?: string | null
           title?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      news_expectations: {
-        Row: {
-          currency_pairs: Json
-          expectation_summary: string
-          generated_at: string
-          id: string
-          news_id: string
-        }
-        Insert: {
-          currency_pairs: Json
-          expectation_summary: string
-          generated_at?: string
-          id?: string
-          news_id: string
-        }
-        Update: {
-          currency_pairs?: Json
-          expectation_summary?: string
-          generated_at?: string
-          id?: string
-          news_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "news_expectations_news_id_fkey"
-            columns: ["news_id"]
-            isOneToOne: false
-            referencedRelation: "forex_news"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      notification_reads: {
-        Row: {
-          id: string
-          notification_id: string
-          read_at: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          notification_id: string
-          read_at?: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          notification_id?: string
-          read_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notification_reads_notification_id_fkey"
-            columns: ["notification_id"]
-            isOneToOne: false
-            referencedRelation: "admin_notifications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pending_payments: {
-        Row: {
-          amount_kes: number
-          analysis_slots: number
-          checkout_request_id: string | null
-          completed_at: string | null
-          created_at: string
-          id: string
-          package_type: string
-          payment_method: string
-          status: string
-          transaction_id: string
-          user_id: string
-        }
-        Insert: {
-          amount_kes: number
-          analysis_slots: number
-          checkout_request_id?: string | null
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          package_type: string
-          payment_method?: string
-          status?: string
-          transaction_id: string
-          user_id: string
-        }
-        Update: {
-          amount_kes?: number
-          analysis_slots?: number
-          checkout_request_id?: string | null
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          package_type?: string
-          payment_method?: string
-          status?: string
-          transaction_id?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -269,14 +55,9 @@ export type Database = {
           broker_name: string | null
           created_at: string
           id: string
-          is_signal_subscriber: boolean
-          last_login_ip: string | null
-          name: string
-          phone_number: string
+          name: string | null
+          phone_number: string | null
           profile_completed: boolean
-          registration_ip: string | null
-          subscription_expires_at: string | null
-          unique_identifier: string
           updated_at: string
           user_id: string
         }
@@ -284,14 +65,9 @@ export type Database = {
           broker_name?: string | null
           created_at?: string
           id?: string
-          is_signal_subscriber?: boolean
-          last_login_ip?: string | null
-          name?: string
-          phone_number?: string
+          name?: string | null
+          phone_number?: string | null
           profile_completed?: boolean
-          registration_ip?: string | null
-          subscription_expires_at?: string | null
-          unique_identifier: string
           updated_at?: string
           user_id: string
         }
@@ -299,77 +75,9 @@ export type Database = {
           broker_name?: string | null
           created_at?: string
           id?: string
-          is_signal_subscriber?: boolean
-          last_login_ip?: string | null
-          name?: string
-          phone_number?: string
+          name?: string | null
+          phone_number?: string | null
           profile_completed?: boolean
-          registration_ip?: string | null
-          subscription_expires_at?: string | null
-          unique_identifier?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      support_messages: {
-        Row: {
-          attachment_path: string | null
-          attachment_type: string | null
-          created_at: string
-          id: string
-          is_read: boolean
-          message: string
-          sender_id: string
-          subject: string
-          thread_id: string
-        }
-        Insert: {
-          attachment_path?: string | null
-          attachment_type?: string | null
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message: string
-          sender_id: string
-          subject: string
-          thread_id: string
-        }
-        Update: {
-          attachment_path?: string | null
-          attachment_type?: string | null
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message?: string
-          sender_id?: string
-          subject?: string
-          thread_id?: string
-        }
-        Relationships: []
-      }
-      support_threads: {
-        Row: {
-          created_at: string
-          id: string
-          status: string
-          subject: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          status?: string
-          subject: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          status?: string
-          subject?: string
           updated_at?: string
           user_id?: string
         }
@@ -381,6 +89,7 @@ export type Database = {
           confidence: number
           created_at: string
           direction: string
+          display_user_id: string
           entry: number
           id: string
           invalidation: string
@@ -390,20 +99,21 @@ export type Database = {
           rationale: Json
           reward_amount: number
           risk_amount: number
-          status: string
+          status: string | null
           stop_loss: number
           symbol: string
           take_profit: number
           timeframe: string
-          trade_type: string
+          trade_type: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           activated?: boolean | null
           confidence: number
           created_at?: string
           direction: string
+          display_user_id: string
           entry: number
           id?: string
           invalidation: string
@@ -413,20 +123,21 @@ export type Database = {
           rationale: Json
           reward_amount: number
           risk_amount: number
-          status?: string
+          status?: string | null
           stop_loss: number
           symbol: string
           take_profit: number
           timeframe: string
-          trade_type?: string
+          trade_type?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           activated?: boolean | null
           confidence?: number
           created_at?: string
           direction?: string
+          display_user_id?: string
           entry?: number
           id?: string
           invalidation?: string
@@ -436,117 +147,50 @@ export type Database = {
           rationale?: Json
           reward_amount?: number
           risk_amount?: number
-          status?: string
+          status?: string | null
           stop_loss?: number
           symbol?: string
           take_profit?: number
           timeframe?: string
-          trade_type?: string
+          trade_type?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
-        Relationships: []
-      }
-      usdt_payments: {
-        Row: {
-          amount_usd: number
-          analysis_slots: number
-          created_at: string
-          id: string
-          package_type: string
-          screenshot_path: string
-          status: string
-          user_id: string
-          verified_at: string | null
-        }
-        Insert: {
-          amount_usd: number
-          analysis_slots: number
-          created_at?: string
-          id?: string
-          package_type: string
-          screenshot_path: string
-          status?: string
-          user_id: string
-          verified_at?: string | null
-        }
-        Update: {
-          amount_usd?: number
-          analysis_slots?: number
-          created_at?: string
-          id?: string
-          package_type?: string
-          screenshot_path?: string
-          status?: string
-          user_id?: string
-          verified_at?: string | null
-        }
-        Relationships: []
-      }
-      user_presence: {
-        Row: {
-          created_at: string
-          id: string
-          is_online: boolean
-          last_seen: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_online?: boolean
-          last_seen?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_online?: boolean
-          last_seen?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_trades_display_user_id"
+            columns: ["display_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_settings"
+            referencedColumns: ["display_user_id"]
+          },
+        ]
       }
       user_settings: {
         Row: {
-          analysis_limit: number
+          analysis_limit: number | null
           created_at: string
+          display_user_id: string
           id: string
+          trading_style: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          analysis_limit?: number
+          analysis_limit?: number | null
           created_at?: string
+          display_user_id: string
           id?: string
+          trading_style?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
-          analysis_limit?: number
+          analysis_limit?: number | null
           created_at?: string
+          display_user_id?: string
           id?: string
+          trading_style?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -557,31 +201,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_next_unique_identifier: { Args: never; Returns: string }
-      get_successful_trades_count: {
-        Args: { target_user_id: string }
-        Returns: number
-      }
-      get_user_slots_info: {
-        Args: { target_user_id: string }
-        Returns: {
-          slots_remaining: number
-          slots_used: number
-          total_slots: number
-        }[]
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      is_admin: { Args: never; Returns: boolean }
-      set_admin_by_email: { Args: { admin_email: string }; Returns: undefined }
+      generate_display_user_id: { Args: never; Returns: string }
+      get_current_display_user_id: { Args: never; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -708,8 +332,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "user"],
-    },
+    Enums: {},
   },
 } as const
