@@ -11,13 +11,11 @@ import { Badge } from "@/components/ui/badge";
 export const SlideInMenu = () => {
   const [open, setOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useAdminCheck();
-
-  // Notification count disabled until admin_notifications table is created
-  const unreadCount = 0;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -34,6 +32,29 @@ export const SlideInMenu = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [open]);
+
+  useEffect(() => {
+    fetchUnreadCount();
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: allNotifications } = await supabase
+      .from("admin_notifications")
+      .select("id")
+      .or(`is_global.eq.true,target_user_id.eq.${user.id}`);
+
+    const { data: readNotifications } = await supabase
+      .from("notification_reads")
+      .select("notification_id")
+      .eq("user_id", user.id);
+
+    const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
+    const unread = allNotifications?.filter(n => !readIds.has(n.id)).length || 0;
+    setUnreadCount(unread);
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -123,7 +144,10 @@ export const SlideInMenu = () => {
 
       <NotificationsPanel 
         isOpen={showNotifications} 
-        onClose={() => setShowNotifications(false)} 
+        onClose={() => {
+          setShowNotifications(false);
+          fetchUnreadCount();
+        }} 
       />
     </>
   );
