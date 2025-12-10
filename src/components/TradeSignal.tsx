@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface TradeSignalProps {
   signal: {
@@ -19,14 +21,19 @@ interface TradeSignalProps {
     rationale: string[];
     newsItems: { title: string; source: string; url: string }[];
     invalidation: string;
+    riskAmount: number;
+    rewardAmount: number;
   };
   riskAmount: number;
-  rewardAmount: number;
 }
 
-export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalProps) => {
+export const TradeSignal = ({ signal, riskAmount }: TradeSignalProps) => {
   const isLong = signal.direction === "LONG";
   const { toast } = useToast();
+  const rewardAmount = signal.rewardAmount;
+  const riskRewardRatio = (rewardAmount / riskAmount).toFixed(2);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [showDownloadOptions, setShowDownloadOptions] = useState(false);
 
   const getDecimals = (n: number) => {
     const s = String(n);
@@ -36,71 +43,155 @@ export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalPro
   const priceDecimals = getDecimals(signal.entry);
   const formatPrice = (n: number) => n.toFixed(priceDecimals);
 
+  const handleAcceptTrade = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to accept trades.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-  const handleDownloadTicket = () => {
-    const doc = new jsPDF();
-    
-    // Header
-    doc.setFontSize(20);
-    doc.setTextColor(40);
-    doc.text("ProTradeAdvisor Trade Ticket", 20, 20);
-    
-    // Signal details
-    doc.setFontSize(12);
-    doc.setTextColor(60);
-    
-    let yPos = 40;
-    const lineHeight = 10;
-    
-    doc.text(`Direction: ${signal.direction}`, 20, yPos);
-    yPos += lineHeight;
-    doc.text(`Symbol: ${signal.symbol}`, 20, yPos);
-    yPos += lineHeight;
-    doc.text(`Timeframe: ${signal.timeframe}`, 20, yPos);
-    yPos += lineHeight;
-    doc.text(`Confidence: ${signal.confidence}%`, 20, yPos);
-    yPos += lineHeight * 1.5;
-    
-    doc.text(`Entry: $${formatPrice(signal.entry)}` , 20, yPos);
-    yPos += lineHeight;
-    doc.text(`Stop Loss: $${formatPrice(signal.stopLoss)}` , 20, yPos);
-    yPos += lineHeight;
-    doc.text(`Take Profit: $${formatPrice(signal.takeProfit)}` , 20, yPos);
-    yPos += lineHeight * 1.5;
-    
-    doc.text(`Risk Amount: $${riskAmount.toFixed(2)}`, 20, yPos);
-    yPos += lineHeight;
-    doc.text(`Potential Reward: $${rewardAmount.toFixed(2)}`, 20, yPos);
-    yPos += lineHeight;
-    doc.text(`Risk/Reward Ratio: 1:${(rewardAmount / riskAmount).toFixed(2)}`, 20, yPos);
-    yPos += lineHeight * 1.5;
-    
-    doc.text("Trade Rationale:", 20, yPos);
-    yPos += lineHeight;
-    signal.rationale.forEach((reason: string, index: number) => {
-      const lines = doc.splitTextToSize(`${index + 1}. ${reason}`, 170);
-      doc.text(lines, 20, yPos);
-      yPos += lines.length * lineHeight;
-    });
-    
-    yPos += lineHeight;
-    doc.text(`Invalidation: ${signal.invalidation}`, 20, yPos);
-    
-    // Footer
-    doc.setFontSize(8);
-    doc.setTextColor(100);
-    doc.text("This is informational only and not financial advice.", 20, 280);
-    
-    doc.save(`trade-ticket-${signal.symbol}-${Date.now()}.pdf`);
-    
-    toast({
-      title: "Ticket Downloaded",
-      description: "Your trade ticket has been saved as a PDF.",
-    });
+      // Check for existing unmarked trades for this symbol older than 2 days
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      
+      const { data: existingTrades } = await supabase
+        .from("trades")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .eq("symbol", signal.symbol)
+        .is("outcome", null)
+        .lt("created_at", twoDaysAgo.toISOString());
+
+      let hiddenCount = 0;
+      if (existingTrades && existingTrades.length > 0) {
+        hiddenCount = existingTrades.length;
+      }
+
+      const { error } = await supabase.from("trades").insert([{
+        user_id: session.user.id,
+        symbol: signal.symbol,
+        direction: signal.direction,
+        timeframe: signal.timeframe,
+        entry: signal.entry,
+        stop_loss: signal.stopLoss,
+        take_profit: signal.takeProfit,
+        confidence: signal.confidence,
+        risk_amount: riskAmount,
+        reward_amount: rewardAmount,
+        rationale: signal.rationale,
+        news_items: signal.newsItems,
+        invalidation: signal.invalidation,
+        status: "pending",
+      }]);
+
+      if (error) throw error;
+
+      if (hiddenCount > 0) {
+        toast({
+          title: "Trade Accepted",
+          description: `${signal.direction} trade for ${signal.symbol} saved. ${hiddenCount} old unmarked ${hiddenCount === 1 ? 'signal' : 'signals'} will be hidden from history view.`,
+        });
+      } else {
+        toast({
+          title: "Trade Accepted",
+          description: `${signal.direction} trade for ${signal.symbol} has been saved to your history.`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error Saving Trade",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownload = async (format: 'pdf' | 'png' | 'jpeg') => {
+    try {
+      if (!cardRef.current) {
+        toast({
+          title: "Error",
+          description: "Unable to capture signal card. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Generating...",
+        description: "Capturing your trade signal...",
+      });
+
+      // Capture the card as canvas
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: null,
+        scale: 2, // Higher quality
+        logging: false,
+        useCORS: true,
+      });
+
+      const timestamp = Date.now();
+      const filename = `trade-signal-${signal.symbol}-${timestamp}`;
+
+      if (format === 'png' || format === 'jpeg') {
+        // Direct image download
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `${filename}.${format}`;
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            toast({
+              title: "Downloaded",
+              description: `Trade signal saved as ${format.toUpperCase()}.`,
+            });
+          }
+        }, `image/${format}`, 0.95);
+      } else {
+        // PDF with embedded image
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        
+        // Calculate PDF dimensions (A4 size with margins)
+        const pdfWidth = 210; // A4 width in mm
+        const pdfHeight = (imgHeight * pdfWidth) / imgWidth;
+        
+        const doc = new jsPDF({
+          orientation: pdfHeight > pdfWidth ? 'portrait' : 'landscape',
+          unit: 'mm',
+          format: [pdfWidth, pdfHeight],
+        });
+        
+        doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        doc.save(`${filename}.pdf`);
+        
+        toast({
+          title: "Downloaded",
+          description: "Trade signal saved as PDF.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Download Failed",
+        description: "Unable to download trade signal. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <Card className="overflow-hidden border-2 border-primary/30 shadow-glow">
+    <Card ref={cardRef} className="overflow-hidden border-2 border-primary/30 shadow-glow">
       <div className={`p-6 ${isLong ? 'bg-success/10' : 'bg-danger/10'} border-b border-border`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -115,7 +206,7 @@ export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalPro
             </div>
           </div>
           <Badge variant={isLong ? "default" : "destructive"} className="text-lg px-4 py-2">
-            {signal.confidence}% Confidence
+            {signal.confidence}% Rating
           </Badge>
         </div>
       </div>
@@ -156,7 +247,7 @@ export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalPro
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Risk/Reward Ratio:</span>
-            <span className="font-semibold text-primary">1:{(rewardAmount / riskAmount).toFixed(2)}</span>
+            <span className="font-semibold text-primary">1:{riskRewardRatio}</span>
           </div>
         </div>
 
@@ -210,11 +301,60 @@ export const TradeSignal = ({ signal, riskAmount, rewardAmount }: TradeSignalPro
           <p className="text-sm text-foreground">{signal.invalidation}</p>
         </div>
 
-        <div className="pt-2">
-          <Button variant="outline" className="w-full" onClick={handleDownloadTicket}>
-            <Download className="h-4 w-4 mr-2" />
-            Download Ticket
-          </Button>
+        <div className="pt-2 space-y-2">
+          {!showDownloadOptions ? (
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => setShowDownloadOptions(true)}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Signal
+            </Button>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-2">
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => {
+                    handleDownload('pdf');
+                    setShowDownloadOptions(false);
+                  }}
+                >
+                  📄 PDF
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => {
+                    handleDownload('png');
+                    setShowDownloadOptions(false);
+                  }}
+                >
+                  🖼️ PNG
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => {
+                    handleDownload('jpeg');
+                    setShowDownloadOptions(false);
+                  }}
+                >
+                  🖼️ JPEG
+                </Button>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="w-full"
+                onClick={() => setShowDownloadOptions(false)}
+              >
+                Cancel
+              </Button>
+            </>
+          )}
         </div>
 
         <p className="text-xs text-muted-foreground text-center pt-2 border-t border-border">

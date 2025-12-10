@@ -1,79 +1,95 @@
-import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useEffect, useRef } from "react";
 
-interface TradingViewWidgetProps {
-  symbol?: string;
-  interval?: string;
+declare global {
+  interface Window {
+    TradingView: any;
+  }
 }
 
-export interface TradingViewWidgetRef {
-  takeSnapshot: () => void;
-}
-
-const TradingViewWidget = forwardRef<TradingViewWidgetRef, TradingViewWidgetProps>(({ 
-  symbol = "OANDA:XAUUSD", 
-  interval = "D" 
-}, ref) => {
+export const TradingViewWidget = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<any>(null);
 
-  useImperativeHandle(ref, () => ({
-    takeSnapshot: () => {
-      if (widgetRef.current && widgetRef.current.takeScreenshot) {
-        widgetRef.current.takeScreenshot();
-      }
-    }
-  }));
-
   useEffect(() => {
-    // Load TradingView script
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/tv.js';
+    const script = document.createElement("script");
+    script.src = "https://s3.tradingview.com/tv.js";
     script.async = true;
+
     script.onload = () => {
-      if (containerRef.current && (window as any).TradingView) {
-        const widget = new (window as any).TradingView.widget({
+      if (window.TradingView && containerRef.current) {
+        widgetRef.current = new window.TradingView.widget({
           autosize: true,
-          symbol: symbol,
-          interval: interval,
+          symbol: "OANDA:USDCAD",
+          interval: "4H",
           timezone: "Etc/UTC",
-          theme: "dark",
+          theme: "white",
           style: "1",
           locale: "en",
           toolbar_bg: "#f1f3f6",
           enable_publishing: false,
           allow_symbol_change: true,
-          container_id: containerRef.current.id,
+          save_image: true,
+          withdateranges: true,
+          hide_top_toolbar: false,
           hide_side_toolbar: false,
-          studies: [
-            "STD;SMA",
-            "STD;RSI",
-          ],
-          disabled_features: [],
-          enabled_features: ["study_templates", "snapshot_trading_drawings"],
-        });
-        widgetRef.current = widget;
-      }
-    };
-    document.head.appendChild(script);
+          calendar: true,
+          client_id: "tradingview.com",
+          user_id: "public_user",
+          container_id: "tradingview_chart",
 
-    return () => {
-      // Cleanup script on unmount
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
+          enabled_features: ["save_chart_properties_to_local_storage"],
+          disabled_features: [],
+
+          drawings_access: {
+            type: "white",
+            tools: [
+              { name: "Regression Trend" },
+              { name: "Trend Line" },
+              { name: "Horizontal Line" },
+              { name: "Vertical Line" },
+              { name: "Arrow" },
+              { name: "Rectangle" },
+              { name: "Ellipse" },
+              { name: "Triangle" },
+              { name: "Polyline" },
+              { name: "Fibonacci Retracement" },
+              { name: "Pitchfork" },
+              { name: "Gann Fan" },
+              { name: "Head And Shoulders" },
+              { name: "ABCD Pattern" },
+              { name: "Long Position" },
+              { name: "Short Position" },
+              { name: "Brush" },
+              { name: "Highlighter" },
+              { name: "Anchored VWAP" }
+            ],
+          },
+
+          watchlist: [
+            "OANDA:XAUUSD",
+            "OANDA:XAGUSD",
+            "OANDA:EURUSD",
+            "OANDA:GBPUSD",
+            "OANDA:EURGBP",
+            "OANDA:USDJPY",
+            "OANDA:USDCAD",
+            "OANDA:AUDUSD",
+            "OANDA:AUDCAD",
+            "OANDA:NAS100USD"
+          ],
+        });
       }
     };
-  }, [symbol, interval]);
+
+    document.head.appendChild(script);
+    return () => {
+      if (script.parentNode) script.parentNode.removeChild(script);
+    };
+  }, []);
 
   return (
-    <div 
-      ref={containerRef}
-      id="tradingview_widget"
-      className="w-full h-full"
-      style={{ height: '100%', width: '100%' }}
-    />
+    <div className="absolute inset-0 w-full h-full">
+      <div id="tradingview_chart" ref={containerRef} className="w-full h-full" />
+    </div>
   );
-});
-
-TradingViewWidget.displayName = 'TradingViewWidget';
-
-export default TradingViewWidget;
+};

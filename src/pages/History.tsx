@@ -7,6 +7,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { NewsScrollingBanner } from "@/components/NewsScrollingBanner";
+import { SlideInMenu } from "@/components/SlideInMenu";
+import { ProfileCompletionGuard } from "@/components/ProfileCompletionGuard";
+import { Footer } from "@/components/Footer";
 import {
   Table,
   TableBody,
@@ -45,9 +49,13 @@ interface Trade {
 }
 
 const History = () => {
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [allTrades, setAllTrades] = useState<Trade[]>([]);
+  const [displayTrades, setDisplayTrades] = useState<Trade[]>([]);
+  const [hiddenTrades, setHiddenTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [userName, setUserName] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -88,6 +96,18 @@ const History = () => {
         return;
       }
 
+      // Load user profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("name, unique_identifier")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (profile) {
+        setUserName(profile.name);
+        setUserId(profile.unique_identifier);
+      }
+
       const { data, error } = await supabase
         .from("trades")
         .select("*")
@@ -95,7 +115,48 @@ const History = () => {
 
       if (error) throw error;
 
-      setTrades(data || []);
+      const trades = data || [];
+      setAllTrades(trades);
+
+      // Filter out old unmarked trades if newer trades exist for same symbol
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+      const symbolLatestMap = new Map<string, Date>();
+      trades.forEach(trade => {
+        const tradeDate = new Date(trade.created_at);
+        const currentLatest = symbolLatestMap.get(trade.symbol);
+        if (!currentLatest || tradeDate > currentLatest) {
+          symbolLatestMap.set(trade.symbol, tradeDate);
+        }
+      });
+
+      const toDisplay: Trade[] = [];
+      const toHide: Trade[] = [];
+
+      trades.forEach(trade => {
+        const tradeDate = new Date(trade.created_at);
+        const isOld = tradeDate < twoDaysAgo;
+        const isUnmarked = trade.outcome === null;
+        const latestDate = symbolLatestMap.get(trade.symbol)!;
+        const hasNewerTrade = tradeDate < latestDate;
+
+        if (isOld && isUnmarked && hasNewerTrade) {
+          toHide.push(trade);
+        } else {
+          toDisplay.push(trade);
+        }
+      });
+
+      setDisplayTrades(toDisplay);
+      setHiddenTrades(toHide);
+
+      if (toHide.length > 0) {
+        toast({
+          title: "Notice",
+          description: `${toHide.length} old unmarked ${toHide.length === 1 ? 'signal has' : 'signals have'} been hidden from view. They're still included in PDF exports.`,
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error Loading Analysis History",
@@ -122,11 +183,16 @@ const History = () => {
 
         if (error) throw error;
 
-        setTrades(trades.map(t => 
-          t.id === id 
-            ? { ...t, outcome: 'not_activated', profit_loss: 0 }
-            : t
-        ));
+      setDisplayTrades(displayTrades.map(t => 
+        t.id === id 
+          ? { ...t, outcome: 'not_activated', profit_loss: 0 }
+          : t
+      ));
+      setAllTrades(allTrades.map(t => 
+        t.id === id 
+          ? { ...t, outcome: 'not_activated', profit_loss: 0 }
+          : t
+      ));
         
         toast({
           title: "Outcome Updated",
@@ -148,7 +214,12 @@ const History = () => {
 
       if (error) throw error;
 
-      setTrades(trades.map(t => 
+      setDisplayTrades(displayTrades.map(t => 
+        t.id === id 
+          ? { ...t, outcome, profit_loss: profitLoss }
+          : t
+      ));
+      setAllTrades(allTrades.map(t => 
         t.id === id 
           ? { ...t, outcome, profit_loss: profitLoss }
           : t
@@ -178,7 +249,12 @@ const History = () => {
 
       if (error) throw error;
 
-      setTrades(trades.map(t => 
+      setDisplayTrades(displayTrades.map(t => 
+        t.id === id 
+          ? { ...t, activated: newActivated }
+          : t
+      ));
+      setAllTrades(allTrades.map(t => 
         t.id === id 
           ? { ...t, activated: newActivated }
           : t
@@ -197,14 +273,14 @@ const History = () => {
     }
   };
 
-  const calculateTotalProfitLoss = (): number => {
-    return trades.reduce((total, trade) => {
+  const calculateTotalProfitLoss = (tradesList: Trade[] = displayTrades): number => {
+    return tradesList.reduce((total, trade) => {
       return total + (trade.profit_loss || 0);
     }, 0);
   };
 
-  const handleDownload = async () => {
-    if (trades.length === 0) {
+  const handleDownload = () => {
+    if (allTrades.length === 0) {
       toast({
         title: "No Data",
         description: "There are no analyses to download.",
@@ -212,31 +288,6 @@ const History = () => {
       });
       return;
     }
-
-    // Fetch user profile data
-    const { data: { session } } = await supabase.auth.getSession();
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("name")
-      .eq("user_id", session?.user?.id)
-      .single();
-
-    const { data: settings } = await supabase
-      .from("user_settings")
-      .select("display_user_id")
-      .eq("user_id", session?.user?.id)
-      .single();
-
-    // Calculate trading period
-    const sortedTrades = [...trades].sort((a, b) => 
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-    const firstTradeDate = sortedTrades.length > 0 
-      ? new Date(sortedTrades[0].created_at).toLocaleDateString()
-      : "";
-    const lastTradeDate = sortedTrades.length > 0 
-      ? new Date(sortedTrades[sortedTrades.length - 1].created_at).toLocaleDateString()
-      : "";
 
     const doc = new jsPDF({
       orientation: "landscape",
@@ -254,12 +305,20 @@ const History = () => {
     doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
     
     // Add user information
-    doc.text(`Trader: ${profile?.name || "N/A"}`, 14, 27);
-    doc.text(`User ID: ${settings?.display_user_id || "N/A"}`, 14, 32);
-    doc.text(`Trading Period: ${firstTradeDate} - ${lastTradeDate}`, 14, 37);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Trader: ${userName}`, 14, 29);
+    doc.text(`User ID: ${userId}`, 14, 35);
+    
+    // Calculate trading period
+    if (allTrades.length > 0) {
+      const oldestTrade = new Date(allTrades[allTrades.length - 1].created_at);
+      const newestTrade = new Date(allTrades[0].created_at);
+      doc.text(`Trading Period: ${oldestTrade.toLocaleDateString()} - ${newestTrade.toLocaleDateString()}`, 14, 41);
+    }
 
-    // Prepare table data
-    const tableData = trades.map(trade => [
+    // Prepare main table data (displayed trades)
+    const tableData = displayTrades.map(trade => [
       new Date(trade.created_at).toLocaleDateString(),
       new Date(trade.created_at).toLocaleTimeString(),
       trade.symbol,
@@ -283,8 +342,8 @@ const History = () => {
       `$${trade.reward_amount.toFixed(2)}`
     ]);
 
-    // Add total row
-    const totalPL = calculateTotalProfitLoss();
+    // Add total row for displayed trades
+    const totalPL = calculateTotalProfitLoss(displayTrades);
     tableData.push([
       "", "", "", "", "", "", "", "", "", "", "", 
       "TOTAL", 
@@ -293,7 +352,11 @@ const History = () => {
       ""
     ]);
 
-    // Generate table
+    // Generate main table
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Active Trades", 14, 48);
+    
     autoTable(doc, {
       head: [[
         "Date",
@@ -313,7 +376,7 @@ const History = () => {
         "Reward"
       ]],
       body: tableData,
-      startY: 43,
+      startY: 54,
       styles: { 
         fontSize: 7,
         cellPadding: 1.5
@@ -334,7 +397,7 @@ const History = () => {
         7: { cellWidth: 18 },
         8: { cellWidth: 18 },
         9: { cellWidth: 18 },
-        10: { cellWidth: 16 },
+        10: { cellWidth: 20 },
         11: { cellWidth: 22 },
         12: { cellWidth: 18, fontStyle: "bold" },
         13: { cellWidth: 16 },
@@ -350,7 +413,7 @@ const History = () => {
         
         // Color profit/loss column
         if (data.column.index === 12 && data.row.index < tableData.length - 1) {
-          const value = trades[data.row.index]?.profit_loss;
+          const value = displayTrades[data.row.index]?.profit_loss;
           if (value !== null && value !== undefined) {
             data.cell.styles.textColor = value >= 0 ? [34, 197, 94] : [239, 68, 68];
           }
@@ -363,6 +426,95 @@ const History = () => {
       }
     });
 
+    // Add unmarked/invalidated trades section if there are any
+    if (hiddenTrades.length > 0) {
+      const finalY = (doc as any).lastAutoTable.finalY || 54;
+      
+      // Add page break if needed
+      if (finalY > 150) {
+        doc.addPage();
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Unmarked/Invalidated Trades", 14, 15);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("(Not included in totals - signals that were not marked as executed)", 14, 21);
+      } else {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Unmarked/Invalidated Trades", 14, finalY + 10);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("(Not included in totals - signals that were not marked as executed)", 14, finalY + 16);
+      }
+
+      const hiddenTableData = hiddenTrades.map(trade => [
+        new Date(trade.created_at).toLocaleDateString(),
+        new Date(trade.created_at).toLocaleTimeString(),
+        trade.symbol,
+        trade.direction,
+        trade.trade_type,
+        trade.trade_type === "pending" ? (trade.activated ? "Yes" : "No") : "N/A",
+        `$${formatPrice(Number(trade.entry))}`,
+        `$${formatPrice(Number(trade.stop_loss))}`,
+        `$${formatPrice(Number(trade.take_profit))}`,
+        extractInvalidationValue(trade.invalidation),
+        `${trade.confidence}%`,
+        "Unmarked",
+        "-",
+        `$${trade.risk_amount.toFixed(2)}`,
+        `$${trade.reward_amount.toFixed(2)}`
+      ]);
+
+      autoTable(doc, {
+        head: [[
+          "Date",
+          "Time",
+          "Symbol",
+          "Direction",
+          "Type",
+          "Activated",
+          "Entry",
+          "Stop Loss",
+          "Take Profit",
+          "Invalidation",
+          "Confidence",
+          "Status",
+          "P/L",
+          "Risk",
+          "Reward"
+        ]],
+        body: hiddenTableData,
+        startY: finalY > 150 ? 24 : finalY + 20,
+        styles: { 
+          fontSize: 7,
+          cellPadding: 1.5
+        },
+        headStyles: {
+          fillColor: [168, 85, 247],
+          fontStyle: "bold",
+          halign: "center"
+        },
+        columnStyles: {
+          0: { cellWidth: 18 },
+          1: { cellWidth: 16 },
+          2: { cellWidth: 18 },
+          3: { cellWidth: 16 },
+          4: { cellWidth: 16 },
+          5: { cellWidth: 14 },
+          6: { cellWidth: 18 },
+          7: { cellWidth: 18 },
+          8: { cellWidth: 18 },
+          9: { cellWidth: 18 },
+          10: { cellWidth: 20 },
+          11: { cellWidth: 22 },
+          12: { cellWidth: 18 },
+          13: { cellWidth: 16 },
+          14: { cellWidth: 16 }
+        },
+      });
+    }
+
     // Save the PDF
     doc.save(`analysis-history-${new Date().toISOString().split('T')[0]}.pdf`);
 
@@ -373,30 +525,32 @@ const History = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-trading">
-      <header className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-0 z-50">
+    <ProfileCompletionGuard>
+      <div className="min-h-screen bg-gradient-trading">
+      <NewsScrollingBanner position="top" />
+      <NewsScrollingBanner position="bottom" showNextDay />
+      <SlideInMenu />
+      
+      <header className="border-b border-border bg-background/50 backdrop-blur-sm mt-16 mb-16">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
+            <div className="flex items-center justify-center gap-3 flex-1">
               <div className="p-2 bg-primary/10 rounded-lg">
                 <TrendingUp className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Analysis History</h1>
-                <p className="text-xs text-muted-foreground">
-                  {trades.length} {trades.length === 1 ? 'analysis' : 'analyses'} completed
-                </p>
+              <p className="text-xs text-muted-foreground">
+                {displayTrades.length} {displayTrades.length === 1 ? 'analysis' : 'analyses'} shown
+                {hiddenTrades.length > 0 && ` • ${hiddenTrades.length} hidden`}
+              </p>
               </div>
             </div>
             <Button 
               variant="outline" 
               size="sm" 
               onClick={handleDownload}
-              disabled={trades.length === 0}
+              disabled={allTrades.length === 0}
             >
               <Download className="h-4 w-4 mr-2" />
               Export PDF
@@ -410,7 +564,7 @@ const History = () => {
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading analysis history...</p>
           </div>
-        ) : trades.length === 0 ? (
+        ) : displayTrades.length === 0 ? (
           <div className="text-center py-12">
             <div className="inline-block p-6 bg-secondary rounded-full mb-4">
               <TrendingUp className="h-12 w-12 text-primary" />
@@ -441,7 +595,7 @@ const History = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {trades.map((trade) => (
+                {displayTrades.map((trade) => (
                   <TableRow key={trade.id}>
                     <TableCell>
                       <Button
@@ -586,9 +740,12 @@ const History = () => {
 
       {/* Trade Signal Dialog */}
       <Dialog open={!!selectedTrade} onOpenChange={(open) => !open && setSelectedTrade(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="trade-signal-description">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">Trade Signal Generated</DialogTitle>
+            <p id="trade-signal-description" className="sr-only">
+              View detailed trade signal information including entry, stop loss, take profit, and trade rationale
+            </p>
           </DialogHeader>
           
           {selectedTrade && (
@@ -728,7 +885,9 @@ const History = () => {
           )}
         </DialogContent>
       </Dialog>
+    <Footer />
     </div>
+    </ProfileCompletionGuard>
   );
 };
 

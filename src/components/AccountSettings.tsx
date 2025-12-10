@@ -23,12 +23,18 @@ const SYMBOL_PRESETS = [
   { value: "volatility15(1s)", label: "Volatility 15 (1s)", points: 5000 },
   { value: "volatility10(1s)", label: "Volatility 10 (1s)", points: 200 },
   { value: "volatility75", label: "Volatility 75 ", points: 10000 },
-  { value: "xauusd", label: "XAUUSD", points: 100 },
-  { value: "btcusd", label: "BTCUSD", points: 100000 },
-  { value: "eurusd", label: "EURUSD", points: 10 },
-  { value: "xrp", label: "XRP", points: 20 },
-  { value: "nasdaq100", label: "Nasdaq 100", points: 1000 },
-  { value: "chfjpy", label: "CHFJPY", points: 150 },
+  { value: "xauusd", label: "XAUUSD (Lot 0.01)", points: 100 },
+  { value: "btcusd", label: "BTCUSD (Lot 0.01)", points: 10000 },
+  { value: "eurusd", label: "EURUSD (Lot 0.1)", points: 10 },
+  { value: "gbpusd", label: "GBPUSD (Lot 0.1)", points: 10 },
+  { value: "usdjpy", label: "USDJPY (Lot 0.1)", points: 15 },
+  { value: "gbpjpy", label: "GBPJPY (Lot 0.1)", points: 15 },
+  { value: "eurgbp", label: "EURGBP (Lot 0.1)", points: 7 },
+  { value: "usdcad", label: "USDCAD (Lot 0.1)", points: 14 },
+  { value: "audcad", label: "AUDCAD (Lot 0.1)", points: 14 },
+  { value: "chfjpy", label: "CHFJPY (Lot 0.1)", points: 15 },
+  { value: "nasdaq100", label: "Nasdaq 100 (Lot 0.1)", points: 100 },
+  { value: "us30", label: "US30 Dow Jones (Lot 0.1)", points: 100 },
   { value: "other", label: "Other (Custom)", points: 0 },
 ];
 
@@ -45,7 +51,6 @@ export const AccountSettings = ({
   onTradeTypeChange,
 }: AccountSettingsProps) => {
   const riskAmount = (accountSize * riskPercent) / 100;
-  const rewardAmount = riskAmount * 3;
 
   const handleSymbolChange = (value: string) => {
     onSymbolPresetChange(value);
@@ -85,14 +90,10 @@ export const AccountSettings = ({
           step={1}
           className="py-2"
         />
-        <div className="grid grid-cols-2 gap-4 pt-2">
+        <div className="pt-2">
           <div className="bg-danger/10 border border-danger/30 rounded-lg p-3">
             <p className="text-xs text-muted-foreground">Risk Amount</p>
             <p className="text-xl font-bold text-danger">${riskAmount.toFixed(2)}</p>
-          </div>
-          <div className="bg-success/10 border border-success/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground">Target Reward (3R)</p>
-            <p className="text-xl font-bold text-success">${rewardAmount.toFixed(2)}</p>
           </div>
         </div>
       </div>
@@ -133,9 +134,32 @@ export const AccountSettings = ({
         )}
       </div>
 
+      <div className="space-y-3">
+        <Label className="flex items-center gap-2 text-foreground">
+          <Zap className="h-4 w-4 text-primary" />
+          Trade Entry Type
+        </Label>
+        <RadioGroup value={tradeType} onValueChange={onTradeTypeChange}>
+          <div className="flex items-center space-x-2 bg-secondary rounded-lg p-3 border border-border">
+            <RadioGroupItem value="immediate" id="immediate" />
+            <Label htmlFor="immediate" className="cursor-pointer flex-1">
+              <span className="font-medium">Immediate Entry</span>
+              <p className="text-xs text-muted-foreground">Enter trade at current market price. Best charts to upload are 1M, 5m, 15M, 30M and 1H</p>
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2 bg-secondary rounded-lg p-3 border border-border">
+            <RadioGroupItem value="pending" id="pending" />
+            <Label htmlFor="pending" className="cursor-pointer flex-1">
+              <span className="font-medium">Pending Order</span>
+              <p className="text-xs text-muted-foreground">Wait for price to reach entry level. Best charts to upload are 15M, 30M, 1H, 4H and 6H or 8H or 12H or 1D</p>
+            </Label>
+          </div>
+        </RadioGroup>
+      </div>
+
       <div className="pt-2 border-t border-border">
         <p className="text-xs text-muted-foreground">
-          All calculations update automatically based on your settings
+          All calculations update automatically
         </p>
       </div>
     </Card>

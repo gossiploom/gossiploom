@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, LogOut, TrendingUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, LogOut, TrendingUp, User } from "lucide-react";
 import { AccountSettings } from "@/components/AccountSettings";
-import { PersonalInfoForm } from "@/components/PersonalInfoForm";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { NewsScrollingBanner } from "@/components/NewsScrollingBanner";
+import { SlideInMenu } from "@/components/SlideInMenu";
 
 const Settings = () => {
   const [accountSize, setAccountSize] = useState(1000);
@@ -15,10 +18,18 @@ const Settings = () => {
   const [pointsPerUsd, setPointsPerUsd] = useState(100);
   const [tradeType, setTradeType] = useState<"pending" | "immediate">("pending");
   const [userEmail, setUserEmail] = useState("");
+  
+  // Profile fields
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [brokerName, setBrokerName] = useState("");
+  const [uniqueIdentifier, setUniqueIdentifier] = useState("");
   const [profileCompleted, setProfileCompleted] = useState(false);
+  
+  // Password change fields
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -32,21 +43,22 @@ const Settings = () => {
       }
       
       setUserEmail(session.user.email || "");
-
+      
       // Load profile data
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", session.user.id)
         .single();
-
+        
       if (profile) {
         setName(profile.name || "");
         setPhoneNumber(profile.phone_number || "");
         setBrokerName(profile.broker_name || "");
+        setUniqueIdentifier(profile.unique_identifier || "");
         setProfileCompleted(profile.profile_completed || false);
       }
-
+      
       // Load saved settings from localStorage
       const savedAccountSize = localStorage.getItem("accountSize");
       const savedRiskPercent = localStorage.getItem("riskPercent");
@@ -60,10 +72,98 @@ const Settings = () => {
       if (savedPointsPerUsd) setPointsPerUsd(Number(savedPointsPerUsd));
       if (savedTradeType) setTradeType(savedTradeType as "pending" | "immediate");
     };
-
+    
     loadUserData();
   }, [navigate]);
 
+  const handleSaveProfile = async () => {
+    if (!name.trim() || !phoneNumber.trim()) {
+      toast({
+        title: "Required Fields Missing",
+        description: "Please fill in your name and phone number.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        name: name.trim(),
+        phone_number: phoneNumber.trim(),
+        broker_name: brokerName.trim() || null,
+        profile_completed: true,
+      })
+      .eq("user_id", session.user.id);
+      
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save profile information.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setProfileCompleted(true);
+    toast({
+      title: "Profile Saved",
+      description: "Your personal information has been updated.",
+    });
+  };
+  
+  const handleChangePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast({
+        title: "Password Required",
+        description: "Please enter and confirm your new password.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords Don't Match",
+        description: "Please make sure both passwords are the same.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to change password.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setNewPassword("");
+    setConfirmPassword("");
+    toast({
+      title: "Password Changed",
+      description: "Your password has been successfully updated.",
+    });
+  };
+  
   const handleSaveSettings = () => {
     localStorage.setItem("accountSize", accountSize.toString());
     localStorage.setItem("riskPercent", riskPercent.toString());
@@ -88,64 +188,123 @@ const Settings = () => {
 
   return (
     <div className="min-h-screen bg-gradient-trading">
-      <header className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-0 z-50">
+      <NewsScrollingBanner position="top" />
+      <NewsScrollingBanner position="bottom" showNextDay />
+      <SlideInMenu />
+      
+      <header className="border-b border-border bg-background/50 backdrop-blur-sm mt-16 mb-16">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-                <p className="text-xs text-muted-foreground">{userEmail}</p>
-              </div>
+          <div className="flex items-center justify-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <TrendingUp className="h-6 w-6 text-primary" />
             </div>
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+              <p className="text-xs text-muted-foreground">{userEmail}</p>
+            </div>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
-          {!profileCompleted && (
-            <Card className="p-6 border-destructive/50 bg-destructive/5">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="rounded-full bg-destructive/10 p-2">
-                  <TrendingUp className="h-5 w-5 text-destructive" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Complete Your Profile</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Please complete your personal information before using the platform.
-                  </p>
-                </div>
-              </div>
-            </Card>
-          )}
-
+          {/* User Profile Information */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Personal Information</h2>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Personal Information</h2>
+                {uniqueIdentifier && (
+                  <p className="text-xs text-muted-foreground">User ID: {uniqueIdentifier}</p>
+                )}
+              </div>
+            </div>
             <p className="text-sm text-muted-foreground mb-6">
-              Manage your personal details and account security.
+              {!profileCompleted && (
+                <span className="text-destructive font-medium">* Required before using the platform. </span>
+              )}
+              Manage your personal details and account information.
             </p>
-            <PersonalInfoForm
-              name={name}
-              phoneNumber={phoneNumber}
-              brokerName={brokerName}
-              onNameChange={setName}
-              onPhoneNumberChange={setPhoneNumber}
-              onBrokerNameChange={setBrokerName}
-              onProfileComplete={() => setProfileCompleted(true)}
-            />
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number *</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="broker">Broker Name (Optional)</Label>
+                <Input
+                  id="broker"
+                  type="text"
+                  placeholder="Enter your broker name"
+                  value={brokerName}
+                  onChange={(e) => setBrokerName(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <Button onClick={handleSaveProfile} className="w-full mt-6">
+              Save Profile Information
+            </Button>
           </Card>
-
+          
+          {/* Password Change */}
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Change Password</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Update your account password. Password must be at least 6 characters long.
+            </p>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <Button onClick={handleChangePassword} className="w-full mt-6">
+              Change Password
+            </Button>
+          </Card>
+          
+          {/* Trading Account Configuration */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-foreground mb-4">Trading Configuration</h2>
             <p className="text-sm text-muted-foreground mb-6">

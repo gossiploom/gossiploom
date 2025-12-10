@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, AlertCircle, Calendar, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ProfileCompletionGuard } from "@/components/ProfileCompletionGuard";
+import { Footer } from "@/components/Footer";
 
 interface NewsItem {
   id: string;
@@ -45,23 +47,27 @@ const News = () => {
   const fetchNews = async () => {
     setIsLoading(true);
     try {
-      // Fetch high impact news
+      // Get start of today in local timezone
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+
+      // Fetch high impact news from start of today onwards
       const { data: highData, error: highError } = await supabase
         .from('forex_news')
         .select('*')
-        .eq('impact', 'High')
-        .gte('event_time', new Date().toISOString())
+        .eq('impact', 'high')
+        .gte('event_time', startOfToday.toISOString())
         .order('event_time', { ascending: true });
 
       if (highError) throw highError;
       setHighImpactNews(highData || []);
 
-      // Fetch low impact news
+      // Fetch low impact news from start of today onwards
       const { data: lowData, error: lowError } = await supabase
         .from('forex_news')
         .select('*')
-        .eq('impact', 'Low')
-        .gte('event_time', new Date().toISOString())
+        .eq('impact', 'low')
+        .gte('event_time', startOfToday.toISOString())
         .order('event_time', { ascending: true });
 
       if (lowError) throw lowError;
@@ -219,7 +225,8 @@ const News = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-trading">
+    <ProfileCompletionGuard>
+      <div className="min-h-screen bg-gradient-trading">
       {/* Header */}
       <header className="border-b border-border bg-background/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -298,6 +305,7 @@ const News = () => {
         </Tabs>
       </main>
     </div>
+    </ProfileCompletionGuard>
   );
 };
 

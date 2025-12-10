@@ -1,11 +1,22 @@
-project_id = "gjhbobzedztwinchfoyg"
+project_id = "scbherxwzjfbijyukvwq"
 
 [functions.analyze-chart]
-verify_jwt = false
+verify_jwt = true
+
+[functions.analyze-news-impact]
+verify_jwt = true
 
 [functions.fetch-forex-news]
 verify_jwt = false
 
-[functions.analyze-news-impact]
+[functions.generate-news-expectations]
 verify_jwt = false
 
+[functions.get-exchange-rate]
+verify_jwt = false
+
+[functions.initiate-mpesa-payment]
+verify_jwt = true
+
+[functions.handle-lipana-webhook]
+verify_jwt = false

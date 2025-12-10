@@ -8,10 +8,48 @@ import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import History from "./pages/History";
 import News from "./pages/News";
-import Charts from "./pages/Charts";
+import ChartViewer from "./pages/ChartViewer";
+import Purchase from "./pages/Purchase";
+import Admin from "./pages/Admin";
+import Signals from "./pages/Signals";
 import NotFound from "./pages/NotFound";
+import About from "./pages/About";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Refund from "./pages/Refund";
+import Contact from "./pages/Contact";
+import { AdminNotificationListener } from "./components/AdminNotificationListener";
+import { useUserPresence } from "./hooks/useUserPresence";
 
 const queryClient = new QueryClient();
+
+const AppContent = () => {
+  useUserPresence();
+  
+  return (
+    <>
+      <AdminNotificationListener />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/news" element={<News />} />
+        <Route path="/chart-viewer" element={<ChartViewer />} />
+        <Route path="/purchase" element={<Purchase />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/signals" element={<Signals />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/refund" element={<Refund />} />
+        <Route path="/contact" element={<Contact />} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -19,16 +57,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/news" element={<News />} />
-          <Route path="/charts" element={<Charts />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AppContent />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,89 +1,56 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Zap, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Link } from "react-router-dom";
 
-const Footer = () => {
+export const Footer = () => {
   return (
-    <footer className="bg-background border-t border-border mt-20">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          {/* Brand */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                InsiderNewsWatch
-              </h3>
-            </div>
-            <p className="text-muted-foreground mb-4 text-sm">
-              Your ultimate destination for breaking news, insider stories, and trending updates across all categories.
-            </p>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="icon">
-                <Twitter className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Instagram className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Youtube className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+    <footer className="w-full bg-card border-t border-border mt-auto">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
+        {/* Links and Contact Row */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+          {/* Legal & Support Links - Horizontal */}
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+            <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
+              About Us
+            </Link>
+            <span className="text-border hidden sm:inline">|</span>
+            <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
+              Terms & Conditions
+            </Link>
+            <span className="text-border hidden sm:inline">|</span>
+            <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+            <span className="text-border hidden sm:inline">|</span>
+            <Link to="/refund" className="text-muted-foreground hover:text-primary transition-colors">
+              Refund Policy
+            </Link>
+            <span className="text-border hidden sm:inline">|</span>
+            <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
+              Contact Us
+            </Link>
+          </nav>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Trending Now</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Celebrity News</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">TV Shows</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Submit Story</a></li>
-            </ul>
-          </div>
-
-          {/* Contact Us */}
-          <div>
-            <h4 className="font-semibold mb-4">Contact Us</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <a 
-                  href="mailto:gossiploom8@gmail.com" 
-                  className="hover:text-primary transition-colors"
-                >
-                  gossiploom8@gmail.com
-                </a>
-              </li>
-              <li className="text-xs">We'd love to hear from you!</li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h4 className="font-semibold mb-4">Legal</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link></li>
-              <li><Link to="/content-guidelines" className="hover:text-primary transition-colors">Content Guidelines</Link></li>
-            </ul>
+          {/* Contact Email */}
+          <div className="text-sm">
+            <span className="text-muted-foreground">Queries: </span>
+            <a 
+              href="mailto:tradeadvisor.live@gmail.com" 
+              className="text-primary hover:underline"
+            >
+              tradeadvisor.live@gmail.com
+            </a>
           </div>
         </div>
 
-        <Separator className="mb-6" />
-        
-        <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-          <p>&copy; 2024-2025 InsiderNewsWatch. All rights reserved.</p>
-          <p className="mt-2 md:mt-0">
-            Built for entertainment • Community guidelines apply
+        {/* Copyright */}
+        <div className="border-t border-border pt-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Trade Advisor. All rights reserved.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Trading involves risk. Past performance is not indicative of future results.
           </p>
         </div>
       </div>
     </footer>
   );
 };
-
-export default Footer;

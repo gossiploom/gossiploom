@@ -1,22 +1,94 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { TrendingUp, Briefcase, Target, BarChart, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Zap, Clock } from "lucide-react";
-import { ForexNewsBanner } from "@/components/ForexNewsBanner";
+import { supabase } from "@/integrations/supabase/client";
+import { NewsScrollingBanner } from "@/components/NewsScrollingBanner";
+import { Footer } from "@/components/Footer";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showDialog, setShowDialog] = useState(false);
-  const [tradingStyle, setTradingStyle] = useState<"scalp" | "day" | null>(null);
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [signupLoading, setSignupLoading] = useState(false);
+  const [userIp, setUserIp] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Fetch user IP address
+    const fetchIp = async () => {
+      try {
+        const response = await fetch("https://api.ipify.org?format=json");
+        const data = await response.json();
+        setUserIp(data.ip);
+      } catch (error) {
+        console.error("Failed to fetch IP:", error);
+      }
+    };
+    fetchIp();
+  }, []);
+
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim() || !signupEmail.trim() || !phoneNumber.trim()) {
+      toast({ title: "Missing Information", description: "Please fill in all fields.", variant: "destructive" });
+      return;
+    }
+    setSignupLoading(true);
+    try {
+      const response = await supabase.functions.invoke('send-account-request', {
+        body: { 
+          fullName, 
+          email: signupEmail, 
+          phoneNumber,
+          ipAddress: userIp
+        }
+      });
+      
+      if (response.error) {
+        const errorData = response.error;
+        throw new Error(errorData.message || "Request failed");
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+      
+      toast({ 
+        title: "Request Submitted Successfully", 
+        description: "You will receive your login details via WhatsApp and the email address you provided." 
+      });
+      setShowCreateAccount(false);
+      setFullName("");
+      setSignupEmail("");
+      setPhoneNumber("");
+    } catch (error: any) {
+      console.error("Account request error:", error);
+      toast({ 
+        title: "Request Failed", 
+        description: error.message || "Unable to submit request. Please try again later.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setSignupLoading(false);
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -26,238 +98,171 @@ const Auth = () => {
     });
   }, [navigate]);
 
-  const handleTradingStyleSelect = (style: "scalp" | "day") => {
-    setTradingStyle(style);
-    setShowDialog(true);
-  };
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tradingStyle) return;
-    
     setLoading(true);
-    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Update user's trading style preference (or create if first time)
-      // display_user_id will be auto-assigned by trigger on first insert (0001-9999)
-      if (data.user) {
-        const { error: updateError } = await supabase
-          .from('user_settings')
-          .upsert({ 
-            user_id: data.user.id,
-            trading_style: tradingStyle 
-          } as any, { 
-            onConflict: 'user_id' 
-          });
-
-        if (updateError) console.error('Error updating trading style:', updateError);
+      // Update last login IP
+      if (userIp && data.user) {
+        await supabase
+          .from("profiles")
+          .update({ last_login_ip: userIp })
+          .eq("user_id", data.user.id);
       }
 
-      toast({
-        title: "Success!",
-        description: "You've been signed in successfully.",
-      });
-
+      toast({ title: "Welcome back!", description: "Successfully logged in." });
       navigate("/");
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error signing in",
-        description: error.message,
-      });
+      toast({ title: "Login Failed", description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-background via-background/95 to-primary/5">
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <ForexNewsBanner dateFilter="today" />
-      </div>
-      <div className="fixed bottom-0 left-0 right-0 z-50">
-        <ForexNewsBanner dateFilter="tomorrow" />
-      </div>
-
-      <div className="w-full max-w-7xl mx-auto px-4 py-8 mt-16 mb-16">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-          {/* Left Side - Marketing Content */}
-          <div className="space-y-8">
-            {/* Hero Section */}
-            <div className="space-y-4">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                ProTradeAdvisor
-              </h1>
-              <p className="text-lg md:text-xl text-foreground font-medium">
-                Gain Your Edge in the Market with Professional Trade Analysis
-              </p>
-              <p className="text-sm md:text-base text-muted-foreground">
-                TradeAdvisor provides professional-grade trade analysis. Upload your trading chart and receive precise entry points, stop-loss, and take-profit levels.
-              </p>
+    <div className="min-h-screen bg-gradient-trading flex flex-col md:grid md:grid-cols-2">
+      <NewsScrollingBanner position="top" />
+      <NewsScrollingBanner position="bottom" showNextDay />
+      <div className="flex flex-col justify-center items-start p-6 md:p-12 text-white mt-16 mb-16">
+        <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+            <div className="inline-block p-2 md:p-3 bg-primary/20 rounded-lg">
+                <TrendingUp className="h-8 w-8 md:h-10 md:w-10 text-primary" />
             </div>
+            <h1 className="text-3xl md:text-5xl font-bold">TradeAdvisor</h1>
+        </div>
 
-            {/* Features Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-card border border-border">
-                <div className="text-2xl mb-2">📊</div>
-                <h3 className="font-semibold mb-1 text-sm">Professional Chart Analysis</h3>
-                <p className="text-xs text-muted-foreground">Our sophisticated system analyzes your trading charts.</p>
-              </div>
-              
-              <div className="p-4 rounded-lg bg-card border border-border">
-                <div className="text-2xl mb-2">🎯</div>
-                <h3 className="font-semibold mb-1 text-sm">Precise Trade Signals</h3>
-                <p className="text-xs text-muted-foreground">Get exact price levels for entry, stop-loss, and take-profit.</p>
-              </div>
-              
-              <div className="p-4 rounded-lg bg-card border border-border">
-                <div className="text-2xl mb-2">⏰</div>
-                <h3 className="font-semibold mb-1 text-sm">Multi-Timeframe Confluence</h3>
-                <p className="text-xs text-muted-foreground">We confirm trends on higher timeframes for higher probability trades.</p>
-              </div>
-              
-              <div className="p-4 rounded-lg bg-card border border-border">
-                <div className="text-2xl mb-2">💡</div>
-                <h3 className="font-semibold mb-1 text-sm">Detailed Rationale & Confidence Score</h3>
-                <p className="text-xs text-muted-foreground">Understand the 'why' behind every trade and gauge the signal's strength.</p>
-              </div>
+        <h2 className="text-xl md:text-3xl font-semibold mb-3 md:mb-4">Gain Your Edge in the Market with Professional Trade Analysis.</h2>
+        <p className="text-sm md:text-lg text-muted-foreground mb-6 md:mb-8">
+            TradeAdvisor provides professional-grade trade analysis. Upload your trading chart and receive precise entry points, stop-loss, and take-profit levels.
+        </p>
+
+        <div className="space-y-4 md:space-y-6 text-sm md:text-lg">
+            <div className="flex items-start gap-3 md:gap-4">
+                <Briefcase className="h-5 w-5 md:h-7 md:w-7 text-primary mt-1 flex-shrink-0" />
+                <div>
+                    <h3 className="font-semibold text-sm md:text-base">Professional Chart Analysis</h3>
+                    <p className="text-muted-foreground text-xs md:text-sm">Our sophisticated system analyzes your trading charts.</p>
+                </div>
             </div>
-
-            {/* Limited Offer Banner */}
-            <div className="p-5 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-              <h3 className="text-lg md:text-xl font-bold mb-2">Limited Time Offer!</h3>
-              <p className="text-sm text-muted-foreground">
-                First-time users are provided with five free signals. Contact us to get started and claim your bonus!
-              </p>
+            <div className="flex items-start gap-3 md:gap-4">
+                <Target className="h-5 w-5 md:h-7 md:w-7 text-primary mt-1 flex-shrink-0" />
+                <div>
+                    <h3 className="font-semibold text-sm md:text-base">Precise Trade Signals</h3>
+                    <p className="text-muted-foreground text-xs md:text-sm">Get exact price levels for entry, stop-loss, and take-profit.</p>
+                </div>
             </div>
-          </div>
-
-          {/* Right Side - Trading Style Selection */}
-          <div className="space-y-6">
-            <div className="text-center lg:text-left">
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">Choose Your Trading Style</h2>
-              <p className="text-sm text-muted-foreground">Select the trading approach that matches your strategy</p>
+            <div className="flex items-start gap-3 md:gap-4">
+                <BarChart className="h-5 w-5 md:h-7 md:w-7 text-primary mt-1 flex-shrink-0" />
+                <div>
+                    <h3 className="font-semibold text-sm md:text-base">Multi-Timeframe Confluence</h3>
+                    <p className="text-muted-foreground text-xs md:text-sm">We confirm trends on higher timeframes for higher probability trades.</p>
+                </div>
             </div>
-
-            <div className="space-y-4">
-              <Card 
-                className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
-                onClick={() => handleTradingStyleSelect("scalp")}
-              >
-                <CardHeader className="space-y-3 pb-4">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-full bg-primary/10 shrink-0">
-                      <Zap className="w-8 h-8 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-xl mb-1">Scalp Trading</CardTitle>
-                      <CardDescription className="text-sm">
-                        Quick trades, immediate entries, small timeframes
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3 pt-0">
-                  <div className="space-y-1.5 text-sm text-muted-foreground">
-                    <p>✓ Immediate entry signals</p>
-                    <p>✓ Near-price entry points</p>
-                    <p>✓ 1m, 5m, 30m, 1h timeframes</p>
-                    <p>✓ Quick profit targets</p>
-                  </div>
-                  <Button className="w-full">
-                    Start Scalping
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card 
-                className="cursor-pointer hover:border-primary transition-all hover:shadow-lg"
-                onClick={() => handleTradingStyleSelect("day")}
-              >
-                <CardHeader className="space-y-3 pb-4">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-full bg-primary/10 shrink-0">
-                      <Clock className="w-8 h-8 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-xl mb-1">Day Trading</CardTitle>
-                      <CardDescription className="text-sm">
-                        Strategic entries at key levels, larger timeframes
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3 pt-0">
-                  <div className="space-y-1.5 text-sm text-muted-foreground">
-                    <p>✓ Pending order signals</p>
-                    <p>✓ Key level entry points</p>
-                    <p>✓ 4h, daily, weekly timeframes</p>
-                    <p>✓ Strategic profit targets</p>
-                  </div>
-                  <Button className="w-full">
-                    Start Day Trading
-                  </Button>
-                </CardContent>
-              </Card>
+             <div className="flex items-start gap-3 md:gap-4">
+                <Award className="h-5 w-5 md:h-7 md:w-7 text-primary mt-1 flex-shrink-0" />
+                <div>
+                    <h3 className="font-semibold text-sm md:text-base">Detailed Rationale & Confidence Rating Score</h3>
+                    <p className="text-muted-foreground text-xs md:text-sm">Understand the 'why' behind every trade and gauge the signal's strength.</p>
+                </div>
             </div>
-          </div>
+        </div>
+
+        <div className="mt-8 md:mt-12 p-4 md:p-6 bg-primary/10 border border-primary/30 rounded-lg">
+            <h3 className="text-lg md:text-2xl font-bold text-primary">Ready to Trade Smarter?</h3>
+            <p className="text-sm md:text-lg mt-2">Join other traders making informed decisions. Create your account today and unlock <span className="font-bold">professional-grade analysis</span> to elevate your trading journey!</p>
         </div>
       </div>
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <div className="flex items-center justify-center p-4 mt-16 mb-16">
+        <Card className="w-full max-w-md p-8 space-y-6">
+            <div className="text-center space-y-2">
+                <div className="inline-block p-3 bg-primary/10 rounded-lg mb-2">
+                    <TrendingUp className="h-8 w-8 text-primary" />
+                </div>
+                <h1 className="text-3xl font-bold text-foreground">TradeAdvisor</h1>
+                <p className="text-muted-foreground">Sign in to your account</p>
+            </div>
+
+            <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input id="password" type="password" placeholder="............." value={password} onChange={(e) => setPassword(e.target.value)} required />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Signing in..." : "Sign In"}
+                </Button>
+                <div className="pt-4 text-center">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setShowCreateAccount(true)}
+                  >
+                    Create Account
+                  </Button>
+                </div>
+            </form>
+        </Card>
+      </div>
+
+      <Dialog open={showCreateAccount} onOpenChange={setShowCreateAccount}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              Sign In - {tradingStyle === "scalp" ? "Scalp Trading" : "Day Trading"}
-            </DialogTitle>
+            <DialogTitle>Create Account</DialogTitle>
             <DialogDescription>
-              Enter your credentials to access your {tradingStyle === "scalp" ? "scalping" : "day trading"} account
+              Fill in your details below to request an account.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSignIn} className="space-y-4">
+          <form onSubmit={handleCreateAccount} className="space-y-4">
             <div className="space-y-2">
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
+              <Label htmlFor="fullName">Full Names</Label>
+              <Input 
+                id="fullName" 
+                type="text" 
+                placeholder="John Doe" 
+                value={fullName} 
+                onChange={(e) => setFullName(e.target.value)} 
+                required 
               />
             </div>
             <div className="space-y-2">
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
+              <Label htmlFor="signupEmail">Email Address</Label>
+              <Input 
+                id="signupEmail" 
+                type="email" 
+                placeholder="your@email.com" 
+                value={signupEmail} 
+                onChange={(e) => setSignupEmail(e.target.value)} 
+                required 
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign In"
-              )}
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Input 
+                id="phoneNumber" 
+                type="tel" 
+                placeholder="+(XXX) XXX XXX XXX" 
+                value={phoneNumber} 
+                onChange={(e) => setPhoneNumber(e.target.value)} 
+                required 
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={signupLoading}>
+              {signupLoading ? "Submitting..." : "Submit Request"}
             </Button>
-            <p className="text-sm text-center text-muted-foreground">
-              Contact admin on Whatsapp +254797657599 to create an account
-            </p>
           </form>
         </DialogContent>
       </Dialog>
+      <div className="col-span-1 md:col-span-2">
+        <Footer />
+      </div>
     </div>
   );
 };
