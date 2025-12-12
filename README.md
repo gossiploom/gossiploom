@@ -1,73 +1,62 @@
-# Welcome to your Lovable project
+# Vite React Project with shadcn/ui and TypeScript
 
-## Project info
+This is a web application built with Vite, React, shadcn/ui, and TypeScript.
 
-**URL**: https://lovable.dev/projects/bd647fbc-1ba9-42cc-8cce-84b849898c31
+## Getting Started
 
-## How can I edit this code?
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-There are several ways of editing your application.
+### Prerequisites
 
-**Use Lovable**
+You need to have Node.js and npm installed on your machine. You can install them from [here](https://nodejs.org/).
 
-Simply visit the [https://lovable.dev/projects/bd647fbc-1ba9-42cc-8cce-84b849898c31) and start prompting.
+### Installation
 
-Changes made via Lovable will be committed automatically to this repo.
+1.  Clone the repository:
+    ```sh
+    git clone <YOUR_GIT_URL>
+    ```
+2.  Navigate to the project directory:
+    ```sh
+    cd <YOUR_PROJECT_NAME>
+    ```
+3.  Install the dependencies:
+    ```sh
+    npm install
+    ```
 
-**Use your preferred IDE**
+## Available Scripts
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+In the project directory, you can run:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### `npm run dev`
 
-Follow these steps:
+Runs the app in the development mode.<br />
+Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+The page will reload if you make edits.<br />
+You will also see any lint errors in the console.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### `npm run build`
 
-# Step 3: Install the necessary dependencies.
-npm i
+Builds the app for production to the `dist` folder.<br />
+It correctly bundles React in production mode and optimizes the build for the best performance.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+The build is minified and the filenames include the hashes.<br />
+Your app is ready to be deployed!
 
-**Edit a file directly in GitHub**
+### `npm run preview`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Serves the production build locally to preview it before deploying.
 
-**Use GitHub Codespaces**
+### `npm run lint`
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Lints the project files using ESLint.
 
-## What technologies are used for this project?
+## Technologies Used
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/bd647fbc-1ba9-42cc-8cce-84b849898c31) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+*   **Vite:** A next-generation front-end tooling that provides a faster and leaner development experience for modern web projects.
+*   **React:** A JavaScript library for building user interfaces.
+*   **TypeScript:** A typed superset of JavaScript that compiles to plain JavaScript.
+*   **shadcn/ui:** A collection of re-usable components that you can copy and paste into your apps.
+*   **Tailwind CSS:** A utility-first CSS framework for rapidly building custom designs.
