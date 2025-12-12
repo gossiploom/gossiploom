@@ -27,6 +27,7 @@ const Index = () => {
   const [userName, setUserName] = useState<string>("");
   const [showWelcome, setShowWelcome] = useState(true);
   const [pendingOutcomes, setPendingOutcomes] = useState(0);
+  const [successfulReferrals, setSuccessfulReferrals] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -59,6 +60,16 @@ const Index = () => {
         if (profile) {
           setUniqueIdentifier(profile.unique_identifier);
           setUserName(profile.name);
+        }
+
+        // Get successful referrals count
+        const { data: referrals } = await supabase
+          .from("referrals")
+          .select("has_purchased")
+          .eq("referrer_id", session.user.id);
+
+        if (referrals) {
+          setSuccessfulReferrals(referrals.filter(r => r.has_purchased).length);
         }
 
         const { count } = await supabase
@@ -361,6 +372,10 @@ const Index = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-foreground">Slots Remaining:</span>
                   <span className="text-lg font-bold text-primary">{analysisLimit - analysisCount}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Successful Referrals:</span>
+                  <span className="text-sm font-semibold text-foreground">{successfulReferrals}</span>
                 </div>
               </div>
             </div>

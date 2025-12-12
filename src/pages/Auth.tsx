@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,13 +22,27 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showCreateAccount, setShowCreateAccount] = useState(false);
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [signupLoading, setSignupLoading] = useState(false);
   const [userIp, setUserIp] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  // Check for referral code in URL
+  useEffect(() => {
+    const refCode = searchParams.get("ref");
+    if (refCode) {
+      setReferralCode(refCode);
+      setShowCreateAccount(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // Fetch user IP address
@@ -46,24 +60,37 @@ const Auth = () => {
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !signupEmail.trim() || !phoneNumber.trim()) {
-      toast({ title: "Missing Information", description: "Please fill in all fields.", variant: "destructive" });
+    if (!firstName.trim() || !lastName.trim() || !signupEmail.trim() || !phoneNumber.trim() || !signupPassword) {
+      toast({ title: "Missing Information", description: "Please fill in all required fields.", variant: "destructive" });
       return;
     }
+
+    if (signupPassword !== confirmPassword) {
+      toast({ title: "Password Mismatch", description: "Passwords do not match.", variant: "destructive" });
+      return;
+    }
+
+    if (signupPassword.length < 6) {
+      toast({ title: "Weak Password", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+
     setSignupLoading(true);
     try {
-      const response = await supabase.functions.invoke('send-account-request', {
+      const response = await supabase.functions.invoke('create-user-account', {
         body: { 
-          fullName, 
-          email: signupEmail, 
-          phoneNumber,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: signupEmail.trim(),
+          phoneNumber: phoneNumber.trim(),
+          password: signupPassword,
+          referralCode: referralCode.trim() || undefined,
           ipAddress: userIp
         }
       });
       
       if (response.error) {
-        const errorData = response.error;
-        throw new Error(errorData.message || "Request failed");
+        throw new Error(response.error.message || "Account creation failed");
       }
 
       if (response.data?.error) {
@@ -71,18 +98,22 @@ const Auth = () => {
       }
       
       toast({ 
-        title: "Request Submitted Successfully", 
-        description: "You will receive your login details via WhatsApp and the email address you provided." 
+        title: "Account Created Successfully!", 
+        description: "You can now sign in with your email and password." 
       });
       setShowCreateAccount(false);
-      setFullName("");
+      setFirstName("");
+      setLastName("");
       setSignupEmail("");
+      setSignupPassword("");
+      setConfirmPassword("");
       setPhoneNumber("");
+      setReferralCode("");
     } catch (error: any) {
-      console.error("Account request error:", error);
+      console.error("Account creation error:", error);
       toast({ 
-        title: "Request Failed", 
-        description: error.message || "Unable to submit request. Please try again later.", 
+        title: "Account Creation Failed", 
+        description: error.message || "Unable to create account. Please try again later.", 
         variant: "destructive" 
       });
     } finally {
@@ -105,7 +136,13 @@ const Auth = () => {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Login successful
+      // Update last login IP
+      if (userIp && data.user) {
+        await supabase
+          .from("profiles")
+          .update({ last_login_ip: userIp })
+          .eq("user_id", data.user.id);
+      }
 
       toast({ title: "Welcome back!", description: "Successfully logged in." });
       navigate("/");
@@ -207,27 +244,40 @@ const Auth = () => {
       </div>
 
       <Dialog open={showCreateAccount} onOpenChange={setShowCreateAccount}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create Account</DialogTitle>
             <DialogDescription>
-              Fill in your details below to request an account.
+              Fill in your details below to create your account.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateAccount} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Names</Label>
-              <Input 
-                id="fullName" 
-                type="text" 
-                placeholder="John Doe" 
-                value={fullName} 
-                onChange={(e) => setFullName(e.target.value)} 
-                required 
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input 
+                  id="firstName" 
+                  type="text" 
+                  placeholder="John" 
+                  value={firstName} 
+                  onChange={(e) => setFirstName(e.target.value)} 
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input 
+                  id="lastName" 
+                  type="text" 
+                  placeholder="Doe" 
+                  value={lastName} 
+                  onChange={(e) => setLastName(e.target.value)} 
+                  required 
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="signupEmail">Email Address</Label>
+              <Label htmlFor="signupEmail">Email Address *</Label>
               <Input 
                 id="signupEmail" 
                 type="email" 
@@ -238,7 +288,7 @@ const Auth = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Label htmlFor="phoneNumber">Phone Number *</Label>
               <Input 
                 id="phoneNumber" 
                 type="tel" 
@@ -248,8 +298,40 @@ const Auth = () => {
                 required 
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="signupPassword">Password *</Label>
+              <Input 
+                id="signupPassword" 
+                type="password" 
+                placeholder="Min. 6 characters" 
+                value={signupPassword} 
+                onChange={(e) => setSignupPassword(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password *</Label>
+              <Input 
+                id="confirmPassword" 
+                type="password" 
+                placeholder="Confirm your password" 
+                value={confirmPassword} 
+                onChange={(e) => setConfirmPassword(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="referralCode">Referral Code (Optional)</Label>
+              <Input 
+                id="referralCode" 
+                type="text" 
+                placeholder="Enter referral code if you have one" 
+                value={referralCode} 
+                onChange={(e) => setReferralCode(e.target.value)} 
+              />
+            </div>
             <Button type="submit" className="w-full" disabled={signupLoading}>
-              {signupLoading ? "Submitting..." : "Submit Request"}
+              {signupLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
         </DialogContent>

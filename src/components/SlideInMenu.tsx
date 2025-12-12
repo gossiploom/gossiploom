@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Settings, History, LogOut, Newspaper, Home, LineChart, ShoppingCart, Shield, Bell, TrendingUp } from "lucide-react";
+import { Menu, Settings, History, LogOut, Newspaper, Home, LineChart, ShoppingCart, Shield, Bell, TrendingUp, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -67,19 +67,17 @@ export const SlideInMenu = () => {
 
   const menuItems = isAdmin ? [
     { to: "/admin", icon: Shield, label: "Admin Dashboard", primary: true },
-    { to: "/", icon: Home, label: "Home" },
     { to: "/settings", icon: Settings, label: "Settings" },
     { to: "/history", icon: History, label: "History" },
-    { to: "/news", icon: Newspaper, label: "News" },
-    { to: "/chart-viewer", icon: LineChart, label: "Chart Viewer" },
+    { to: "/news", icon: Newspaper, label: "News" },,
   ] : [
     { to: "/", icon: Home, label: "Home" },
     { to: "/signals", icon: TrendingUp, label: "Signals" },
-    { to: "/settings", icon: Settings, label: "Settings" },
     { to: "/history", icon: History, label: "History" },
     { to: "/purchase", icon: ShoppingCart, label: "Purchase Slots" },
     { to: "/news", icon: Newspaper, label: "News" },
-    { to: "/chart-viewer", icon: LineChart, label: "Chart Viewer" },
+    { to: "/settings", icon: Settings, label: "Settings" },
+    { to: "/referral-program", icon: Users, label: "Referral Program" },
   ];
 
   return (

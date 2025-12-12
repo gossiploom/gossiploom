@@ -20,3 +20,18 @@ verify_jwt = true
 
 [functions.handle-lipana-webhook]
 verify_jwt = false
+
+[functions.create-user-account]
+verify_jwt = false
+
+[functions.send-account-request]
+verify_jwt = false
+
+[functions.admin-create-user]
+verify_jwt = true
+
+[functions.capture-paypal-order]
+verify_jwt = true
+
+[functions.create-paypal-order]
+verify_jwt = true

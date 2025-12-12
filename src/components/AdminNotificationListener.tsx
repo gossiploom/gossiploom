@@ -9,41 +9,64 @@ interface Notification {
   message: string;
   duration_seconds: number;
   created_at: string;
+  is_global: boolean;
+  target_user_id: string | null;
 }
 
 export const AdminNotificationListener = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUnreadNotifications = async () => {
+    const fetchNotifications = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      setCurrentUserId(user?.id || null);
 
-      // Get notifications that user hasn't read yet
-      const { data: allNotifications } = await supabase
+      // Fetch global notifications (visible to everyone including non-authenticated users)
+      const { data: globalNotifications } = await supabase
         .from("admin_notifications")
         .select("*")
-        .or(`is_global.eq.true,target_user_id.eq.${user.id}`)
+        .eq("is_global", true)
         .order("created_at", { ascending: false });
 
-      if (!allNotifications) return;
+      let allNotifications = globalNotifications || [];
 
-      const { data: readNotifications } = await supabase
-        .from("notification_reads")
-        .select("notification_id")
-        .eq("user_id", user.id);
+      // If user is authenticated, also fetch their targeted notifications
+      if (user) {
+        const { data: targetedNotifications } = await supabase
+          .from("admin_notifications")
+          .select("*")
+          .eq("target_user_id", user.id)
+          .order("created_at", { ascending: false });
 
-      const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
-      const unread = allNotifications.filter(n => !readIds.has(n.id));
+        if (targetedNotifications) {
+          allNotifications = [...allNotifications, ...targetedNotifications];
+        }
 
+        // Get read notifications for authenticated users
+        const { data: readNotifications } = await supabase
+          .from("notification_reads")
+          .select("notification_id")
+          .eq("user_id", user.id);
+
+        const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
+        allNotifications = allNotifications.filter(n => !readIds.has(n.id));
+      }
+
+      // For non-authenticated users, use localStorage to track dismissed notifications
+      const localDismissed = JSON.parse(localStorage.getItem("dismissed_notifications") || "[]");
+      setDismissedIds(new Set(localDismissed));
+
+      const unread = allNotifications.filter(n => !localDismissed.includes(n.id));
       setNotifications(unread);
     };
 
-    fetchUnreadNotifications();
+    fetchNotifications();
 
     // Subscribe to new notifications
     const channel = supabase
-      .channel("admin-notifications")
+      .channel("admin-notifications-public")
       .on(
         "postgres_changes",
         {
@@ -52,13 +75,13 @@ export const AdminNotificationListener = () => {
           table: "admin_notifications",
         },
         async (payload) => {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return;
-
-          const notification = payload.new as Notification & { is_global: boolean; target_user_id: string | null };
+          const notification = payload.new as Notification;
           
-          // Check if notification is for this user
-          if (notification.is_global || notification.target_user_id === user.id) {
+          // Show global notifications to everyone
+          if (notification.is_global) {
+            setNotifications(prev => [notification, ...prev]);
+          } else if (currentUserId && notification.target_user_id === currentUserId) {
+            // Show targeted notifications only to the target user
             setNotifications(prev => [notification, ...prev]);
           }
         }
@@ -68,17 +91,23 @@ export const AdminNotificationListener = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [currentUserId]);
 
   const dismissNotification = async (notificationId: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    // For authenticated users, save to database
+    if (currentUserId) {
+      await supabase.from("notification_reads").insert({
+        notification_id: notificationId,
+        user_id: currentUserId,
+      });
+    }
 
-    await supabase.from("notification_reads").insert({
-      notification_id: notificationId,
-      user_id: user.id,
-    });
+    // For all users (including non-authenticated), save to localStorage
+    const localDismissed = JSON.parse(localStorage.getItem("dismissed_notifications") || "[]");
+    localDismissed.push(notificationId);
+    localStorage.setItem("dismissed_notifications", JSON.stringify(localDismissed));
 
+    setDismissedIds(prev => new Set([...prev, notificationId]));
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
   };
 

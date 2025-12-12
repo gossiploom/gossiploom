@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, TrendingUp, TrendingDown, Download, Eye } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SlideInMenu } from "@/components/SlideInMenu";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Bell, CreditCard, UserPlus, Activity, ArrowLeft, Send, Check, X, Image, MessageSquare, TrendingUp, Upload, Calendar } from "lucide-react";
+import { Users, Bell, CreditCard, UserPlus, Activity, Send, Check, X, Image, MessageSquare, Upload, Calendar, Globe } from "lucide-react";
 
 interface AccountRequest {
   id: string;
@@ -43,6 +42,9 @@ interface UserWithDetails {
   last_login_ip: string | null;
   is_signal_subscriber: boolean;
   subscription_expires_at: string | null;
+  referral_code: string | null;
+  total_referrals: number;
+  successful_referrals: number;
 }
 
 interface Payment {
@@ -159,7 +161,7 @@ const Admin = () => {
   const fetchUsers = async () => {
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, name, phone_number, unique_identifier, last_login_ip, is_signal_subscriber, subscription_expires_at");
+      .select("user_id, name, phone_number, unique_identifier, last_login_ip, is_signal_subscriber, subscription_expires_at, referral_code");
 
     if (!profiles) return;
 
@@ -180,10 +182,16 @@ const Admin = () => {
       .select("user_id, outcome")
       .in("user_id", userIds);
 
+    const { data: referrals } = await supabase
+      .from("referrals")
+      .select("referrer_id, has_purchased")
+      .in("referrer_id", userIds);
+
     const combined = profiles.map(profile => {
       const userSettings = settings?.find(s => s.user_id === profile.user_id);
       const userPresence = presence?.find(p => p.user_id === profile.user_id);
       const userTrades = trades?.filter(t => t.user_id === profile.user_id) || [];
+      const userReferrals = referrals?.filter(r => r.referrer_id === profile.user_id) || [];
       const slotsUsed = userTrades.length;
       const successfulTrades = userTrades.filter(t => t.outcome === "win").length;
       const totalSlots = userSettings?.analysis_limit || 5;
@@ -196,6 +204,8 @@ const Admin = () => {
         slots_used: slotsUsed,
         slots_remaining: Math.max(0, totalSlots - slotsUsed),
         successful_trades: successfulTrades,
+        total_referrals: userReferrals.length,
+        successful_referrals: userReferrals.filter(r => r.has_purchased).length,
       };
     });
 
@@ -441,6 +451,16 @@ const Admin = () => {
             .from("user_settings")
             .update({ analysis_limit: currentSlots + slotsToAdd })
             .eq("user_id", payment.user_id);
+
+          // Mark referral as successful (first purchase)
+          await supabase
+            .from("referrals")
+            .update({ 
+              has_purchased: true,
+              first_purchase_at: new Date().toISOString(),
+            })
+            .eq("referred_id", payment.user_id)
+            .eq("has_purchased", false);
         } else {
           await supabase
             .from("usdt_payments")
@@ -471,6 +491,16 @@ const Admin = () => {
             .from("user_settings")
             .update({ analysis_limit: currentSlots + slotsToAdd })
             .eq("user_id", payment.user_id);
+
+          // Mark referral as successful (first purchase)
+          await supabase
+            .from("referrals")
+            .update({ 
+              has_purchased: true,
+              first_purchase_at: new Date().toISOString(),
+            })
+            .eq("referred_id", payment.user_id)
+            .eq("has_purchased", false);
         } else {
           await supabase
             .from("pending_payments")
@@ -499,7 +529,6 @@ const Admin = () => {
       if (!user) throw new Error("Not authenticated");
 
       const fileExt = signalImage.name.split('.').pop();
-      // Ensure the file path is a valid string, not an empty string
       const filePath = `${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
@@ -536,10 +565,10 @@ const Admin = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // The fix: Removed the subject field as it does not exist in the support_messages table.
       await supabase.from("support_messages").insert({
         thread_id: selectedThread.id,
         sender_id: user.id,
+        subject: selectedThread.subject,
         message: replyMessage,
       });
 
@@ -570,12 +599,17 @@ const Admin = () => {
   const rejectedRequests = accountRequests.filter(r => r.status === "rejected");
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage users, payments, and notifications</p>
+    <div className="min-h-screen bg-background relative">
+
+    <div className="absolute top-5 right-4 z-50">
+      <SlideInMenu />
+    </div>
+
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Manage users, payments, and notifications</p>
           </div>
         </div>
 
@@ -802,6 +836,7 @@ const Admin = () => {
                         <TableHead>Slots Used</TableHead>
                         <TableHead>Slots Left</TableHead>
                         <TableHead>Wins</TableHead>
+                        <TableHead>Referrals</TableHead>
                         <TableHead>IP Address</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
@@ -823,92 +858,40 @@ const Admin = () => {
                           <TableCell>{user.slots_used}</TableCell>
                           <TableCell>{user.slots_remaining}</TableCell>
                           <TableCell className="text-green-600">{user.successful_trades}</TableCell>
+                          <TableCell>
+                            <span className="text-primary font-semibold">{user.successful_referrals}</span>
+                            <span className="text-muted-foreground">/{user.total_referrals}</span>
+                          </TableCell>
                           <TableCell className="font-mono text-xs">{user.last_login_ip || "—"}</TableCell>
                           <TableCell>
                             <Badge variant={user.is_online ? "default" : "secondary"}>
                               {user.is_online ? "Online" : "Offline"}
                             </Badge>
-                            {!user.is_online && user.last_seen && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Last seen: {new Date(user.last_seen).toLocaleTimeString()}
-                              </p>
-                            )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              <Dialog onOpenChange={setAdjustSlotsDialog}>
-                                <DialogTrigger asChild>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => {
-                                      setSelectedUser(user);
-                                      setNewSlots(user.analysis_limit.toString());
-                                    }}
-                                  >
-                                    Slots
-                                  </Button>
-                                </DialogTrigger>
-                                {selectedUser && selectedUser.user_id === user.user_id && (
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Adjust Slots for {selectedUser.name}</DialogTitle>
-                                      <DialogDescription>Set the total analysis slots available to the user.</DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                      <div>
-                                        <Label htmlFor="newSlots">Total Slots</Label>
-                                        <Input 
-                                          id="newSlots"
-                                          type="number" 
-                                          value={newSlots} 
-                                          onChange={e => setNewSlots(e.target.value)} 
-                                        />
-                                      </div>
-                                      <Button onClick={handleAdjustSlots} className="w-full">
-                                        Update Slots
-                                      </Button>
-                                    </div>
-                                  </DialogContent>
-                                )}
-                              </Dialog>
-
-                              <Dialog onOpenChange={setSubscriptionDialog}>
-                                <DialogTrigger asChild>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    onClick={() => {
-                                      setSelectedUser(user);
-                                      setSubscriptionExpiry(user.subscription_expires_at ? user.subscription_expires_at.split('T')[0] : "");
-                                    }}
-                                  >
-                                    Sub
-                                  </Button>
-                                </DialogTrigger>
-                                {selectedUser && selectedUser.user_id === user.user_id && (
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Manage Subscription for {selectedUser.name}</DialogTitle>
-                                      <DialogDescription>Mark user as subscriber and set expiry date.</DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                      <div>
-                                        <Label htmlFor="expiryDate">Subscription Expiry Date</Label>
-                                        <Input 
-                                          id="expiryDate"
-                                          type="date" 
-                                          value={subscriptionExpiry} 
-                                          onChange={e => setSubscriptionExpiry(e.target.value)} 
-                                        />
-                                      </div>
-                                      <Button onClick={handleUpdateSubscription} className="w-full">
-                                        Update Subscription
-                                      </Button>
-                                    </div>
-                                  </DialogContent>
-                                )}
-                              </Dialog>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setNewSlots(String(user.analysis_limit));
+                                  setAdjustSlotsDialog(true);
+                                }}
+                              >
+                                Slots
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setSubscriptionExpiry(user.subscription_expires_at || "");
+                                  setSubscriptionDialog(true);
+                                }}
+                              >
+                                <Calendar className="h-4 w-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -923,17 +906,17 @@ const Admin = () => {
           <TabsContent value="payments">
             <Card>
               <CardHeader>
-                <CardTitle>Payment Verification</CardTitle>
-                <CardDescription>Review and verify all pending payments (M-Pesa, USDT, etc.)</CardDescription>
+                <CardTitle>Payment Tracking</CardTitle>
+                <CardDescription>View all payments and verify transactions</CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>User</TableHead>
-                      <TableHead>Type</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Package</TableHead>
                       <TableHead>Amount</TableHead>
-                      <TableHead>Slots</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Actions</TableHead>
@@ -943,20 +926,22 @@ const Admin = () => {
                     {payments.map(payment => (
                       <TableRow key={payment.id}>
                         <TableCell>
-                          {payment.user_name}
-                          <span className="ml-2 font-mono text-xs text-muted-foreground">{payment.user_identifier}</span>
+                          <div>
+                            <p className="font-medium">{payment.user_name || "—"}</p>
+                            <p className="text-xs text-muted-foreground">{payment.user_identifier}</p>
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{payment.payment_method?.toUpperCase() || "M-PESA"}</Badge>
+                          <Badge variant="outline">
+                            {payment.payment_method === "usdt" ? "USDT" : payment.payment_method === "paypal" ? "Card" : "M-Pesa"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{payment.package_type}</TableCell>
+                        <TableCell>
+                          {payment.amount_usd ? `$${payment.amount_usd}` : `KES ${payment.amount_kes}`}
                         </TableCell>
                         <TableCell>
-                          {payment.amount_kes ? `KES ${payment.amount_kes.toLocaleString()}` : (
-                            payment.amount_usd ? `USD ${payment.amount_usd.toLocaleString()}` : "N/A"
-                          )}
-                        </TableCell>
-                        <TableCell>{payment.analysis_slots}</TableCell>
-                        <TableCell>
-                          <Badge variant={payment.status === "pending" ? "default" : payment.status === "verified" || payment.status === "completed" ? "secondary" : "destructive"}>
+                          <Badge variant={payment.status === "pending" ? "secondary" : payment.status === "verified" || payment.status === "completed" ? "default" : "destructive"}>
                             {payment.status}
                           </Badge>
                         </TableCell>
@@ -965,7 +950,7 @@ const Admin = () => {
                           <div className="flex gap-2">
                             {payment.screenshot_path && (
                               <Button size="sm" variant="outline" onClick={() => handleViewScreenshot(payment.screenshot_path!)}>
-                                <Eye className="h-4 w-4" />
+                                <Image className="h-4 w-4" />
                               </Button>
                             )}
                             {payment.status === "pending" && (
@@ -985,7 +970,7 @@ const Admin = () => {
                     {payments.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center text-muted-foreground">
-                          No payment records found
+                          No payments found
                         </TableCell>
                       </TableRow>
                     )}
@@ -998,39 +983,61 @@ const Admin = () => {
           <TabsContent value="notifications">
             <Card>
               <CardHeader>
-                <CardTitle>Send Global/Targeted Notification</CardTitle>
-                <CardDescription>Send an in-app notification to all users or a specific user.</CardDescription>
+                <CardTitle>Send Notification</CardTitle>
+                <CardDescription>Send pop-up notifications to users</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div>
+                  <Label>Title</Label>
+                  <Input
+                    value={notificationTitle}
+                    onChange={e => setNotificationTitle(e.target.value)}
+                    placeholder="Notification title"
+                  />
+                </div>
+                <div>
+                  <Label>Message</Label>
+                  <Textarea
+                    value={notificationMessage}
+                    onChange={e => setNotificationMessage(e.target.value)}
+                    placeholder="Notification message"
+                    rows={3}
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="notificationTitle">Title</Label>
-                    <Input id="notificationTitle" value={notificationTitle} onChange={e => setNotificationTitle(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label htmlFor="notificationTarget">Target</Label>
+                    <Label>Target</Label>
                     <Select value={notificationTarget} onValueChange={setNotificationTarget}>
-                      <SelectTrigger id="notificationTarget">
-                        <SelectValue placeholder="Select target" />
+                      <SelectTrigger>
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Users</SelectItem>
+                        <SelectItem value="all">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4" />
+                            All Visitors (including non-users)
+                          </div>
+                        </SelectItem>
                         {users.map(user => (
-                          <SelectItem key={user.user_id} value={user.user_id}>{user.name} ({user.unique_identifier})</SelectItem>
+                          <SelectItem key={user.user_id} value={user.user_id}>
+                            {user.name || user.unique_identifier} ({user.unique_identifier})
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="notificationMessage">Message</Label>
-                  <Textarea id="notificationMessage" value={notificationMessage} onChange={e => setNotificationMessage(e.target.value)} />
-                </div>
-                <div>
-                  <Label htmlFor="notificationDuration">Display Duration (seconds)</Label>
-                  <Input id="notificationDuration" type="number" value={notificationDuration} onChange={e => setNotificationDuration(e.target.value)} />
+                  <div>
+                    <Label>Duration (seconds, 0 = until dismissed)</Label>
+                    <Input
+                      value={notificationDuration}
+                      onChange={e => setNotificationDuration(e.target.value)}
+                      type="number"
+                      min="0"
+                    />
+                  </div>
                 </div>
                 <Button onClick={handleSendNotification} disabled={sendingNotification} className="w-full">
+                  <Send className="h-4 w-4 mr-2" />
                   {sendingNotification ? "Sending..." : "Send Notification"}
                 </Button>
               </CardContent>
@@ -1038,140 +1045,230 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="support">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-1">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Support Threads</CardTitle>
-                    <CardDescription>Active and closed support conversations</CardDescription>
-                  </CardHeader>
-                  <ScrollArea className="h-[600px]">
-                    <div className="divide-y">
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Support Tickets</CardTitle>
+                  <CardDescription>User messages and requests</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[400px]">
+                    <div className="p-4 space-y-2">
                       {supportThreads.map(thread => (
                         <div
                           key={thread.id}
-                          className={`p-4 cursor-pointer hover:bg-muted/50 ${selectedThread?.id === thread.id ? 'bg-muted' : ''}`}
+                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedThread?.id === thread.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
+                          }`}
                           onClick={() => {
                             setSelectedThread(thread);
                             fetchThreadMessages(thread.id);
                           }}
                         >
-                          <div className="flex justify-between items-center">
-                            <p className="font-semibold">{thread.subject}</p>
-                            <Badge variant={thread.status === 'open' ? 'default' : 'secondary'}>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium text-sm">{thread.subject}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {thread.user_name || thread.user_identifier}
+                              </p>
+                            </div>
+                            <Badge variant={thread.status === "open" ? "default" : "secondary"}>
                               {thread.status}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {thread.user_name || "Unknown User"} ({thread.user_identifier})
-                          </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Last update: {new Date(thread.updated_at).toLocaleDateString()}
+                            {new Date(thread.updated_at).toLocaleString()}
                           </p>
                         </div>
                       ))}
+                      {supportThreads.length === 0 && (
+                        <p className="text-center text-muted-foreground py-8">No support tickets</p>
+                      )}
                     </div>
                   </ScrollArea>
-                </Card>
-              </div>
+                </CardContent>
+              </Card>
 
-              <div className="md:col-span-2">
-                <Card className="h-full flex flex-col">
-                  <CardHeader>
-                    <CardTitle>
-                      {selectedThread ? `Thread: ${selectedThread.subject}` : "Select a Thread"}
-                    </CardTitle>
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    {selectedThread ? selectedThread.subject : "Select a ticket"}
+                  </CardTitle>
+                  {selectedThread && (
                     <CardDescription>
-                      {selectedThread ? `User: ${selectedThread.user_name} (${selectedThread.user_identifier})` : "Conversation history will appear here"}
+                      From: {selectedThread.user_name || selectedThread.user_identifier}
                     </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-1 flex flex-col">
-                    {selectedThread ? (
-                      <>
-                        <ScrollArea className="h-[400px] mb-4 p-4 border rounded-md">
-                          <div className="space-y-4">
-                            {threadMessages.map(message => (
-                              <div key={message.id} className={`flex ${message.sender_id === selectedThread.user_id ? 'justify-start' : 'justify-end'}`}>
-                                <div className={`max-w-xs p-3 rounded-lg ${message.sender_id === selectedThread.user_id ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'}`}>
-                                  <p className="text-sm">{message.message}</p>
-                                  <p className="text-xs mt-1 opacity-70">
-                                    {message.sender_id === selectedThread.user_id ? selectedThread.user_name : "Admin"} - {new Date(message.created_at).toLocaleTimeString()}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Type your reply..."
-                            value={replyMessage}
-                            onChange={e => setReplyMessage(e.target.value)}
-                            onKeyPress={e => e.key === 'Enter' && handleAdminReply()}
-                          />
-                          <Button onClick={handleAdminReply}>
-                            <Send className="h-4 w-4" />
-                          </Button>
+                  )}
+                </CardHeader>
+                <CardContent className="p-0">
+                  {selectedThread ? (
+                    <>
+                      <ScrollArea className="h-[280px] px-4">
+                        <div className="space-y-3 py-4">
+                          {threadMessages.map(msg => (
+                            <div
+                              key={msg.id}
+                              className={`p-3 rounded-lg max-w-[85%] ${
+                                msg.sender_id !== selectedThread.user_id
+                                  ? 'ml-auto bg-primary text-primary-foreground'
+                                  : 'bg-muted'
+                              }`}
+                            >
+                              <p className="text-sm">{msg.message}</p>
+                              <p className={`text-xs mt-1 ${
+                                msg.sender_id !== selectedThread.user_id ? 'opacity-70' : 'text-muted-foreground'
+                              }`}>
+                                {new Date(msg.created_at).toLocaleString()}
+                              </p>
+                            </div>
+                          ))}
                         </div>
-                      </>
-                    ) : (
-                      <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                        Select a thread to view messages.
+                      </ScrollArea>
+                      <div className="p-4 border-t flex gap-2">
+                        <Input
+                          value={replyMessage}
+                          onChange={e => setReplyMessage(e.target.value)}
+                          placeholder="Type your reply..."
+                          onKeyDown={e => e.key === "Enter" && handleAdminReply()}
+                        />
+                        <Button onClick={handleAdminReply} disabled={!replyMessage.trim()}>
+                          <Send className="h-4 w-4" />
+                        </Button>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                    </>
+                  ) : (
+                    <div className="h-[340px] flex items-center justify-center text-muted-foreground">
+                      Select a ticket to view messages
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
           <TabsContent value="signals">
             <Card>
-              <CardHeader>
-                <CardTitle>Post New Signal</CardTitle>
-                <CardDescription>Share a new trading signal with subscribers</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Trading Signals</CardTitle>
+                  <CardDescription>Post signals for subscribed users</CardDescription>
+                </div>
+                <Dialog open={signalDialog} onOpenChange={setSignalDialog}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Post Signal
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Post New Signal</DialogTitle>
+                      <DialogDescription>Upload a chart image for subscribers</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Signal Image *</Label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={e => setSignalImage(e.target.files?.[0] || null)}
+                        />
+                      </div>
+                      <div>
+                        <Label>Title (optional)</Label>
+                        <Input
+                          value={signalTitle}
+                          onChange={e => setSignalTitle(e.target.value)}
+                          placeholder="e.g., EUR/USD Buy Setup"
+                        />
+                      </div>
+                      <div>
+                        <Label>Description (optional)</Label>
+                        <Textarea
+                          value={signalDescription}
+                          onChange={e => setSignalDescription(e.target.value)}
+                          placeholder="Additional notes about this signal..."
+                          rows={3}
+                        />
+                      </div>
+                      <Button onClick={handlePostSignal} disabled={postingSignal || !signalImage} className="w-full">
+                        <Upload className="h-4 w-4 mr-2" />
+                        {postingSignal ? "Posting..." : "Post Signal"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="signalTitle">Title (Optional)</Label>
-                  <Input id="signalTitle" value={signalTitle} onChange={e => setSignalTitle(e.target.value)} />
-                </div>
-                <div>
-                  <Label htmlFor="signalDescription">Description (Optional)</Label>
-                  <Textarea id="signalDescription" value={signalDescription} onChange={e => setSignalDescription(e.target.value)} />
-                </div>
-                <div>
-                  <Label htmlFor="signalImage">Signal Image</Label>
-                  <Input 
-                    id="signalImage" 
-                    type="file" 
-                    accept="image/*"
-                    onChange={e => setSignalImage(e.target.files ? e.target.files[0] : null)}
-                  />
-                </div>
-                <Button onClick={handlePostSignal} disabled={postingSignal || !signalImage} className="w-full">
-                  {postingSignal ? "Posting..." : "Post Signal"}
-                </Button>
+              <CardContent>
+                <p className="text-muted-foreground text-center py-8">
+                  {users.filter(u => u.is_signal_subscriber).length} active signal subscribers
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
 
-      <Dialog open={screenshotDialog} onOpenChange={setScreenshotDialog}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Payment Screenshot</DialogTitle>
-            <DialogDescription>Proof of payment uploaded by the user.</DialogDescription>
-          </DialogHeader>
-          {screenshotUrl ? (
-            <img src={screenshotUrl} alt="Payment Screenshot" className="max-w-full h-auto" />
-          ) : (
-            <p>Loading screenshot...</p>
-          )}
-        </DialogContent>
-      </Dialog>
+        {/* Adjust Slots Dialog */}
+        <Dialog open={adjustSlotsDialog} onOpenChange={setAdjustSlotsDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Adjust Analysis Slots</DialogTitle>
+              <DialogDescription>
+                Update slots for {selectedUser?.name || selectedUser?.unique_identifier}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>New Slot Count</Label>
+                <Input
+                  value={newSlots}
+                  onChange={e => setNewSlots(e.target.value)}
+                  type="number"
+                  min="0"
+                />
+              </div>
+              <Button onClick={handleAdjustSlots} className="w-full">Update Slots</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Subscription Dialog */}
+        <Dialog open={subscriptionDialog} onOpenChange={setSubscriptionDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Manage Subscription</DialogTitle>
+              <DialogDescription>
+                Update signal subscription for {selectedUser?.name || selectedUser?.unique_identifier}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Subscription Expiry Date</Label>
+                <Input
+                  type="datetime-local"
+                  value={subscriptionExpiry}
+                  onChange={e => setSubscriptionExpiry(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleUpdateSubscription} className="w-full">
+                Activate/Update Subscription
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Screenshot Dialog */}
+        <Dialog open={screenshotDialog} onOpenChange={setScreenshotDialog}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Payment Screenshot</DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center">
+              <img src={screenshotUrl} alt="Payment proof" className="max-h-[70vh] object-contain rounded-lg" />
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };
