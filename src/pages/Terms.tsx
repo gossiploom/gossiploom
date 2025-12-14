@@ -71,7 +71,7 @@ const Terms = () => {
             </ul>
             <p>We are not liable for losses resulting from delays, errors, or inaccurate information.</p>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">6. Account Registration (If Applicable)</h2>
+            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">6. Account Registration </h2>
             <p>To access certain features, you may need to create an account.</p>
             <p>You agree to:</p>
             <ul className="list-disc pl-6 space-y-2">
@@ -81,7 +81,7 @@ const Terms = () => {
             </ul>
             <p>We reserve the right to suspend or delete accounts that violate our policies.</p>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">7. Payment and Subscriptions (If Applicable)</h2>
+            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">7. Payment and Subscriptions </h2>
             <p>If the website offers paid plans:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li>All payments must be made using approved methods.</li>

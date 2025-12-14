@@ -128,20 +128,69 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Update the profile with user details (profile is auto-created by trigger)
+    // === Initialize all user tables immediately ===
+    
+    // 1. Create user_roles entry (all new users get 'user' role)
+    const { error: roleError } = await supabase
+      .from("user_roles")
+      .upsert({
+        user_id: userId,
+        role: 'user',
+      }, { onConflict: 'user_id,role' });
+
+    if (roleError) {
+      console.error("Error creating user role:", roleError);
+    } else {
+      console.log("User role created successfully for user:", userId);
+    }
+
+    // 2. Update the profile with user details (profile may be auto-created by trigger, upsert to be safe)
+    const { data: nextId } = await supabase.rpc('get_next_unique_identifier');
     const { error: profileError } = await supabase
       .from("profiles")
-      .update({
+      .upsert({
+        user_id: userId,
+        unique_identifier: nextId || '0001',
         name: fullName,
         phone_number: phoneNumber.trim(),
         registration_ip: ipAddress,
         profile_completed: true,
         referred_by: referrerId,
-      })
-      .eq("user_id", userId);
+      }, { onConflict: 'user_id' });
 
     if (profileError) {
-      console.error("Error updating profile:", profileError);
+      console.error("Error creating/updating profile:", profileError);
+    } else {
+      console.log("Profile created/updated successfully for user:", userId);
+    }
+
+    // 3. Create user_presence entry
+    const { error: presenceError } = await supabase
+      .from("user_presence")
+      .upsert({
+        user_id: userId,
+        is_online: false,
+        last_seen: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+    if (presenceError) {
+      console.error("Error creating user presence:", presenceError);
+    } else {
+      console.log("User presence created successfully for user:", userId);
+    }
+
+    // 4. Create user_settings with 0 analysis slots
+    const { error: settingsError } = await supabase
+      .from("user_settings")
+      .upsert({
+        user_id: userId,
+        analysis_limit: 0,
+      }, { onConflict: 'user_id' });
+
+    if (settingsError) {
+      console.error("Error creating user settings:", settingsError);
+    } else {
+      console.log("User settings created successfully for user:", userId);
     }
 
     // Create referral tracking record if user was referred
@@ -159,16 +208,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Ensure user_settings has 0 analysis slots
-    const { error: settingsError } = await supabase
-      .from("user_settings")
-      .update({ analysis_limit: 0 })
-      .eq("user_id", userId);
-
-    if (settingsError) {
-      console.error("Error updating user settings:", settingsError);
-    }
-
     // Get the unique identifier for the new user
     const { data: newProfile } = await supabase
       .from("profiles")
@@ -176,8 +215,62 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("user_id", userId)
       .single();
 
+    // Send welcome email to user with BCC to admin
+    const welcomeEmailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+        <p>Dear <strong>${fullName}</strong>,</p>
+        
+        <p>Your account has been created successfully, and you can log in using the details below:</p>
+        
+        <p><strong>Email (Username):</strong> ${email}<br/>
+        <strong>Password:</strong> ${password}</p>
+        
+        <p>Inside the platform, you will find tools designed to support informed trading decisions and real-time market insights. For better performance, <strong>always use pending trade orders</strong> and <strong>apply your point of invalidation as the stop loss</strong>. This approach protects capital and supports consistent results.</p>
+        
+        <p>As you begin trading, we recommend focusing on the following pairs and instruments: <strong>US100, US30, EURGBP</strong>, and you can also include <strong>XAUUSD, GBPUSD, EURUSD, USDJPY, and BTCUSD</strong> for broader market exposure.</p>
+        
+        <p>For better outcomes, upload and analyze <strong>5 charts</strong> using the following timeframes: <strong>5M, 15M, 1H, 4H, and 12H</strong>.</p>
+        
+        <p>To begin enjoying full access to our services, please select a package and make your initial payment from the options below:</p>
+        
+        <h3 style="color: #1a1a1a; margin-top: 20px;">Select Your Package</h3>
+        <ul style="line-height: 1.8;">
+          <li><strong>Starter</strong> – 40 analysis slots at <strong>$40 USD</strong></li>
+          <li><strong>Growth</strong> – 100 analysis slots at <strong>$90 USD</strong></li>
+          <li><strong>Professional</strong> – 250 analysis slots at <strong>$200 USD</strong></li>
+          <li><strong>Enterprise</strong> – 500 analysis slots at <strong>$350 USD</strong></li>
+        </ul>
+        
+        <p>Alternatively, you may choose to subscribe to our <strong>monthly signals</strong>, which are generated and updated daily on the platform, at <strong>$45 USD per month</strong>.</p>
+        
+        <p>If you have any questions, we are here to assist you.</p>
+        
+        <p>Wishing you a successful trading journey.</p>
+        
+        <p><strong>Trade Advisor Team</strong></p>
+      </div>
+    `;
+
+    const welcomeEmailResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "TradeAdvisor <noreply@tradeadvisor.live>",
+        to: [email.trim().toLowerCase()],
+        bcc: ["tradeadvisor.live@gmail.com"],
+        subject: `Welcome ${fullName} to TradeAdvisor.live`,
+        html: welcomeEmailHtml,
+      }),
+    });
+
+    const welcomeEmailData = await welcomeEmailResponse.json();
+    console.log("Welcome email sent to user:", welcomeEmailData);
+
     // Send email notification to admin
-    const emailResponse = await fetch("https://api.resend.com/emails", {
+    const adminEmailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
@@ -186,7 +279,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "TradeAdvisor <onboarding@resend.dev>",
         to: ["sammygits@gmail.com"],
-        subject: "New Account Created - TradeAdvisor",
+        subject: `TradeAdvisor - New Account ${fullName} Created`,
         html: `
           <h1>New Account Created</h1>
           <p>A new user has successfully created an account on TradeAdvisor.</p>
@@ -206,8 +299,8 @@ const handler = async (req: Request): Promise<Response> => {
       }),
     });
 
-    const emailData = await emailResponse.json();
-    console.log("Admin notification email sent:", emailData);
+    const adminEmailData = await adminEmailResponse.json();
+    console.log("Admin notification email sent:", adminEmailData);
 
     return new Response(JSON.stringify({ 
       success: true,

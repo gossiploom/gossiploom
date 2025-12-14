@@ -22,12 +22,14 @@ import Contact from "./pages/Contact";
 import { AdminNotificationListener } from "./components/AdminNotificationListener";
 import { useUserPresence } from "./hooks/useUserPresence";
 import { useAdminCheck } from "./hooks/useAdminCheck";
+import { useAutoLogout } from "./hooks/useAutoLogout";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   useUserPresence();
-  const { isAdmin } = useAdminCheck();  // 
+  useAutoLogout();
+  const { isAdmin } = useAdminCheck();
 
   return (
     <>

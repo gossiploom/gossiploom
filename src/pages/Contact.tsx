@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Footer } from "@/components/Footer";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
   const [name, setName] = useState("");
@@ -28,21 +29,51 @@ const Contact = () => {
       return;
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Create mailto link with form data
-    const mailtoLink = `mailto:tradeadvisor.live@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-      `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`
-    )}`;
+    try {
+      const { data, error } = await supabase.functions.invoke("send-contact-query", {
+        body: {
+          name: name.trim(),
+          email: email.trim(),
+          subject: subject.trim(),
+          message: message.trim(),
+        },
+      });
 
-    window.location.href = mailtoLink;
+      if (error) throw error;
 
-    toast({
-      title: "Email client opened",
-      description: "Please send the email from your email client to complete your enquiry.",
-    });
+      toast({
+        title: "Message sent!",
+        description: "We've received your enquiry and will get back to you soon. A confirmation email has been sent to your address.",
+      });
 
-    setIsSubmitting(false);
+      // Clear form
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
+    } catch (error: any) {
+      console.error("Error submitting contact form:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -70,6 +101,7 @@ const Contact = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="bg-background"
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -82,6 +114,7 @@ const Contact = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-background"
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -94,6 +127,7 @@ const Contact = () => {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   className="bg-background"
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -105,6 +139,7 @@ const Contact = () => {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   className="bg-background min-h-[150px]"
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -113,8 +148,17 @@ const Contact = () => {
                 className="w-full"
                 disabled={isSubmitting}
               >
-                <Send className="w-4 h-4 mr-2" />
-                {isSubmitting ? "Opening email client..." : "Send Message"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Send Message
+                  </>
+                )}
               </Button>
             </form>
           </div>

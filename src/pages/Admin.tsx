@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SlideInMenu } from "@/components/SlideInMenu";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Bell, CreditCard, UserPlus, Activity, Send, Check, X, Image, MessageSquare, Upload, Calendar, Globe } from "lucide-react";
+import { Users, Bell, CreditCard, UserPlus, Activity, Send, Check, X, Image, MessageSquare, Upload, Calendar, Globe, Mail } from "lucide-react";
 
 interface AccountRequest {
   id: string;
@@ -83,6 +83,18 @@ interface SupportMessage {
   created_at: string;
 }
 
+interface ContactQuery {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: string;
+  admin_response: string | null;
+  responded_at: string | null;
+  created_at: string;
+}
+
 const Admin = () => {
   const navigate = useNavigate();
   const { isAdmin, loading } = useAdminCheck();
@@ -95,6 +107,10 @@ const Admin = () => {
   const [selectedThread, setSelectedThread] = useState<SupportThread | null>(null);
   const [threadMessages, setThreadMessages] = useState<SupportMessage[]>([]);
   const [onlineCount, setOnlineCount] = useState(0);
+  const [contactQueries, setContactQueries] = useState<ContactQuery[]>([]);
+  const [selectedQuery, setSelectedQuery] = useState<ContactQuery | null>(null);
+  const [queryResponse, setQueryResponse] = useState("");
+  const [sendingQueryResponse, setSendingQueryResponse] = useState(false);
   
   // Create user form
   const [createUserDialog, setCreateUserDialog] = useState(false);
@@ -102,7 +118,7 @@ const Admin = () => {
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserPhone, setNewUserPhone] = useState("");
-  const [newUserSlots, setNewUserSlots] = useState("5");
+  const [newUserSlots, setNewUserSlots] = useState("0");
   const [creatingUser, setCreatingUser] = useState(false);
 
   // Notification form
@@ -147,6 +163,7 @@ const Admin = () => {
       fetchUsers();
       fetchPayments();
       fetchSupportThreads();
+      fetchContactQueries();
     }
   }, [isAdmin]);
 
@@ -194,7 +211,7 @@ const Admin = () => {
       const userReferrals = referrals?.filter(r => r.referrer_id === profile.user_id) || [];
       const slotsUsed = userTrades.length;
       const successfulTrades = userTrades.filter(t => t.outcome === "win").length;
-      const totalSlots = userSettings?.analysis_limit || 5;
+      const totalSlots = userSettings?.analysis_limit ?? 0;
       
       return {
         ...profile,
@@ -272,6 +289,14 @@ const Admin = () => {
     setSupportThreads(threadsWithUsers);
   };
 
+  const fetchContactQueries = async () => {
+    const { data } = await supabase
+      .from("contact_queries")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setContactQueries((data as ContactQuery[]) || []);
+  };
+
   const fetchThreadMessages = async (threadId: string) => {
     const { data } = await supabase
       .from("support_messages")
@@ -308,7 +333,7 @@ const Admin = () => {
       setNewUserPassword("");
       setNewUserName("");
       setNewUserPhone("");
-      setNewUserSlots("5");
+      setNewUserSlots("0");
       fetchUsers();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -585,6 +610,39 @@ const Admin = () => {
     }
   };
 
+  const handleRespondToQuery = async () => {
+    if (!selectedQuery || !queryResponse.trim()) return;
+
+    setSendingQueryResponse(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase.functions.invoke("respond-contact-query", {
+        body: {
+          queryId: selectedQuery.id,
+          response: queryResponse.trim(),
+          userEmail: selectedQuery.email,
+          userName: selectedQuery.name,
+          originalSubject: selectedQuery.subject,
+          originalMessage: selectedQuery.message,
+          adminUserId: user.id,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Response sent", description: "Email sent to user" });
+      setQueryResponse("");
+      setSelectedQuery(null);
+      fetchContactQueries();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setSendingQueryResponse(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -614,7 +672,7 @@ const Admin = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -680,15 +738,29 @@ const Admin = () => {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-cyan-500/20 rounded-lg">
+                  <Mail className="h-5 w-5 text-cyan-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending Queries</p>
+                  <p className="text-2xl font-bold">{contactQueries.filter(q => q.status === "pending").length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="requests" className="space-y-4">
-          <TabsList className="grid grid-cols-6 w-full max-w-4xl">
+          <TabsList className="grid grid-cols-7 w-full max-w-5xl">
             <TabsTrigger value="requests">Requests</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="support">Support</TabsTrigger>
+            <TabsTrigger value="queries">Queries</TabsTrigger>
             <TabsTrigger value="signals">Signals</TabsTrigger>
           </TabsList>
 
@@ -1139,6 +1211,110 @@ const Admin = () => {
                   ) : (
                     <div className="h-[340px] flex items-center justify-center text-muted-foreground">
                       Select a ticket to view messages
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="queries">
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    Queries from Non-Users
+                  </CardTitle>
+                  <CardDescription>Contact form submissions from website visitors</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[400px]">
+                    <div className="p-4 space-y-2">
+                      {contactQueries.map(query => (
+                        <div
+                          key={query.id}
+                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedQuery?.id === query.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
+                          }`}
+                          onClick={() => setSelectedQuery(query)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium text-sm">{query.subject}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {query.name} • {query.email}
+                              </p>
+                            </div>
+                            <Badge variant={query.status === "pending" ? "secondary" : "default"}>
+                              {query.status}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(query.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                      ))}
+                      {contactQueries.length === 0 && (
+                        <p className="text-center text-muted-foreground py-8">No contact queries</p>
+                      )}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    {selectedQuery ? selectedQuery.subject : "Select a query"}
+                  </CardTitle>
+                  {selectedQuery && (
+                    <CardDescription>
+                      From: {selectedQuery.name} ({selectedQuery.email})
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  {selectedQuery ? (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-muted rounded-lg">
+                        <p className="text-sm whitespace-pre-wrap">{selectedQuery.message}</p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Received: {new Date(selectedQuery.created_at).toLocaleString()}
+                        </p>
+                      </div>
+
+                      {selectedQuery.admin_response ? (
+                        <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                          <p className="text-xs text-primary font-medium mb-1">Your Response:</p>
+                          <p className="text-sm whitespace-pre-wrap">{selectedQuery.admin_response}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Responded: {selectedQuery.responded_at && new Date(selectedQuery.responded_at).toLocaleString()}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label>Your Response</Label>
+                          <Textarea
+                            value={queryResponse}
+                            onChange={e => setQueryResponse(e.target.value)}
+                            placeholder="Type your response to the user..."
+                            rows={4}
+                          />
+                          <Button 
+                            onClick={handleRespondToQuery} 
+                            disabled={!queryResponse.trim() || sendingQueryResponse}
+                            className="w-full"
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            {sendingQueryResponse ? "Sending..." : "Send Response"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                      Select a query to view and respond
                     </div>
                   )}
                 </CardContent>

@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { NewsScrollingBanner } from "@/components/NewsScrollingBanner";
 import { Badge } from "@/components/ui/badge";
 import { Footer } from "@/components/Footer";
-import { Lock, TrendingUp, ExternalLink } from "lucide-react";
+import { Lock, TrendingUp, ExternalLink, CreditCard, Smartphone, Copy, Check, Loader2, Upload } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface Signal {
   id: string;
@@ -24,6 +27,12 @@ const Signals = () => {
   const [subscriptionExpiry, setSubscriptionExpiry] = useState<string | null>(null);
   const [signals, setSignals] = useState<Signal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
+
+  const USDT_WALLET_ADDRESS = "TN1UuykftzNNYA8brBiWsd3xasLfAUfTdd";
 
   useEffect(() => {
     const checkSubscription = async () => {
@@ -72,6 +81,97 @@ const Signals = () => {
         })
       );
       setSignals(signalsWithUrls as any);
+    }
+  };
+
+  const copyUSDTAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(USDT_WALLET_ADDRESS);
+      setCopied(true);
+      toast.success("Wallet address copied!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy address");
+    }
+  };
+
+  const handleMpesaPayment = async () => {
+    if (!phoneNumber || phoneNumber.length < 9) {
+      toast.error("Please enter a valid phone number");
+      return;
+    }
+
+    setProcessingPayment(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please login first");
+        navigate("/auth");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("initiate-mpesa-payment", {
+        body: {
+          phone: phoneNumber,
+          amount: 45 * 129, // Convert USD to KES (approximate rate)
+          packageType: "Signal Subscription",
+          analysisSlots: 0
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success("STK Push sent! Check your phone to complete payment.");
+      } else {
+        toast.error(data?.message || "Payment initiation failed");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Payment failed");
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
+  const handleScreenshotUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingScreenshot(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please login first");
+        return;
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `signal-sub-${user.id}-${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("usdt-payments")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { error: insertError } = await supabase
+        .from("usdt_payments")
+        .insert({
+          user_id: user.id,
+          amount_usd: 45,
+          analysis_slots: 0,
+          package_type: "Signal Subscription",
+          screenshot_path: fileName,
+          status: "pending"
+        });
+
+      if (insertError) throw insertError;
+
+      toast.success("Screenshot uploaded! Your subscription will be activated after verification.");
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed");
+    } finally {
+      setUploadingScreenshot(false);
     }
   };
 
@@ -126,16 +226,116 @@ const Signals = () => {
                     Regular updates throughout the day
                   </li>
                 </ul>
-                <Button 
-                  className="w-full" 
-                  onClick={() => window.open("https://www.paypal.com/ncp/payment/X9DZFU5T3LKBG", "_blank")}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Subscribe Now - $45/month
-                </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  After payment, your subscription will be activated within 24 hours.
-                </p>
+
+                <Tabs defaultValue="card" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="card" className="flex items-center gap-1">
+                      <CreditCard className="h-4 w-4" />
+                      Card
+                    </TabsTrigger>
+                    <TabsTrigger value="usdt" className="flex items-center gap-1">
+                      <span className="text-xs font-bold">₮</span>
+                      USDT
+                    </TabsTrigger>
+                    <TabsTrigger value="mpesa" className="flex items-center gap-1">
+                      <Smartphone className="h-4 w-4" />
+                      M-Pesa
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="card" className="space-y-3 mt-4">
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold text-primary">$45</p>
+                      <p className="text-sm text-muted-foreground">Monthly subscription</p>
+                    </div>
+                    <Button 
+                      className="w-full" 
+                      onClick={() => window.open("https://www.paypal.com/ncp/payment/X9DZFU5T3LKBG", "_blank")}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Pay with Card - $45
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Secure payment via PayPal. Subscription activates within 24 hours.
+                    </p>
+                  </TabsContent>
+
+                  <TabsContent value="usdt" className="space-y-3 mt-4">
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold text-primary">45 USDT</p>
+                      <p className="text-sm text-muted-foreground">TRC20 Network</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Wallet Address:</p>
+                      <div className="flex items-center gap-2">
+                        <Input 
+                          value={USDT_WALLET_ADDRESS} 
+                          readOnly 
+                          className="text-xs font-mono"
+                        />
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={copyUSDTAddress}
+                        >
+                          {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">After payment, upload confirmation screenshot:</p>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleScreenshotUpload}
+                          disabled={uploadingScreenshot}
+                          className="text-xs"
+                        />
+                        {uploadingScreenshot && <Loader2 className="h-4 w-4 animate-spin" />}
+                      </div>
+                    </div>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Subscription activates after admin verification (within 24 hours).
+                    </p>
+                  </TabsContent>
+
+                  <TabsContent value="mpesa" className="space-y-3 mt-4">
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold text-primary">KES 5,805</p>
+                      <p className="text-sm text-muted-foreground">≈ $45 USD</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">M-Pesa Phone Number:</p>
+                      <Input
+                        type="tel"
+                        placeholder="e.g., +254712345678"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                      />
+                    </div>
+                    <Button 
+                      className="w-full" 
+                      onClick={handleMpesaPayment}
+                      disabled={processingPayment || !phoneNumber}
+                    >
+                      {processingPayment ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Sending STK Push...
+                        </>
+                      ) : (
+                        <>
+                          <Smartphone className="h-4 w-4 mr-2" />
+                          Pay with M-Pesa
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      You'll receive an STK push on your phone to complete payment.
+                    </p>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           ) : (

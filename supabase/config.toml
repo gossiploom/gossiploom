@@ -35,3 +35,9 @@ verify_jwt = true
 
 [functions.create-paypal-order]
 verify_jwt = true
+
+[functions.send-contact-query]
+verify_jwt = false
+
+[functions.respond-contact-query]
+verify_jwt = true
