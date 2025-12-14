@@ -24,7 +24,6 @@ Deno.serve(async (req) => {
 
     console.log('Analyzing news impact for:', newsItem.title);
 
-    // Call Gemini 2.5 Flash directly (Lovable replaced)
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
@@ -77,17 +76,25 @@ Provide:
 
     const data = await response.json();
 
-    const analysis =
+    const content =
       data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!analysis) {
+    if (!content) {
       throw new Error('No analysis generated');
     }
 
-    console.log('Analysis generated successfully');
-
+    // ✅ RETURN CHAT-COMPLETION COMPATIBLE RESPONSE
     return new Response(
-      JSON.stringify({ analysis }),
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              role: 'assistant',
+              content: content,
+            },
+          },
+        ],
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
