@@ -1,5 +1,3 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -24,24 +22,7 @@ Deno.serve(async (req) => {
 
     console.log('Analyzing news impact for:', newsItem.title);
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: `
-You are a forex trading expert. Analyze economic news and provide clear, concise trading expectations.
-Keep responses under 150 words. Focus on likely market reactions and which currency pairs will be most affected.
-
-Analyze this forex news event and provide trading expectations:
+    const prompt = `Analyze this forex news event and provide trading expectations:
 
 Title: ${newsItem.title}
 Currency: ${newsItem.currency}
@@ -54,19 +35,31 @@ Provide:
 1. Expected market reaction
 2. Which currency pairs to watch (at least four pairs)
 3. Potential trading direction (bullish/bearish)
-4. Key levels or volatility expectations
-                  `.trim(),
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 300,
-          },
-        }),
-      }
-    );
+4. Key levels or volatility expectations`;
+
+    // Call Gemini 2.5 Flash API directly
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `You are a forex trading expert. Analyze economic news and provide clear, concise trading expectations. Keep responses under 150 words. Focus on likely market reactions and which currency pairs will be most affected.\n\n${prompt}`
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 500,
+        }
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -75,26 +68,16 @@ Provide:
     }
 
     const data = await response.json();
+    const analysis = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    const content =
-      data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!content) {
+    if (!analysis) {
       throw new Error('No analysis generated');
     }
 
-    // ✅ RETURN CHAT-COMPLETION COMPATIBLE RESPONSE
+    console.log('Analysis generated successfully');
+
     return new Response(
-      JSON.stringify({
-        choices: [
-          {
-            message: {
-              role: 'assistant',
-              content: content,
-            },
-          },
-        ],
-      }),
+      JSON.stringify({ analysis }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
