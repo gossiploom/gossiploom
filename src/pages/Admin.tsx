@@ -95,6 +95,19 @@ interface ContactQuery {
   created_at: string;
 }
 
+interface AdminSignal {
+  id: string;
+  symbol: string | null;
+  direction: string | null;
+  entry_price: number | null;
+  stop_loss: number | null;
+  take_profit: number | null;
+  risk_reward: string | null;
+  outcome: string;
+  outcome_notes: string | null;
+  created_at: string;
+}
+
 const Admin = () => {
   const navigate = useNavigate();
   const { isAdmin, loading } = useAdminCheck();
@@ -141,15 +154,33 @@ const Admin = () => {
   const [screenshotDialog, setScreenshotDialog] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState("");
 
-  // Signal posting
+  // Signal posting and management
   const [signalDialog, setSignalDialog] = useState(false);
-  const [signalImage, setSignalImage] = useState<File | null>(null);
-  const [signalTitle, setSignalTitle] = useState("");
-  const [signalDescription, setSignalDescription] = useState("");
+  const [signalSymbol, setSignalSymbol] = useState("");
+  const [signalDirection, setSignalDirection] = useState<"long" | "short">("long");
+  const [signalEntry, setSignalEntry] = useState("");
+  const [signalStopLoss, setSignalStopLoss] = useState("");
+  const [signalTakeProfit, setSignalTakeProfit] = useState("");
+  const [signalRiskReward, setSignalRiskReward] = useState("");
   const [postingSignal, setPostingSignal] = useState(false);
+  const [adminSignals, setAdminSignals] = useState<AdminSignal[]>([]);
+  const [editSignalDialog, setEditSignalDialog] = useState(false);
+  const [selectedSignal, setSelectedSignal] = useState<AdminSignal | null>(null);
+  const [outcomeDialog, setOutcomeDialog] = useState(false);
+  const [signalOutcome, setSignalOutcome] = useState<"win" | "loss" | "pending">("pending");
+  const [outcomeNotes, setOutcomeNotes] = useState("");
+  
+  const PRESET_NOTES = "Do not continue to hold your trades if Stop Loss has Reached, exit the trade. Consider also using trailing profit or breakeven to lock any realized profit should price retrace to stop loss before getting to take profit. Break even when 1:1.5 profit is realized";
 
   // Admin reply
   const [replyMessage, setReplyMessage] = useState("");
+
+  // Admin email
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [emailTargetType, setEmailTargetType] = useState<"all" | "single">("all");
+  const [singleEmailAddress, setSingleEmailAddress] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -164,6 +195,7 @@ const Admin = () => {
       fetchPayments();
       fetchSupportThreads();
       fetchContactQueries();
+      fetchAdminSignals();
     }
   }, [isAdmin]);
 
@@ -543,8 +575,8 @@ const Admin = () => {
   };
 
   const handlePostSignal = async () => {
-    if (!signalImage) {
-      toast({ title: "Error", description: "Please select an image", variant: "destructive" });
+    if (!signalSymbol || !signalEntry || !signalStopLoss || !signalTakeProfit || !signalRiskReward) {
+      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
       return;
     }
 
@@ -553,19 +585,14 @@ const Admin = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const fileExt = signalImage.name.split('.').pop();
-      const filePath = `${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("admin-signals")
-        .upload(filePath, signalImage);
-
-      if (uploadError) throw uploadError;
-
       const { error: insertError } = await supabase.from("admin_signals").insert({
-        image_path: filePath,
-        title: signalTitle || null,
-        description: signalDescription || null,
+        symbol: signalSymbol.toUpperCase(),
+        direction: signalDirection,
+        entry_price: parseFloat(signalEntry),
+        stop_loss: parseFloat(signalStopLoss),
+        take_profit: parseFloat(signalTakeProfit),
+        risk_reward: signalRiskReward,
+        additional_notes: PRESET_NOTES,
         created_by: user.id,
       });
 
@@ -573,14 +600,118 @@ const Admin = () => {
 
       toast({ title: "Success", description: "Signal posted successfully" });
       setSignalDialog(false);
-      setSignalImage(null);
-      setSignalTitle("");
-      setSignalDescription("");
+      setSignalSymbol("");
+      setSignalDirection("long");
+      setSignalEntry("");
+      setSignalStopLoss("");
+      setSignalTakeProfit("");
+      setSignalRiskReward("");
+      fetchAdminSignals();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setPostingSignal(false);
     }
+  };
+
+  const fetchAdminSignals = async () => {
+    const { data } = await supabase
+      .from("admin_signals")
+      .select("id, symbol, direction, entry_price, stop_loss, take_profit, risk_reward, outcome, outcome_notes, created_at")
+      .order("created_at", { ascending: false });
+    setAdminSignals(data || []);
+  };
+
+  const handleEditSignal = async () => {
+    if (!selectedSignal || !signalSymbol || !signalEntry || !signalStopLoss || !signalTakeProfit || !signalRiskReward) {
+      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("admin_signals")
+        .update({
+          symbol: signalSymbol.toUpperCase(),
+          direction: signalDirection,
+          entry_price: parseFloat(signalEntry),
+          stop_loss: parseFloat(signalStopLoss),
+          take_profit: parseFloat(signalTakeProfit),
+          risk_reward: signalRiskReward,
+        })
+        .eq("id", selectedSignal.id);
+
+      if (error) throw error;
+
+      toast({ title: "Success", description: "Signal updated successfully" });
+      setEditSignalDialog(false);
+      setSelectedSignal(null);
+      fetchAdminSignals();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleDeleteSignal = async (signalId: string) => {
+    if (!confirm("Are you sure you want to delete this signal?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("admin_signals")
+        .delete()
+        .eq("id", signalId);
+
+      if (error) throw error;
+
+      toast({ title: "Success", description: "Signal deleted successfully" });
+      fetchAdminSignals();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleUpdateOutcome = async () => {
+    if (!selectedSignal) return;
+
+    try {
+      const { error } = await supabase
+        .from("admin_signals")
+        .update({
+          outcome: signalOutcome,
+          outcome_notes: outcomeNotes || null,
+          outcome_updated_at: new Date().toISOString(),
+        })
+        .eq("id", selectedSignal.id);
+
+      if (error) throw error;
+
+      toast({ title: "Success", description: "Outcome updated successfully" });
+      setOutcomeDialog(false);
+      setSelectedSignal(null);
+      setSignalOutcome("pending");
+      setOutcomeNotes("");
+      fetchAdminSignals();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const openEditSignalDialog = (signal: AdminSignal) => {
+    setSelectedSignal(signal);
+    setSignalSymbol(signal.symbol || "");
+    setSignalDirection((signal.direction as "long" | "short") || "long");
+    setSignalEntry(signal.entry_price?.toString() || "");
+    setSignalStopLoss(signal.stop_loss?.toString() || "");
+    setSignalTakeProfit(signal.take_profit?.toString() || "");
+    setSignalRiskReward(signal.risk_reward || "");
+    setEditSignalDialog(true);
+  };
+
+  const openOutcomeDialog = (signal: AdminSignal) => {
+    setSelectedSignal(signal);
+    setSignalOutcome((signal.outcome as "win" | "loss" | "pending") || "pending");
+    setOutcomeNotes(signal.outcome_notes || "");
+    setOutcomeDialog(true);
   };
 
   const handleAdminReply = async () => {
@@ -640,6 +771,44 @@ const Admin = () => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setSendingQueryResponse(false);
+    }
+  };
+
+  const handleSendAdminEmail = async () => {
+    if (!emailSubject.trim() || !emailBody.trim()) {
+      toast({ title: "Error", description: "Subject and body are required", variant: "destructive" });
+      return;
+    }
+
+    if (emailTargetType === "single" && !singleEmailAddress.trim()) {
+      toast({ title: "Error", description: "Email address is required", variant: "destructive" });
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-admin-email", {
+        body: {
+          subject: emailSubject.trim(),
+          body: emailBody.trim(),
+          targetType: emailTargetType,
+          singleEmail: emailTargetType === "single" ? singleEmailAddress.trim() : undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({ 
+        title: "Email sent", 
+        description: data.message || "Email sent successfully" 
+      });
+      setEmailSubject("");
+      setEmailBody("");
+      setSingleEmailAddress("");
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -754,13 +923,14 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="requests" className="space-y-4">
-          <TabsList className="grid grid-cols-7 w-full max-w-5xl">
+          <TabsList className="grid grid-cols-8 w-full max-w-5xl">
             <TabsTrigger value="requests">Requests</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="support">Support</TabsTrigger>
             <TabsTrigger value="queries">Queries</TabsTrigger>
+            <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="signals">Signals</TabsTrigger>
           </TabsList>
 
@@ -1322,6 +1492,73 @@ const Admin = () => {
             </div>
           </TabsContent>
 
+          <TabsContent value="email">
+            <Card>
+              <CardHeader>
+                <CardTitle>Send Email</CardTitle>
+                <CardDescription>Send emails to all users or a single recipient</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Recipients</Label>
+                  <Select value={emailTargetType} onValueChange={(v: "all" | "single") => setEmailTargetType(v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Users ({users.length} users)</SelectItem>
+                      <SelectItem value="single">Single Email Address</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {emailTargetType === "single" && (
+                  <div className="space-y-2">
+                    <Label>Email Address</Label>
+                    <Input
+                      type="email"
+                      placeholder="recipient@example.com"
+                      value={singleEmailAddress}
+                      onChange={e => setSingleEmailAddress(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Subject *</Label>
+                  <Input
+                    placeholder="Enter email subject"
+                    value={emailSubject}
+                    onChange={e => setEmailSubject(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Body *</Label>
+                  <Textarea
+                    placeholder="Enter email body. Use **text** for bold, *text* for italic, __text__ for underline."
+                    value={emailBody}
+                    onChange={e => setEmailBody(e.target.value)}
+                    rows={10}
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Formatting tips: **bold**, *italic*, __underline__. Line breaks will be preserved.
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={handleSendAdminEmail} 
+                  disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim()}
+                  className="w-full"
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {sendingEmail ? "Sending..." : emailTargetType === "all" ? `Send to All ${users.length} Users` : "Send Email"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="signals">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
@@ -1332,43 +1569,88 @@ const Admin = () => {
                 <Dialog open={signalDialog} onOpenChange={setSignalDialog}>
                   <DialogTrigger asChild>
                     <Button>
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Send className="h-4 w-4 mr-2" />
                       Post Signal
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-md">
                     <DialogHeader>
                       <DialogTitle>Post New Signal</DialogTitle>
-                      <DialogDescription>Upload a chart image for subscribers</DialogDescription>
+                      <DialogDescription>Enter trading signal details</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <div>
-                        <Label>Signal Image *</Label>
+                        <Label>Symbol *</Label>
                         <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={e => setSignalImage(e.target.files?.[0] || null)}
+                          value={signalSymbol}
+                          onChange={e => setSignalSymbol(e.target.value)}
+                          placeholder="e.g., EUR/USD, XAU/USD"
                         />
                       </div>
                       <div>
-                        <Label>Title (optional)</Label>
-                        <Input
-                          value={signalTitle}
-                          onChange={e => setSignalTitle(e.target.value)}
-                          placeholder="e.g., EUR/USD Buy Setup"
-                        />
+                        <Label>Direction *</Label>
+                        <Select value={signalDirection} onValueChange={(v: "long" | "short") => setSignalDirection(v)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="long">Long (Buy)</SelectItem>
+                            <SelectItem value="short">Short (Sell)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div>
-                        <Label>Description (optional)</Label>
-                        <Textarea
-                          value={signalDescription}
-                          onChange={e => setSignalDescription(e.target.value)}
-                          placeholder="Additional notes about this signal..."
-                          rows={3}
-                        />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Entry Point *</Label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={signalEntry}
+                            onChange={e => setSignalEntry(e.target.value)}
+                            placeholder="e.g., 1.0850"
+                          />
+                        </div>
+                        <div>
+                          <Label>Stop Loss *</Label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={signalStopLoss}
+                            onChange={e => setSignalStopLoss(e.target.value)}
+                            placeholder="e.g., 1.0800"
+                          />
+                        </div>
                       </div>
-                      <Button onClick={handlePostSignal} disabled={postingSignal || !signalImage} className="w-full">
-                        <Upload className="h-4 w-4 mr-2" />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Take Profit *</Label>
+                          <Input
+                            type="number"
+                            step="any"
+                            value={signalTakeProfit}
+                            onChange={e => setSignalTakeProfit(e.target.value)}
+                            placeholder="e.g., 1.0950"
+                          />
+                        </div>
+                        <div>
+                          <Label>Risk to Reward *</Label>
+                          <Input
+                            value={signalRiskReward}
+                            onChange={e => setSignalRiskReward(e.target.value)}
+                            placeholder="e.g., 1:2"
+                          />
+                        </div>
+                      </div>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <Label className="text-xs text-muted-foreground">Additional Notes (preset):</Label>
+                        <p className="text-xs mt-1">{PRESET_NOTES}</p>
+                      </div>
+                      <Button 
+                        onClick={handlePostSignal} 
+                        disabled={postingSignal || !signalSymbol || !signalEntry || !signalStopLoss || !signalTakeProfit || !signalRiskReward} 
+                        className="w-full"
+                      >
+                        <Send className="h-4 w-4 mr-2" />
                         {postingSignal ? "Posting..." : "Post Signal"}
                       </Button>
                     </div>
@@ -1376,9 +1658,64 @@ const Admin = () => {
                 </Dialog>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground text-center py-8">
-                  {users.filter(u => u.is_signal_subscriber).length} active signal subscribers
-                </p>
+                <div className="flex items-center justify-between mb-4 p-3 bg-muted rounded-lg">
+                  <span className="text-sm">{users.filter(u => u.is_signal_subscriber).length} active signal subscribers</span>
+                  <span className="text-sm text-muted-foreground">{adminSignals.length} signals posted</span>
+                </div>
+                
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-3">
+                    {adminSignals.map(signal => (
+                      <div key={signal.id} className="p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold">{signal.symbol}</span>
+                            <Badge variant={signal.direction === "long" ? "default" : "destructive"}>
+                              {signal.direction === "long" ? "LONG" : "SHORT"}
+                            </Badge>
+                            <Badge 
+                              variant={signal.outcome === "win" ? "default" : signal.outcome === "loss" ? "destructive" : "secondary"}
+                              className={signal.outcome === "win" ? "bg-green-600" : signal.outcome === "loss" ? "bg-red-600" : ""}
+                            >
+                              {signal.outcome.toUpperCase()}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => openEditSignalDialog(signal)}>
+                              Edit
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => openOutcomeDialog(signal)}>
+                              Outcome
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteSignal(signal.id)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Entry:</span> {signal.entry_price}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">SL:</span> {signal.stop_loss}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">TP:</span> {signal.take_profit}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">R:R:</span> {signal.risk_reward}
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {new Date(signal.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    ))}
+                    {adminSignals.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">No signals posted yet</p>
+                    )}
+                  </div>
+                </ScrollArea>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1441,6 +1778,118 @@ const Admin = () => {
             </DialogHeader>
             <div className="flex justify-center">
               <img src={screenshotUrl} alt="Payment proof" className="max-h-[70vh] object-contain rounded-lg" />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Signal Dialog */}
+        <Dialog open={editSignalDialog} onOpenChange={setEditSignalDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Signal</DialogTitle>
+              <DialogDescription>Update trading signal details</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Symbol *</Label>
+                <Input
+                  value={signalSymbol}
+                  onChange={e => setSignalSymbol(e.target.value)}
+                  placeholder="e.g., EUR/USD"
+                />
+              </div>
+              <div>
+                <Label>Direction *</Label>
+                <Select value={signalDirection} onValueChange={(v: "long" | "short") => setSignalDirection(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="long">Long (Buy)</SelectItem>
+                    <SelectItem value="short">Short (Sell)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Entry Point *</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={signalEntry}
+                    onChange={e => setSignalEntry(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Stop Loss *</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={signalStopLoss}
+                    onChange={e => setSignalStopLoss(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Take Profit *</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={signalTakeProfit}
+                    onChange={e => setSignalTakeProfit(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Risk to Reward *</Label>
+                  <Input
+                    value={signalRiskReward}
+                    onChange={e => setSignalRiskReward(e.target.value)}
+                  />
+                </div>
+              </div>
+              <Button onClick={handleEditSignal} className="w-full">
+                Update Signal
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Outcome Dialog */}
+        <Dialog open={outcomeDialog} onOpenChange={setOutcomeDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Update Signal Outcome</DialogTitle>
+              <DialogDescription>
+                {selectedSignal?.symbol} - {selectedSignal?.direction?.toUpperCase()}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Outcome</Label>
+                <Select value={signalOutcome} onValueChange={(v: "win" | "loss" | "pending") => setSignalOutcome(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="win">Win</SelectItem>
+                    <SelectItem value="loss">Loss</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Notes (optional)</Label>
+                <Textarea
+                  value={outcomeNotes}
+                  onChange={e => setOutcomeNotes(e.target.value)}
+                  placeholder="Add any notes about the outcome..."
+                  rows={3}
+                />
+              </div>
+              <Button onClick={handleUpdateOutcome} className="w-full">
+                Update Outcome
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

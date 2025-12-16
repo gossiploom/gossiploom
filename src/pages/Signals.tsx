@@ -15,9 +15,15 @@ import { toast } from "sonner";
 
 interface Signal {
   id: string;
-  image_path: string;
-  title: string | null;
-  description: string | null;
+  symbol: string | null;
+  direction: string | null;
+  entry_price: number | null;
+  stop_loss: number | null;
+  take_profit: number | null;
+  risk_reward: string | null;
+  additional_notes: string | null;
+  outcome: string;
+  outcome_notes: string | null;
   created_at: string;
 }
 
@@ -67,20 +73,11 @@ const Signals = () => {
   const fetchSignals = async () => {
     const { data } = await supabase
       .from("admin_signals")
-      .select("*")
+      .select("id, symbol, direction, entry_price, stop_loss, take_profit, risk_reward, additional_notes, outcome, outcome_notes, created_at")
       .order("created_at", { ascending: false });
 
     if (data) {
-      // Get signed URLs for images
-      const signalsWithUrls = await Promise.all(
-        data.map(async (signal) => {
-          const { data: urlData } = await supabase.storage
-            .from("admin-signals")
-            .createSignedUrl(signal.image_path, 3600);
-          return { ...signal, image_url: urlData?.signedUrl };
-        })
-      );
-      setSignals(signalsWithUrls as any);
+      setSignals(data);
     }
   };
 
@@ -215,15 +212,15 @@ const Signals = () => {
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
-                    Daily trading signals from experts
+                    Daily trading signals with entry points
                   </li>
                   <li className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
-                    Chart images with entry/exit points
+                    Stop loss and take profit levels
                   </li>
                   <li className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
-                    Regular updates throughout the day
+                    Risk to reward ratios included
                   </li>
                 </ul>
 
@@ -357,19 +354,63 @@ const Signals = () => {
                 </Card>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
-                  {signals.map((signal: any) => (
-                    <Card key={signal.id} className="overflow-hidden">
-                      <img 
-                        src={signal.image_url} 
-                        alt={signal.title || "Trading signal"} 
-                        className="w-full h-64 object-contain bg-muted"
-                      />
-                      <CardContent className="p-4">
-                        {signal.title && <h3 className="font-semibold">{signal.title}</h3>}
-                        {signal.description && (
-                          <p className="text-sm text-muted-foreground mt-1">{signal.description}</p>
+                  {signals.map((signal) => (
+                    <Card key={signal.id} className="overflow-hidden border-2">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-xl">{signal.symbol}</CardTitle>
+                            <Badge 
+                              variant={signal.outcome === "win" ? "default" : signal.outcome === "loss" ? "destructive" : "secondary"}
+                              className={signal.outcome === "win" ? "bg-green-600" : signal.outcome === "loss" ? "bg-red-600" : ""}
+                            >
+                              {signal.outcome.toUpperCase()}
+                            </Badge>
+                          </div>
+                          <Badge 
+                            variant={signal.direction === "long" ? "default" : "destructive"}
+                            className={signal.direction === "long" ? "bg-green-600" : "bg-red-600"}
+                          >
+                            {signal.direction === "long" ? "LONG (BUY)" : "SHORT (SELL)"}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                            <p className="text-xs text-muted-foreground mb-1">Entry</p>
+                            <p className="text-2xl font-bold text-blue-500">{signal.entry_price}</p>
+                          </div>
+                          <div className="p-3 bg-red-500/10 rounded-lg border border-red-500/30">
+                            <p className="text-xs text-muted-foreground mb-1">Stop Loss</p>
+                            <p className="text-2xl font-bold text-red-500">{signal.stop_loss}</p>
+                          </div>
+                          <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/30">
+                            <p className="text-xs text-muted-foreground mb-1">Take Profit</p>
+                            <p className="text-2xl font-bold text-green-500">{signal.take_profit}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-center p-2 bg-muted rounded-lg">
+                          <span className="text-sm text-muted-foreground mr-2">Risk to Reward:</span>
+                          <span className="font-bold text-primary">{signal.risk_reward}</span>
+                        </div>
+
+                        {signal.outcome_notes && (
+                          <div className="p-3 bg-primary/10 border border-primary/30 rounded-lg">
+                            <p className="text-xs font-medium text-primary mb-1">📝 Outcome Notes:</p>
+                            <p className="text-xs text-muted-foreground">{signal.outcome_notes}</p>
+                          </div>
                         )}
-                        <p className="text-xs text-muted-foreground mt-2">
+
+                        {signal.additional_notes && (
+                          <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                            <p className="text-xs font-medium text-yellow-600 dark:text-yellow-400 mb-1">⚠️ Important Note:</p>
+                            <p className="text-xs text-muted-foreground">{signal.additional_notes}</p>
+                          </div>
+                        )}
+
+                        <p className="text-xs text-muted-foreground text-center">
                           Posted: {new Date(signal.created_at).toLocaleString()}
                         </p>
                       </CardContent>

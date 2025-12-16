@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.respond-contact-query]
 verify_jwt = true
+
+[functions.send-admin-email]
+verify_jwt = true

@@ -34,24 +34,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-    // Check for duplicate IP address in profiles
-    if (ipAddress) {
-      const { data: existingIpProfile } = await supabase
-        .from("profiles")
-        .select("unique_identifier, name")
-        .eq("registration_ip", ipAddress)
-        .single();
-
-      if (existingIpProfile) {
-        return new Response(
-          JSON.stringify({ 
-            error: `Only one account per IP address is allowed. An account already exists (User #${existingIpProfile.unique_identifier}).` 
-          }),
-          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-    }
-
     // Check for duplicate email in auth.users
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
     const existingEmail = existingUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase().trim());
@@ -279,7 +261,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "TradeAdvisor <onboarding@resend.dev>",
         to: ["sammygits@gmail.com"],
-        subject: "New Account Created - TradeAdvisor",
+        subject: `New Account #${newProfile?.unique_identifier || 'N/A'} Created - TradeAdvisor`,
         html: `
           <h1>New Account Created</h1>
           <p>A new user has successfully created an account on TradeAdvisor.</p>

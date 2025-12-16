@@ -31,6 +31,8 @@ const Auth = () => {
   const [referralCode, setReferralCode] = useState("");
   const [signupLoading, setSignupLoading] = useState(false);
   const [userIp, setUserIp] = useState<string | null>(null);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -111,11 +113,20 @@ const Auth = () => {
       setReferralCode("");
     } catch (error: any) {
       console.error("Account creation error:", error);
-      toast({ 
-        title: "Account Creation Failed", 
-        description: error.message || "Unable to create account. Please try again later.", 
-        variant: "destructive" 
-      });
+      const errorMsg = error.message || "Unable to create account. Please try again later.";
+      
+      // Check if it's an IP restriction error and show prominent dialog
+      if (errorMsg.includes("IP address") || errorMsg.includes("already exists")) {
+        setErrorMessage(`Account not created: ${errorMsg}`);
+        setShowErrorDialog(true);
+        setShowCreateAccount(false);
+      } else {
+        toast({ 
+          title: "Account Creation Failed", 
+          description: errorMsg, 
+          variant: "destructive" 
+        });
+      }
     } finally {
       setSignupLoading(false);
     }
@@ -336,6 +347,29 @@ const Auth = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Error Dialog for IP Restriction */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent className="sm:max-w-md bg-yellow-400 border-yellow-500">
+          <DialogHeader>
+            <DialogTitle className="text-black text-xl font-bold text-center">
+              Account Creation Failed
+            </DialogTitle>
+            <DialogDescription className="text-black text-center text-base font-medium pt-4">
+              {errorMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center pt-4">
+            <Button 
+              onClick={() => setShowErrorDialog(false)}
+              className="bg-black text-yellow-400 hover:bg-gray-800"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="col-span-1 md:col-span-2">
         <Footer />
       </div>
