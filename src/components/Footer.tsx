@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { PlatformGuide } from "./PlatformGuide";
 
 export const Footer = () => {
   return (
@@ -23,6 +24,12 @@ export const Footer = () => {
             <Link to="/refund" className="text-muted-foreground hover:text-primary transition-colors">
               Refund Policy
             </Link>
+            <span className="text-border hidden sm:inline">|</span>
+            <Link to="/faq" className="text-muted-foreground hover:text-primary transition-colors">
+              FAQ
+            </Link>
+            <span className="text-border hidden sm:inline">|</span>
+            <PlatformGuide />
             <span className="text-border hidden sm:inline">|</span>
             <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
               Contact Us

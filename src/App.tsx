@@ -19,6 +19,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Refund from "./pages/Refund";
 import Contact from "./pages/Contact";
+import FAQ from "./pages/FAQ";
 import { AdminNotificationListener } from "./components/AdminNotificationListener";
 import { useUserPresence } from "./hooks/useUserPresence";
 import { useAdminCheck } from "./hooks/useAdminCheck";
@@ -57,6 +58,7 @@ const AppContent = () => {
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/refund" element={<Refund />} />
+        <Route path="/faq" element={<FAQ />} />
         <Route path="/contact" element={<Contact />} />
 
         {/* CATCH-ALL */}

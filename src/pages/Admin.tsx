@@ -167,7 +167,7 @@ const Admin = () => {
   const [editSignalDialog, setEditSignalDialog] = useState(false);
   const [selectedSignal, setSelectedSignal] = useState<AdminSignal | null>(null);
   const [outcomeDialog, setOutcomeDialog] = useState(false);
-  const [signalOutcome, setSignalOutcome] = useState<"win" | "loss" | "pending">("pending");
+  const [signalOutcome, setSignalOutcome] = useState<"win" | "loss" | "pending" | "active" | "breakeven">("pending");
   const [outcomeNotes, setOutcomeNotes] = useState("");
   
   const PRESET_NOTES = "Do not continue to hold your trades if Stop Loss has Reached, exit the trade. Consider also using trailing profit or breakeven to lock any realized profit should price retrace to stop loss before getting to take profit. Break even when 1:1.5 profit is realized";
@@ -1867,14 +1867,16 @@ const Admin = () => {
             <div className="space-y-4">
               <div>
                 <Label>Outcome</Label>
-                <Select value={signalOutcome} onValueChange={(v: "win" | "loss" | "pending") => setSignalOutcome(v)}>
+                <Select value={signalOutcome} onValueChange={(v: "win" | "loss" | "pending" | "active" | "breakeven") => setSignalOutcome(v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="win">Win</SelectItem>
                     <SelectItem value="loss">Loss</SelectItem>
+                    <SelectItem value="breakeven">Break Even</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
