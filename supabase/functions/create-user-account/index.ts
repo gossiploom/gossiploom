@@ -207,6 +207,13 @@ const handler = async (req: Request): Promise<Response> => {
         <p><strong>Email (Username):</strong> ${email}<br/>
         <strong>Password:</strong> ${password}</p>
         
+        <div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 15px; margin: 20px 0; border-radius: 4px;">
+          <h3 style="color: #0284c7; margin: 0 0 10px 0;">📖 Getting Started - Platform Guide</h3>
+          <p style="margin: 0 0 10px 0;">We have prepared a comprehensive <strong>Platform Guide</strong> to help you understand how to use all the features of TradeAdvisor. You can access it from the footer pages.</p>
+          <p style="margin: 0 0 10px 0;"><strong>🎥 Video Walkthrough:</strong> If you prefer visual learning or need additional clarity on how to navigate the platform, we highly recommend watching our <strong>video walkthrough</strong> included in the Platform Guide. It will take you step-by-step through the entire process.</p>
+          <p style="margin: 0;"><strong>❓ Have Questions?</strong> Visit our <strong>FAQ page</strong> for answers to common questions about trading, packages, payments, and more.</p>
+        </div>
+        
         <p>Inside the platform, you will find tools designed to support informed trading decisions and real-time market insights. For better performance, <strong>always use pending trade orders</strong> and <strong>apply your point of invalidation as the stop loss</strong>. This approach protects capital and supports consistent results.</p>
         
         <p>As you begin trading, we recommend focusing on the following pairs and instruments: <strong>US100, US30, EURGBP</strong>, and you can also include <strong>XAUUSD, GBPUSD, EURUSD, USDJPY, and BTCUSD</strong> for broader market exposure.</p>
