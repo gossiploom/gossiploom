@@ -145,9 +145,8 @@ Analyze the provided chart(s) and return a JSON object with this exact structure
   "symbol": "DETECTED_SYMBOL" (e.g., "EURUSD", "XAUUSD", "GBPJPY" - extract from chart),
   "timeframes": ["1H", "4H"] (list the timeframes visible in the charts),
   "direction": "LONG" or "SHORT",
-  "entry": number (entry price - MUST include all decimal places visible on chart including the zeros after the decimal, e.g., 13517.135 not 13517, 4213.000 not 4213),
-  "stopLoss": number (stop loss price based on invalidation level - include all decimals), 
-  "invalidation": number (invalidation level and the amount at risk if greater or less than stop loss value)
+  "entry": number (entry price - Avoid an entry value whose final digit is a zero especially after the decimal, entry point must end withe either, 1, 2, 3, 4, 5, 6, 7.8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating , e.g., 13517.135 not 13517 or 0.19865 not 0.1987),
+  "stopLoss": number (stop loss price based on invalidation level - include all decimals even the zeros after the decimal point, no truncating or rounding off decimals, also avoid stop loss value whose last digit is zero),
   "takeProfit": number (CRITICAL: identify the most realistic level price will likely reach based on technical analysis, NOT based on risk-reward ratio),
   "confidence": number (0-100, your confidence level - higher with multiple timeframe confluence and when point of invalidation gives stop loss lower than the risk per trade. If point of invalidation gives a higher risk than the user is willing the confidence should be low below 55%),
   "rationale": [
@@ -160,18 +159,19 @@ Analyze the provided chart(s) and return a JSON object with this exact structure
     "Take profit rationale: [explain why this is the most likely target - e.g., previous resistance, Fibonacci extension, structure level]",
     "Risk consideration"
   ],
-  "invalidation": "Clear condition that would invalidate this trade"
+  "invalidation": "Clear condition that would invalidate this trade and the risk amount should one fail to consider the stoploss but decide to use point of invalidation as StopLoss"
 }
 
 Key requirements:
 - MUST identify and extract the symbol from the chart(s)
-- CRITICAL: Read price levels with ALL decimal places shown on the chart inclding the zeros after the decimal points (e.g., 13517.135 not 13517, 4213.000 not 4213)
+- CRITICAL: Read price levels with ALL decimal places shown on the chart (e.g., 13517.135 not 13517 or 1.15647 not 1.156 or 4213.000 not 4213)
 - If multiple charts are provided, analyze them for multi-timeframe confluence
 - Higher timeframe should confirm the trend, lower timeframe for precise entry
 ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Major fair value gap, order block, supply/demand, or Fibonacci levels visible on the SMALLEST timeframe
 - Entry should be viable (not too far from current price) and offer minimal drawdown` : `- For IMMEDIATE TRADES: Only generate a signal if price is AT a major technical level RIGHT NOW with strong confirmation
 - Entry must be at the current price shown on chart where there's clear technical significance
-- Stop loss MUST be beyond key structure (not just calculated from risk) - be realistic about market volatility
+- Avoid an entry value whose final digit is a zero especially after the decimal, entry point must end withe either, 1, 2, 3, 4, 5, 6, 7.8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating , e.g., 13517.135 not 13517 or 0.19865 not 0.1987
+-Stop loss MUST be beyond key structure (not just calculated from risk) - be realistic about market volatility
 - Confidence should be 65% or higher for immediate trades (lower confidence = skip the trade when point of invalidation gives a risk of more than 30% despite the identified risk by user if their risk is more than 30%)`}
 - Confidence for trades whose point of invalidation is lower than the risk user for the user should be 80% or higher
 - CRITICAL FOR TAKE PROFIT: Identify the most realistic price target based on:
@@ -184,9 +184,9 @@ ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Majo
   * Be conservative - choose closer, more achievable targets over distant levels
 - Stop loss should be at the invalidation point for the setup (beyond key structure, not arbitrary)
 - For IMMEDIATE trades, stop loss must account for normal market volatility and should be beyond the technical structure
-- Entry, stop loss, and take profit prices must include all visible decimals from the chart even the zeros after the decimal (e.g., 1.15647 not 1.156, 13517.135 not 13517, 4213.000 not 4213)
+- Entry, stop loss, and take profit prices must include all visible decimals from the chart and must end withe either, 1, 2, 3, 4, 5, 6, 7.8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating (e.g., 1.15647 not 1.156, 4213.000 not 4213)
 - Base your analysis on visible technical patterns, fair value gap, order block, support/resistance, trend, and price action
-- Be specific and precise with price levels including all decimals
+- Be specific and precise with price levels including all values after the decimal point and no rounding off or truncating decimals
 - Provide clear, actionable rationale mentioning timeframe confluence if applicable
 - Explain why the take profit level is realistic and likely to be reached
 - For immediate trades, explain why NOW is a good time to enter (what technical confirmation exists at current price)
