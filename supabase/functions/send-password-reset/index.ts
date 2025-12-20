@@ -109,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
       type: "recovery",
       email: email,
       options: {
-        redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.protradeadvisor.vercel.app')}/auth`,
+        redirectTo: `${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.protradeadvisor.vercel.app/settings')}/auth`,
       },
     });
 
