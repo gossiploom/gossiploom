@@ -168,10 +168,10 @@ const Contact = () => {
               You can also reach us directly at:
             </p>
             <a 
-              href="mailto:tradeadvisor.live@gmail.com" 
+              href="mailto:support@tradeadvisor.live" 
               className="text-primary hover:underline font-medium"
             >
-              tradeadvisor.live@gmail.com
+              support@tradeadvisor.live
             </a>
           </div>
         </div>

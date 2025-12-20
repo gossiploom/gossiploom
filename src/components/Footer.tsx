@@ -40,10 +40,10 @@ export const Footer = () => {
           <div className="text-sm">
             <span className="text-muted-foreground">Queries: </span>
             <a 
-              href="mailto:tradeadvisor.live@gmail.com" 
+              href="mailto:support@tradeadvisor.live" 
               className="text-primary hover:underline"
             >
-              tradeadvisor.live@gmail.com
+              support@tradeadvisor.live
             </a>
           </div>
         </div>
