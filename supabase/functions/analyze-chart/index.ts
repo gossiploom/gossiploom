@@ -36,12 +36,12 @@ serve(async (req) => {
 
     console.log(`Processing ${files.length} chart file(s)`);
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const imageParts: { inline_data: { mime_type: string; data: string } }[] = [];
+    const imageBase64Array: string[] = [];
     let csvData: string | null = null;
 
     // Process all files
@@ -61,12 +61,7 @@ serve(async (req) => {
         }
         
         const base64 = btoa(binary);
-        imageParts.push({
-          inline_data: {
-            mime_type: file.type,
-            data: base64
-          }
-        });
+        imageBase64Array.push(`data:${file.type};base64,${base64}`);
         console.log('Image converted to base64 successfully');
       } else if (file.type === 'text/csv') {
         const text = await file.text();
@@ -78,7 +73,7 @@ serve(async (req) => {
 
     // Build AI prompt
     const isPendingOrder = tradeType === 'pending';
-    const systemPrompt = `You are an expert forex trading analyst specializing in technical analysis and trade signal generation. 
+    const systemPrompt = `You are an expert forex trading analyst specializing in technical analysis, smart money concepts and trade signal generation. 
 Your task is to analyze trading charts and provide precise trade recommendations.
 
 CRITICAL: First, identify the trading symbol (currency pair, gold, etc.) from the chart(s). Look for the symbol displayed in the chart.
@@ -192,54 +187,53 @@ ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Majo
 - For immediate trades, explain why NOW is a good time to enter (what technical confirmation exists at current price)
 - Only return the JSON object, no additional text`;
 
-    // Build Gemini API request parts
-    const parts: any[] = [
-      { text: systemPrompt },
-      { 
-        text: files.length > 1 
-          ? `Analyze these ${files.length} charts (different timeframes of the same symbol). Identify the symbol and provide a trade signal with multi-timeframe confluence.`
-          : `Analyze this chart. First identify the symbol from the chart, then provide a trade signal.`
-      }
+    const messages: any[] = [
+      { role: 'system', content: systemPrompt }
     ];
 
-    if (imageParts.length > 0) {
-      // Add all images to parts
-      imageParts.forEach(imagePart => {
-        parts.push(imagePart);
+    if (imageBase64Array.length > 0) {
+      const content: any[] = [
+        { 
+          type: 'text', 
+          text: files.length > 1 
+            ? `Analyze these ${files.length} charts (different timeframes of the same symbol). Identify the symbol and provide a trade signal with multi-timeframe confluence.`
+            : `Analyze this chart. First identify the symbol from the chart, then provide a trade signal.`
+        }
+      ];
+      
+      // Add all images to the content
+      imageBase64Array.forEach(imageBase64 => {
+        content.push({ type: 'image_url', image_url: { url: imageBase64 } });
       });
+      
+      messages.push({ role: 'user', content });
     } else if (csvData) {
-      parts.push({
-        text: `Here is the OHLC CSV data:\n\n${csvData}\n\nIdentify the symbol and timeframe(s), then analyze this data and provide a trade signal.`
+      messages.push({
+        role: 'user',
+        content: `Here is the OHLC CSV data:\n\n${csvData}\n\nIdentify the symbol and timeframe(s), then analyze this data and provide a trade signal.`
       });
     } else {
       throw new Error('Unsupported file type');
     }
 
-    console.log('Calling Gemini AI for chart analysis...');
+    console.log('Calling Lovable AI for chart analysis...');
 
-    const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: parts
-            }
-          ],
-          generationConfig: {
-            temperature: 0.3,
-          }
-        }),
-      }
-    );
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages,
+        temperature: 0.3,
+      }),
+    });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('Gemini API error:', aiResponse.status, errorText);
+      console.error('AI API error:', aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -255,18 +249,13 @@ ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Majo
         );
       }
       
-      throw new Error(`Gemini API error: ${aiResponse.status} - ${errorText}`);
+      throw new Error(`AI API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log('Gemini response received');
+    console.log('AI response received');
 
-    const aiContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!aiContent) {
-      console.error('No content in Gemini response:', JSON.stringify(aiData));
-      throw new Error('Gemini returned no content');
-    }
+    const aiContent = aiData.choices[0].message.content;
     
     // Extract JSON from the response
     let signalData;

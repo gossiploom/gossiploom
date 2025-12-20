@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { PlatformGuide } from "./PlatformGuide";
 
 export const Footer = () => {
   return (
@@ -29,7 +28,9 @@ export const Footer = () => {
               FAQ
             </Link>
             <span className="text-border hidden sm:inline">|</span>
-            <PlatformGuide />
+            <Link to="/platform-guide" className="text-muted-foreground hover:text-primary transition-colors">
+              Platform Guide
+            </Link>
             <span className="text-border hidden sm:inline">|</span>
             <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
               Contact Us

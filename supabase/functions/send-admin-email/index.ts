@@ -12,8 +12,10 @@ const corsHeaders = {
 interface SendEmailRequest {
   subject: string;
   body: string;
-  targetType: "all" | "single";
+  targetType: "all" | "single" | "multiple";
   singleEmail?: string;
+  multipleUserIds?: string[];
+  isWelcomeMessage?: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -22,9 +24,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { subject, body, targetType, singleEmail }: SendEmailRequest = await req.json();
+    const { subject, body, targetType, singleEmail, multipleUserIds, isWelcomeMessage }: SendEmailRequest = await req.json();
 
-    console.log("Processing admin email request:", { subject, targetType, singleEmail });
+    const multipleUserIdsCount = multipleUserIds ? multipleUserIds.length : 0;
+    console.log("Processing admin email request:", { subject, targetType, singleEmail, multipleUserIdsCount, isWelcomeMessage });
 
     // Validate inputs
     if (!subject || !body) {
@@ -35,12 +38,27 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Email address is required for single recipient");
     }
 
+    if (targetType === "multiple" && (!multipleUserIds || multipleUserIds.length === 0)) {
+      throw new Error("At least one user is required for multiple recipients");
+    }
+
     // Convert body to HTML - preserve formatting
     const htmlBody = body
       .replace(/\n/g, "<br />")
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.*?)\*/g, "<em>$1</em>")
       .replace(/__(.*?)__/g, "<u>$1</u>");
+
+    const emailTemplate = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        ${htmlBody}
+        <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;" />
+        <p style="color: #666; font-size: 12px;">
+          This email was sent by Trade Advisor.<br />
+          If you have any questions, please contact our support team.
+        </p>
+      </div>
+    `;
 
     if (targetType === "single") {
       // Send to single email
@@ -51,22 +69,66 @@ const handler = async (req: Request): Promise<Response> => {
         to: [singleEmail!],
         bcc: ["tradeadvisor.live@gmail.com"],
         subject: subject,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            ${htmlBody}
-            <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;" />
-            <p style="color: #666; font-size: 12px;">
-              This email was sent by Trade Advisor.<br />
-              If you have any questions, please contact our support team.
-            </p>
-          </div>
-        `,
+        html: emailTemplate,
       });
 
       console.log("Single email sent:", emailResponse);
 
       return new Response(
         JSON.stringify({ success: true, message: "Email sent successfully", count: 1 }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    } else if (targetType === "multiple") {
+      // Send to multiple selected users - need to fetch their emails first
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      // Get emails for selected user IDs
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error("Error fetching users:", authError);
+        throw new Error("Failed to fetch user list");
+      }
+
+      const selectedEmails = authData.users
+        .filter(user => multipleUserIds!.includes(user.id) && user.email)
+        .map(user => user.email as string);
+
+      console.log(`Sending email to ${selectedEmails.length} selected recipients`);
+      
+      let successCount = 0;
+      let failCount = 0;
+      const errors: string[] = [];
+
+      // Send individual emails to each recipient
+      for (const email of selectedEmails) {
+        try {
+          await resend.emails.send({
+            from: "Trade Advisor <noreply@tradeadvisor.live>",
+            to: [email],
+            bcc: ["tradeadvisor.live@gmail.com"],
+            subject: subject,
+            html: emailTemplate,
+          });
+          successCount++;
+          console.log(`Email sent to: ${email}`);
+        } catch (error: any) {
+          failCount++;
+          errors.push(`${email}: ${error.message}`);
+          console.error(`Failed to send to ${email}:`, error.message);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: `Email sent to ${successCount} users${failCount > 0 ? `, ${failCount} failed` : ''}`, 
+          count: successCount,
+          failCount,
+          errors: errors.length > 0 ? errors : undefined
+        }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     } else {
@@ -89,31 +151,69 @@ const handler = async (req: Request): Promise<Response> => {
         throw new Error("No users found to send emails to");
       }
 
-      console.log(`Sending email to ${userEmails.length} users via BCC`);
+      console.log(`Sending email to ${userEmails.length} users individually`);
 
-      // Send single email with all recipients in BCC to hide addresses from each other
-      // Use a placeholder "to" address (admin email) and put all users in BCC
-      const emailResponse = await resend.emails.send({
-        from: "Trade Advisor <noreply@tradeadvisor.live>",
-        to: ["tradeadvisor.live@gmail.com"], // Admin gets the direct copy
-        bcc: userEmails, // All users in BCC - they won't see each other's emails
-        subject: subject,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            ${htmlBody}
-            <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;" />
-            <p style="color: #666; font-size: 12px;">
-              This email was sent by Trade Advisor.<br />
-              If you have any questions, please contact our support team.
-            </p>
-          </div>
-        `,
-      });
+      // Only use BCC for welcome messages to avoid duplication
+      if (isWelcomeMessage) {
+        // Send single email with BCC for welcome messages
+        const emailResponse = await resend.emails.send({
+          from: "Trade Advisor <noreply@tradeadvisor.live>",
+          to: ["tradeadvisor.live@gmail.com"],
+          bcc: userEmails,
+          subject: subject,
+          html: emailTemplate,
+        });
 
-      console.log("Bulk email sent:", emailResponse);
+        console.log("Welcome message sent via BCC:", emailResponse);
+
+        return new Response(
+          JSON.stringify({ success: true, message: `Welcome email sent to ${userEmails.length} users`, count: userEmails.length }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      // For regular emails, send individually to avoid Resend bouncing
+      let successCount = 0;
+      let failCount = 0;
+      const errors: string[] = [];
+
+      for (const email of userEmails) {
+        try {
+          await resend.emails.send({
+            from: "Trade Advisor <noreply@tradeadvisor.live>",
+            to: [email],
+            subject: subject,
+            html: emailTemplate,
+          });
+          successCount++;
+          console.log(`Email sent to: ${email}`);
+        } catch (error: any) {
+          failCount++;
+          errors.push(`${email}: ${error.message}`);
+          console.error(`Failed to send to ${email}:`, error.message);
+        }
+      }
+
+      // Send a copy to admin
+      try {
+        await resend.emails.send({
+          from: "Trade Advisor <noreply@tradeadvisor.live>",
+          to: ["tradeadvisor.live@gmail.com"],
+          subject: `[Admin Copy] ${subject}`,
+          html: `<p><strong>This is an admin copy of an email sent to ${successCount} users.</strong></p><hr/>${emailTemplate}`,
+        });
+      } catch (e) {
+        console.error("Failed to send admin copy:", e);
+      }
 
       return new Response(
-        JSON.stringify({ success: true, message: `Email sent to ${userEmails.length} users`, count: userEmails.length }),
+        JSON.stringify({ 
+          success: true, 
+          message: `Email sent to ${successCount} users${failCount > 0 ? `, ${failCount} failed` : ''}`, 
+          count: successCount,
+          failCount,
+          errors: errors.length > 0 ? errors.slice(0, 10) : undefined // Limit errors in response
+        }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

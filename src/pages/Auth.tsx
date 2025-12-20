@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { TrendingUp, Briefcase, Target, BarChart, Award } from "lucide-react";
+import { TrendingUp, Briefcase, Target, BarChart, Award, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { NewsScrollingBanner } from "@/components/NewsScrollingBanner";
@@ -33,6 +33,14 @@ const Auth = () => {
   const [userIp, setUserIp] = useState<string | null>(null);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  
+  // Forgot password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLastName, setResetLastName] = useState("");
+  const [resetPhone, setResetPhone] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -129,6 +137,57 @@ const Auth = () => {
       }
     } finally {
       setSignupLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail.trim() || !resetLastName.trim() || !resetPhone.trim()) {
+      toast({ 
+        title: "Missing Information", 
+        description: "Please fill in all required fields.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const response = await supabase.functions.invoke('send-password-reset', {
+        body: { 
+          email: resetEmail.trim(),
+          lastName: resetLastName.trim(),
+          phoneNumber: resetPhone.trim(),
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to send reset link");
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      toast({ 
+        title: "Check Your Email", 
+        description: response.data?.message || "If your account exists and details match, you will receive a password reset link." 
+      });
+      
+      setShowForgotPassword(false);
+      setResetEmail("");
+      setResetLastName("");
+      setResetPhone("");
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+      toast({ 
+        title: "Error", 
+        description: error.message || "Unable to process your request. Please try again later.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -240,7 +299,18 @@ const Auth = () => {
                 <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Signing in..." : "Sign In"}
                 </Button>
-                <div className="pt-4 text-center">
+                <div className="text-center">
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    className="text-sm text-muted-foreground hover:text-primary"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    <KeyRound className="h-3 w-3 mr-1" />
+                    Forgot Password?
+                  </Button>
+                </div>
+                <div className="pt-2 text-center">
                   <Button 
                     type="button" 
                     variant="outline" 
@@ -367,6 +437,62 @@ const Auth = () => {
               Close
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" />
+              Reset Password
+            </DialogTitle>
+            <DialogDescription>
+              Enter your registered email, last name, and phone number. If the details match, a password reset link will be sent to your email.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="resetEmail">Email Address *</Label>
+              <Input 
+                id="resetEmail" 
+                type="email" 
+                placeholder="your@email.com" 
+                value={resetEmail} 
+                onChange={(e) => setResetEmail(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="resetLastName">Last Name *</Label>
+              <Input 
+                id="resetLastName" 
+                type="text" 
+                placeholder="Your registered last name" 
+                value={resetLastName} 
+                onChange={(e) => setResetLastName(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="resetPhone">Phone Number *</Label>
+              <Input 
+                id="resetPhone" 
+                type="tel" 
+                placeholder="Your registered phone number" 
+                value={resetPhone} 
+                onChange={(e) => setResetPhone(e.target.value)} 
+                required 
+              />
+            </div>
+            <div className="bg-muted/50 p-3 rounded-lg text-sm text-muted-foreground">
+              <p>A password reset link will be sent to your registered email address if all details match our records.</p>
+            </div>
+            <Button type="submit" className="w-full" disabled={resetLoading}>
+              {resetLoading ? "Sending..." : "Send Reset Link"}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
 

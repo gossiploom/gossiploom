@@ -1,66 +1,72 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { BookOpen } from "lucide-react";
+import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { BookOpen, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export const PlatformGuide = () => {
+const PlatformGuide = () => {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <button className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
-          <BookOpen className="h-4 w-4" />
-          Platform Guide
-        </button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            📈 TradeAdvisor.live: Platform Onboarding and Signal Generation Guide
-          </DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="h-[70vh] pr-4">
-          <div className="space-y-6 text-sm">
+    <div className="min-h-screen bg-background flex flex-col">
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Back Button */}
+          <div className="mb-6">
+            <Button variant="ghost" asChild className="gap-2">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Link>
+            </Button>
+          </div>
+
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <BookOpen className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold text-foreground">Platform Guide</h1>
+            </div>
+            <p className="text-muted-foreground">
+              📈 TradeAdvisor.live: Platform Onboarding and Signal Generation Guide
+            </p>
+          </div>
+
+          {/* Guide Content */}
+          <div className="space-y-8">
             {/* Welcome Section */}
-            <section>
-              <h3 className="text-lg font-semibold text-primary mb-2">Welcome and Platform Overview</h3>
+            <section className="bg-card rounded-lg border border-border p-6">
+              <h2 className="text-xl font-semibold text-primary mb-4">Welcome and Platform Overview</h2>
               <p className="text-muted-foreground">
                 Thank you for creating an account with TradeAdvisor.live. This platform is designed to assist you in your pursuit of financial independence through high-quality trading signals and expert-generated setups.
               </p>
-              <p className="text-muted-foreground mt-2">
+              <p className="text-muted-foreground mt-3">
                 This introductory guide will provide a comprehensive walkthrough of the platform and the two primary methods through which you can leverage our analytical tools and expertise.
               </p>
             </section>
 
             {/* Video Walkthrough */}
-            <section>
-              <h3 className="text-lg font-semibold text-primary mb-2">📹 Video Walkthrough</h3>
-              <p className="text-muted-foreground mb-3">
+            <section className="bg-card rounded-lg border border-border p-6">
+              <h2 className="text-xl font-semibold text-primary mb-4">📹 Video Walkthrough</h2>
+              <p className="text-muted-foreground mb-4">
                 Watch this quick video guide to see how to navigate and use the platform effectively:
               </p>
               <div className="rounded-lg overflow-hidden border border-border bg-muted/30">
                 <video 
                   controls 
-                  className="w-full max-h-[400px]"
+                  className="w-full max-h-[500px]"
                   preload="metadata"
                 >
                   <source src="/TradeAdvisorGuide.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
-              <p className="text-xs text-muted-foreground mt-2 italic">
+              <p className="text-sm text-muted-foreground mt-3 italic">
                 Tip: Click the fullscreen button for a better viewing experience.
               </p>
             </section>
 
             {/* Options for Signal Access */}
-            <section>
-              <h3 className="text-lg font-semibold text-primary mb-2">Options for Signal Access</h3>
-              <p className="text-muted-foreground mb-3">
+            <section className="bg-card rounded-lg border border-border p-6">
+              <h2 className="text-xl font-semibold text-primary mb-4">Options for Signal Access</h2>
+              <p className="text-muted-foreground mb-4">
                 You can benefit from the TradeAdvisor.live platform through two distinct service models:
               </p>
               <div className="overflow-x-auto">
@@ -89,23 +95,23 @@ export const PlatformGuide = () => {
             </section>
 
             {/* Step 1 */}
-            <section>
-              <h3 className="text-lg font-semibold text-primary mb-2">Step 1: Account Configuration and Risk Management</h3>
-              <p className="text-muted-foreground mb-3">
+            <section className="bg-card rounded-lg border border-border p-6">
+              <h2 className="text-xl font-semibold text-primary mb-4">Step 1: Account Configuration and Risk Management</h2>
+              <p className="text-muted-foreground mb-4">
                 Upon logging into your account with your selected credentials, your first step is to configure your trading preferences in the Settings page:
               </p>
-              <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
+              <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-2">
                 <li><strong>Risk Acceptance Level:</strong> Preset your acceptable risk tolerance.</li>
                 <li><strong>Account Size:</strong> Input your account capital for accurate position sizing.</li>
                 <li><strong>Trading Type:</strong> We recommend utilizing Pending Orders, as this method has demonstrated the highest profitability within our platform's ecosystem.</li>
               </ul>
 
-              <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
-                <h4 className="font-semibold text-foreground mb-2">Broker and Point Configuration Notice</h4>
-                <p className="text-muted-foreground mb-3">
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
+                <h3 className="font-semibold text-foreground mb-3">Broker and Point Configuration Notice</h3>
+                <p className="text-muted-foreground mb-4">
                   The platform's point configuration is primarily calculated based on the JustMarkets broker. If you use a different broker, please be aware that the calculated Stop Loss (SL) and Reward-to-Risk (R:R) ratio values may vary.
                 </p>
-                <h5 className="font-medium text-foreground mb-2">Important Note for Non-JustMarkets Users:</h5>
+                <h4 className="font-medium text-foreground mb-2">Important Note for Non-JustMarkets Users:</h4>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-2">
                   <li>The generated Entry and Take profit values remains valid.</li>
                   <li>Always use the provided Invalidation Point as your definitive Stop Loss.</li>
@@ -116,25 +122,25 @@ export const PlatformGuide = () => {
             </section>
 
             {/* Purchasing Slots */}
-            <section>
-              <h3 className="text-lg font-semibold text-primary mb-2">Purchasing Analysis Slots</h3>
+            <section className="bg-card rounded-lg border border-border p-6">
+              <h2 className="text-xl font-semibold text-primary mb-4">Purchasing Analysis Slots</h2>
               <p className="text-muted-foreground">
                 To generate your own signals, you must have analysis credits. Navigate to the Purchase Slots page. Once purchased, your credits will be issued immediately and will be reflected in the "Analysis Slots" section on the Home Page after a refresh.
               </p>
             </section>
 
             {/* Step 2 */}
-            <section>
-              <h3 className="text-lg font-semibold text-primary mb-2">Step 2: Generating Your Own Trading Setups</h3>
-              <p className="text-muted-foreground mb-3">
+            <section className="bg-card rounded-lg border border-border p-6">
+              <h2 className="text-xl font-semibold text-primary mb-4">Step 2: Generating Your Own Trading Setups</h2>
+              <p className="text-muted-foreground mb-4">
                 Once analysis slots are available, you are ready to generate your own trading setups. A list of highly recommended and profitable trading pairs, optimized for our strategy, was provided to you via email upon registration. Our strategy utilizes technical analysis, and these pairs have proven most effective through extensive backtesting.
               </p>
 
-              <h4 className="font-semibold text-foreground mb-2">Procedure for Optimal Signal Generation</h4>
-              <p className="text-muted-foreground mb-3">
+              <h3 className="font-semibold text-foreground mb-3">Procedure for Optimal Signal Generation</h3>
+              <p className="text-muted-foreground mb-4">
                 To ensure the generation of the most logical and realistic trade signals, please follow these steps precisely:
               </p>
-              <ol className="list-decimal list-inside space-y-3 text-muted-foreground ml-2">
+              <ol className="list-decimal list-inside space-y-4 text-muted-foreground ml-2">
                 <li>
                   <strong>MT4/MT5 Chart Preparation:</strong> On your trading platform, disable price lines or paint them white. This prevents the analysis tool from misinterpreting them as support/resistance levels, which can lead to erroneous signals.
                 </li>
@@ -143,14 +149,14 @@ export const PlatformGuide = () => {
                 </li>
                 <li>
                   <strong>Screenshot Capture:</strong> Capture screenshots of the current chart on the following five timeframes:
-                  <ul className="list-disc list-inside ml-6 mt-1 space-y-1">
+                  <ul className="list-disc list-inside ml-6 mt-2 space-y-1">
                     <li>5-minute (M5)</li>
                     <li>15-minute (M15)</li>
                     <li>1-hour (H1)</li>
                     <li>4-hour (H4)</li>
                     <li>12-hour (H12)</li>
                   </ul>
-                  <p className="ml-6 mt-1 text-sm italic">(Larger timeframes establish market bias, while smaller timeframes help pinpoint optimal entry and exit zones.)</p>
+                  <p className="ml-6 mt-2 text-sm italic">(Larger timeframes establish market bias, while smaller timeframes help pinpoint optimal entry and exit zones.)</p>
                 </li>
                 <li>
                   <strong>Upload Charts:</strong> Return to the TradeAdvisor.live Home Page and upload the five captured screenshots (best results are achieved with five charts).
@@ -165,10 +171,10 @@ export const PlatformGuide = () => {
             </section>
 
             {/* Step 3 */}
-            <section>
-              <h3 className="text-lg font-semibold text-primary mb-2">Step 3: Trade Execution and Monitoring</h3>
-              <p className="text-muted-foreground mb-3">With the signal generated:</p>
-              <ol className="list-decimal list-inside space-y-2 text-muted-foreground ml-2">
+            <section className="bg-card rounded-lg border border-border p-6">
+              <h2 className="text-xl font-semibold text-primary mb-4">Step 3: Trade Execution and Monitoring</h2>
+              <p className="text-muted-foreground mb-4">With the signal generated:</p>
+              <ol className="list-decimal list-inside space-y-3 text-muted-foreground ml-2">
                 <li>
                   <strong>Execute Trade:</strong> Navigate back to your MT4 or MT5 platform and open a Pending Order using the provided values.
                 </li>
@@ -180,9 +186,35 @@ export const PlatformGuide = () => {
                 </li>
               </ol>
             </section>
+
+            {/* Need Help Section */}
+            <div className="text-center p-6 bg-muted/50 rounded-lg border border-border">
+              <h3 className="text-lg font-semibold mb-2">Need More Help?</h3>
+              <p className="text-muted-foreground mb-4">
+                Check out our FAQ page for answers to common questions, or contact our support team.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <Link
+                  to="/faq"
+                  className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+                >
+                  Visit FAQ
+                </Link>
+                <span className="text-border">|</span>
+                <Link
+                  to="/contact"
+                  className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+                >
+                  Contact Support
+                </Link>
+              </div>
+            </div>
           </div>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 };
+
+export default PlatformGuide;

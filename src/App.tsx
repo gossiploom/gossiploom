@@ -20,6 +20,7 @@ import Privacy from "./pages/Privacy";
 import Refund from "./pages/Refund";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
+import PlatformGuide from "./pages/PlatformGuide";
 import { AdminNotificationListener } from "./components/AdminNotificationListener";
 import { useUserPresence } from "./hooks/useUserPresence";
 import { useAdminCheck } from "./hooks/useAdminCheck";
@@ -59,6 +60,7 @@ const AppContent = () => {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/refund" element={<Refund />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/platform-guide" element={<PlatformGuide />} />
         <Route path="/contact" element={<Contact />} />
 
         {/* CATCH-ALL */}

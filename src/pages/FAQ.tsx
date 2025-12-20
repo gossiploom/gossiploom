@@ -5,8 +5,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { HelpCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { HelpCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+
 const FAQ = () => {
   const faqSections = [
     {
@@ -177,6 +179,16 @@ const FAQ = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto">
+          {/* Back Button */}
+          <div className="mb-6">
+            <Button variant="ghost" asChild className="gap-2">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Link>
+            </Button>
+          </div>
+
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-2">

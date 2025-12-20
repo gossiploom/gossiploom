@@ -17,16 +17,6 @@ import { SlideInMenu } from "@/components/SlideInMenu";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Bell, CreditCard, UserPlus, Activity, Send, Check, X, Image, MessageSquare, Upload, Calendar, Globe, Mail } from "lucide-react";
 
-interface AccountRequest {
-  id: string;
-  full_name: string;
-  email: string;
-  phone_number: string;
-  status: string;
-  created_at: string;
-  rejection_reason: string | null;
-  request_ip: string | null;
-}
 
 interface UserWithDetails {
   user_id: string;
@@ -113,7 +103,6 @@ const Admin = () => {
   const { isAdmin, loading } = useAdminCheck();
   const { toast } = useToast();
   
-  const [accountRequests, setAccountRequests] = useState<AccountRequest[]>([]);
   const [users, setUsers] = useState<UserWithDetails[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [supportThreads, setSupportThreads] = useState<SupportThread[]>([]);
@@ -137,7 +126,7 @@ const Admin = () => {
   // Notification form
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
-  const [notificationTarget, setNotificationTarget] = useState("all");
+  const [notificationTarget, setNotificationTarget] = useState<string[]>(["all"]);
   const [notificationDuration, setNotificationDuration] = useState("10");
   const [sendingNotification, setSendingNotification] = useState(false);
 
@@ -178,8 +167,9 @@ const Admin = () => {
   // Admin email
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
-  const [emailTargetType, setEmailTargetType] = useState<"all" | "single">("all");
+  const [emailTargetType, setEmailTargetType] = useState<"all" | "single" | "multiple">("all");
   const [singleEmailAddress, setSingleEmailAddress] = useState("");
+  const [selectedEmailUsers, setSelectedEmailUsers] = useState<string[]>([]);
   const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
@@ -190,7 +180,6 @@ const Admin = () => {
 
   useEffect(() => {
     if (isAdmin) {
-      fetchAccountRequests();
       fetchUsers();
       fetchPayments();
       fetchSupportThreads();
@@ -198,14 +187,6 @@ const Admin = () => {
       fetchAdminSignals();
     }
   }, [isAdmin]);
-
-  const fetchAccountRequests = async () => {
-    const { data } = await supabase
-      .from("account_requests")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setAccountRequests(data || []);
-  };
 
   const fetchUsers = async () => {
     const { data: profiles } = await supabase
@@ -374,25 +355,6 @@ const Admin = () => {
     }
   };
 
-  const handleProcessRequest = async (request: AccountRequest, approve: boolean, rejectionReason?: string) => {
-    if (approve) {
-      setNewUserEmail(request.email);
-      setNewUserName(request.full_name);
-      setNewUserPhone(request.phone_number);
-      setCreateUserDialog(true);
-    }
-
-    await supabase
-      .from("account_requests")
-      .update({ 
-        status: approve ? "approved" : "rejected",
-        processed_at: new Date().toISOString(),
-        rejection_reason: rejectionReason || null,
-      })
-      .eq("id", request.id);
-
-    fetchAccountRequests();
-  };
 
   const handleSendNotification = async () => {
     if (!notificationTitle || !notificationMessage) {
@@ -400,26 +362,42 @@ const Admin = () => {
       return;
     }
 
+    if (notificationTarget.length === 0) {
+      toast({ title: "Error", description: "Please select at least one recipient", variant: "destructive" });
+      return;
+    }
+
     setSendingNotification(true);
     try {
-      const notificationData: any = {
-        title: notificationTitle,
-        message: notificationMessage,
-        duration_seconds: parseInt(notificationDuration),
-        is_global: notificationTarget === "all",
-      };
-
-      if (notificationTarget !== "all") {
-        notificationData.target_user_id = notificationTarget;
+      const isGlobal = notificationTarget.includes("all");
+      
+      if (isGlobal) {
+        // Send global notification
+        const { error } = await supabase.from("admin_notifications").insert({
+          title: notificationTitle,
+          message: notificationMessage,
+          duration_seconds: parseInt(notificationDuration),
+          is_global: true,
+        });
+        if (error) throw error;
+      } else {
+        // Send to each selected user
+        const notifications = notificationTarget.map(userId => ({
+          title: notificationTitle,
+          message: notificationMessage,
+          duration_seconds: parseInt(notificationDuration),
+          is_global: false,
+          target_user_id: userId,
+        }));
+        
+        const { error } = await supabase.from("admin_notifications").insert(notifications);
+        if (error) throw error;
       }
 
-      const { error } = await supabase.from("admin_notifications").insert(notificationData);
-      if (error) throw error;
-
-      toast({ title: "Success", description: "Notification sent" });
+      toast({ title: "Success", description: `Notification sent to ${isGlobal ? 'all users' : `${notificationTarget.length} user(s)`}` });
       setNotificationTitle("");
       setNotificationMessage("");
-      setNotificationTarget("all");
+      setNotificationTarget(["all"]);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -785,6 +763,11 @@ const Admin = () => {
       return;
     }
 
+    if (emailTargetType === "multiple" && selectedEmailUsers.length === 0) {
+      toast({ title: "Error", description: "Please select at least one user", variant: "destructive" });
+      return;
+    }
+
     setSendingEmail(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-admin-email", {
@@ -793,6 +776,7 @@ const Admin = () => {
           body: emailBody.trim(),
           targetType: emailTargetType,
           singleEmail: emailTargetType === "single" ? singleEmailAddress.trim() : undefined,
+          multipleUserIds: emailTargetType === "multiple" ? selectedEmailUsers : undefined,
         },
       });
 
@@ -805,6 +789,7 @@ const Admin = () => {
       setEmailSubject("");
       setEmailBody("");
       setSingleEmailAddress("");
+      setSelectedEmailUsers([]);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -822,8 +807,6 @@ const Admin = () => {
 
   if (!isAdmin) return null;
 
-  const pendingRequests = accountRequests.filter(r => r.status === "pending");
-  const rejectedRequests = accountRequests.filter(r => r.status === "rejected");
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -871,19 +854,6 @@ const Admin = () => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-500/20 rounded-lg">
-                  <UserPlus className="h-5 w-5 text-yellow-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Pending Requests</p>
-                  <p className="text-2xl font-bold">{pendingRequests.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
                 <div className="p-2 bg-purple-500/20 rounded-lg">
                   <CreditCard className="h-5 w-5 text-purple-500" />
                 </div>
@@ -922,9 +892,8 @@ const Admin = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="requests" className="space-y-4">
-          <TabsList className="grid grid-cols-8 w-full max-w-5xl">
-            <TabsTrigger value="requests">Requests</TabsTrigger>
+        <Tabs defaultValue="users" className="space-y-4">
+          <TabsList className="grid grid-cols-7 w-full max-w-5xl">
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
@@ -933,95 +902,6 @@ const Admin = () => {
             <TabsTrigger value="email">Email</TabsTrigger>
             <TabsTrigger value="signals">Signals</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="requests">
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pending Account Requests</CardTitle>
-                  <CardDescription>Review and process account creation requests</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>IP Address</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pendingRequests.map(request => (
-                        <TableRow key={request.id}>
-                          <TableCell>{request.full_name}</TableCell>
-                          <TableCell>{request.email}</TableCell>
-                          <TableCell>{request.phone_number}</TableCell>
-                          <TableCell className="font-mono text-xs">{request.request_ip || "—"}</TableCell>
-                          <TableCell>{new Date(request.created_at).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button size="sm" onClick={() => handleProcessRequest(request, true)}>
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleProcessRequest(request, false, "Rejected by admin")}>
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {pendingRequests.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center text-muted-foreground">
-                            No pending requests
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Rejected Requests</CardTitle>
-                  <CardDescription>Requests that were rejected</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Rejection Reason</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {rejectedRequests.map(request => (
-                        <TableRow key={request.id}>
-                          <TableCell>{request.full_name}</TableCell>
-                          <TableCell>{request.email}</TableCell>
-                          <TableCell className="text-destructive">{request.rejection_reason || "—"}</TableCell>
-                          <TableCell>{new Date(request.created_at).toLocaleDateString()}</TableCell>
-                        </TableRow>
-                      ))}
-                      {rejectedRequests.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center text-muted-foreground">
-                            No rejected requests
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
 
           <TabsContent value="users">
             <Card>
@@ -1248,25 +1128,47 @@ const Admin = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Target</Label>
-                    <Select value={notificationTarget} onValueChange={setNotificationTarget}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4" />
-                            All Visitors (including non-users)
-                          </div>
-                        </SelectItem>
-                        {users.map(user => (
-                          <SelectItem key={user.user_id} value={user.user_id}>
-                            {user.name || user.unique_identifier} ({user.unique_identifier})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>Target Recipients</Label>
+                    <div className="mt-2 space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={notificationTarget.includes("all")}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNotificationTarget(["all"]);
+                            } else {
+                              setNotificationTarget([]);
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <Globe className="h-4 w-4" />
+                        <span className="text-sm font-medium">All Visitors (including non-users)</span>
+                      </label>
+                      <div className="border-t my-2" />
+                      {users.map(user => (
+                        <label key={user.user_id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={notificationTarget.includes(user.user_id)}
+                            disabled={notificationTarget.includes("all")}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setNotificationTarget(prev => prev.filter(t => t !== "all").concat(user.user_id));
+                              } else {
+                                setNotificationTarget(prev => prev.filter(t => t !== user.user_id));
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <span className="text-sm">{user.name || user.unique_identifier} ({user.unique_identifier})</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Selected: {notificationTarget.includes("all") ? "All" : `${notificationTarget.length} user(s)`}
+                    </p>
                   </div>
                   <div>
                     <Label>Duration (seconds, 0 = until dismissed)</Label>
@@ -1278,7 +1180,7 @@ const Admin = () => {
                     />
                   </div>
                 </div>
-                <Button onClick={handleSendNotification} disabled={sendingNotification} className="w-full">
+                <Button onClick={handleSendNotification} disabled={sendingNotification || notificationTarget.length === 0} className="w-full">
                   <Send className="h-4 w-4 mr-2" />
                   {sendingNotification ? "Sending..." : "Send Notification"}
                 </Button>
@@ -1496,17 +1398,22 @@ const Admin = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Send Email</CardTitle>
-                <CardDescription>Send emails to all users or a single recipient</CardDescription>
+                <CardDescription>Send emails to all users, multiple users, or a single recipient</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Recipients</Label>
-                  <Select value={emailTargetType} onValueChange={(v: "all" | "single") => setEmailTargetType(v)}>
+                  <Select value={emailTargetType} onValueChange={(v: "all" | "single" | "multiple") => {
+                    setEmailTargetType(v);
+                    setSelectedEmailUsers([]);
+                    setSingleEmailAddress("");
+                  }}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Users ({users.length} users)</SelectItem>
+                      <SelectItem value="multiple">Select Multiple Users</SelectItem>
                       <SelectItem value="single">Single Email Address</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1521,6 +1428,34 @@ const Admin = () => {
                       value={singleEmailAddress}
                       onChange={e => setSingleEmailAddress(e.target.value)}
                     />
+                  </div>
+                )}
+
+                {emailTargetType === "multiple" && (
+                  <div className="space-y-2">
+                    <Label>Select Users</Label>
+                    <div className="max-h-48 overflow-y-auto border rounded-md p-3 space-y-2">
+                      {users.map(user => (
+                        <label key={user.user_id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedEmailUsers.includes(user.user_id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedEmailUsers(prev => [...prev, user.user_id]);
+                              } else {
+                                setSelectedEmailUsers(prev => prev.filter(id => id !== user.user_id));
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <span className="text-sm">{user.name || user.unique_identifier} ({user.unique_identifier})</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Selected: {selectedEmailUsers.length} user(s)
+                    </p>
                   </div>
                 )}
 
@@ -1549,11 +1484,14 @@ const Admin = () => {
 
                 <Button 
                   onClick={handleSendAdminEmail} 
-                  disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim()}
+                  disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim() || (emailTargetType === "multiple" && selectedEmailUsers.length === 0)}
                   className="w-full"
                 >
                   <Send className="h-4 w-4 mr-2" />
-                  {sendingEmail ? "Sending..." : emailTargetType === "all" ? `Send to All ${users.length} Users` : "Send Email"}
+                  {sendingEmail ? "Sending..." : 
+                    emailTargetType === "all" ? `Send to All ${users.length} Users` : 
+                    emailTargetType === "multiple" ? `Send to ${selectedEmailUsers.length} User(s)` : 
+                    "Send Email"}
                 </Button>
               </CardContent>
             </Card>

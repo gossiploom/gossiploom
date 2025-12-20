@@ -73,7 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
         <p><strong>Subject:</strong> ${originalSubject}</p>
         <p>${originalMessage.replace(/\n/g, "<br />")}</p>
         <hr />
-        <p>If you have any further questions, please don't hesitate to contact us.</p>
+        <p>If you have any further questions, please don't hesitate to contact us on support@tradeadvisor.live.</p>
         <p>Best regards,<br />The Trade Advisor Team</p>
       `,
     });
