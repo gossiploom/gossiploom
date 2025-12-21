@@ -464,7 +464,7 @@ const Index = () => {
                     Ready to Analyze
                   </h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    Configure your account settings and upload minimum of 3 charts to receive a Trade Advisor-powered trade signal with precise entry, stop-loss, and take-profit levels. Best charts to upload are 15M, 30M, 1H, 4H and 6H or 8H or 12H or 1D
+                    Configure your account settings and upload minimum of 3 charts to receive a Trade Advisor-powered trade signal with precise entry, stop-loss, and take-profit levels. Best charts to upload are 5M, 15M, 1H, 4H and 6H or 8H or 12H or 1D
                   </p>
                 </div>
               </div>
