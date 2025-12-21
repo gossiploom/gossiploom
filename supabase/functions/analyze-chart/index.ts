@@ -175,7 +175,7 @@ Analyze the provided chart(s) and return a JSON object with this exact structure
   "symbol": "DETECTED_SYMBOL" (e.g., "EURUSD", "XAUUSD", "GBPJPY" - extract from chart),
   "timeframes": ["1H", "4H"] (list the timeframes visible in the charts),
   "direction": "LONG" or "SHORT",
-  "entry": number (entry price - Avoid an entry value whose final digit is a zero especially after the decimal, entry point must end withe either, 1, 2, 3, 4, 5, 6, 7.8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating , e.g., 13517.135 not 13517 or 0.19865 not 0.1987),
+  "entry": number (entry price - Avoid an entry value whose final digit is a zero especially after the decimal, entry point must end withe either, 1, 2, 3, 4, 5, 6, 7, 8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating , e.g., 13517.135 not 13517 or 0.19865 not 0.1987),
   "stopLoss": number (stop loss price based on invalidation level - include all decimals even the zeros after the decimal point, no truncating or rounding off decimals, also avoid stop loss value whose last digit is zero),
   "takeProfit": number (CRITICAL: identify the most realistic level price will likely reach based on technical analysis, NOT based on risk-reward ratio),
   "confidence": number (0-100, your confidence level - higher with multiple timeframe confluence and when point of invalidation gives stop loss lower than the risk per trade. If point of invalidation gives a higher risk than the user is willing the confidence should be low below 55%),
@@ -200,7 +200,7 @@ Key requirements:
 ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Major fair value gap, order block, supply/demand, or Fibonacci levels visible on the SMALLEST timeframe
 - Entry should be viable (not too far from current price) and offer minimal drawdown` : `- For IMMEDIATE TRADES: Only generate a signal if price is AT a major technical level RIGHT NOW with strong confirmation
 - Entry must be at the current price shown on chart where there's clear technical significance
-- Avoid an entry value whose final digit is a zero especially after the decimal, entry point must end withe either, 1, 2, 3, 4, 5, 6, 7.8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating , e.g., 13517.135 not 13517 or 0.19865 not 0.1987
+- Avoid an entry value whose final digit is a zero especially after the decimal, entry point must end withe either, 1, 2, 3, 4, 5, 6, 7, 8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating , e.g., 13517.135 not 13517 or 0.19865 not 0.1987
 -Stop loss MUST be beyond key structure (not just calculated from risk) - be realistic about market volatility
 - Confidence should be 65% or higher for immediate trades (lower confidence = skip the trade when point of invalidation gives a risk of more than 30% despite the identified risk by user if their risk is more than 30%)`}
 - Confidence for trades whose point of invalidation is lower than the risk user for the user should be 80% or higher
@@ -214,7 +214,7 @@ ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Majo
   * Be conservative - choose closer, more achievable targets over distant levels
 - Stop loss should be at the invalidation point for the setup (beyond key structure, not arbitrary)
 - For IMMEDIATE trades, stop loss must account for normal market volatility and should be beyond the technical structure
-- Entry, stop loss, and take profit prices must include all visible decimals from the chart and must end withe either, 1, 2, 3, 4, 5, 6, 7.8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating (e.g., 1.15647 not 1.156, 4213.000 not 4213)
+- Entry, stop loss, and take profit prices must include all visible decimals from the chart and must end withe either, 1, 2, 3, 4, 5, 6, 7, 8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating (e.g., 1.15647 not 1.156, 4213.000 not 4213)
 - Base your analysis on visible technical patterns, fair value gap, order block, support/resistance, trend, and price action
 - Be specific and precise with price levels including all values after the decimal point and no rounding off or truncating decimals
 - Provide clear, actionable rationale mentioning timeframe confluence if applicable
@@ -345,7 +345,7 @@ ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Majo
     // --------------------------------
 
     // Check if trade is viable (especially for immediate trades)
-    if (!isPendingOrder && signalData.confidence < 75) {
+    if (!isPendingOrder && signalData.confidence < 70) {
       console.log('Trade not viable - confidence rating too low for immediate entry');
       return new Response(
         JSON.stringify({ 
