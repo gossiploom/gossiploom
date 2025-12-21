@@ -18,6 +18,11 @@ interface SendEmailRequest {
   isWelcomeMessage?: boolean;
 }
 
+// Simple delay function
+function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -55,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
         <hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;" />
         <p style="color: #666; font-size: 12px;">
           This email was sent by Trade Advisor.<br />
-          If you have any questions, please contact our support team.
+          If you have any questions, please contact our support team on support@tradeadvisor.live
         </p>
       </div>
     `;
@@ -65,7 +70,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Sending email to single recipient:", singleEmail);
       
       const emailResponse = await resend.emails.send({
-        from: "Trade Advisor <noreply@tradeadvisor.live>",
+        from: "Trade Advisor <support@tradeadvisor.live>",
         to: [singleEmail!],
         bcc: ["tradeadvisor.live@gmail.com"],
         subject: subject,
@@ -106,20 +111,22 @@ const handler = async (req: Request): Promise<Response> => {
       for (const email of selectedEmails) {
         try {
           await resend.emails.send({
-            from: "Trade Advisor <noreply@tradeadvisor.live>",
+            from: "Trade Advisor <support@tradeadvisor.live>",
             to: [email],
-            bcc: ["tradeadvisor.live@gmail.com"],
+            bcc: ["admin@tradeadvisor.live"],
             subject: subject,
             html: emailTemplate,
           });
-          successCount++;
-          console.log(`Email sent to: ${email}`);
-        } catch (error: any) {
-          failCount++;
-          errors.push(`${email}: ${error.message}`);
-          console.error(`Failed to send to ${email}:`, error.message);
-        }
-      }
+    successCount++;
+    console.log(`Email sent to: ${email}`);
+  } catch (error: any) {
+    failCount++;
+    errors.push(`${email}: ${error.message}`);
+    console.error(`Failed to send to ${email}:`, error.message);
+  }
+
+  await delay(2000);
+}
 
       return new Response(
         JSON.stringify({ 
@@ -157,9 +164,9 @@ const handler = async (req: Request): Promise<Response> => {
       if (isWelcomeMessage) {
         // Send single email with BCC for welcome messages
         const emailResponse = await resend.emails.send({
-          from: "Trade Advisor <noreply@tradeadvisor.live>",
-          to: ["tradeadvisor.live@gmail.com"],
-          bcc: userEmails,
+          from: "Trade Advisor <support@tradeadvisor.live>",
+          to: userEmails,
+          bcc: ["admin@tradeadvisor.live"],
           subject: subject,
           html: emailTemplate,
         });
@@ -180,7 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
       for (const email of userEmails) {
         try {
           await resend.emails.send({
-            from: "Trade Advisor <noreply@tradeadvisor.live>",
+            from: "Trade Advisor <support@tradeadvisor.live>",
             to: [email],
             subject: subject,
             html: emailTemplate,
@@ -191,14 +198,15 @@ const handler = async (req: Request): Promise<Response> => {
           failCount++;
           errors.push(`${email}: ${error.message}`);
           console.error(`Failed to send to ${email}:`, error.message);
-        }
       }
+      await delay(2000); // Wait 2 seconds between emails
+    }
 
-      // Send a copy to admin
+    // Send admin copy
       try {
         await resend.emails.send({
-          from: "Trade Advisor <noreply@tradeadvisor.live>",
-          to: ["tradeadvisor.live@gmail.com"],
+          from: "Trade Advisor <support@tradeadvisor.live>",
+          to: ["admin@tradeadvisor.live"],
           subject: `[Admin Copy] ${subject}`,
           html: `<p><strong>This is an admin copy of an email sent to ${successCount} users.</strong></p><hr/>${emailTemplate}`,
         });
