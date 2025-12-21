@@ -3,8 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Decimal from "https://esm.sh/decimal.js@10.4.3";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 /* ===================== DECIMAL VALIDATION ===================== */
@@ -34,21 +34,22 @@ function validatePrice(value: Decimal, fieldName: string) {
   validateLastDigit(value, fieldName);
 }
 
-/* ===================== SERVER ===================== */
+/* ============================================================= */
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Received request, parsing formData...');
     const formData = await req.formData();
-
-    const fileCount = Number(formData.get("fileCount")) || 1;
-    const accountSize = new Decimal(formData.get("accountSize") || 0);
-    const riskPercent = new Decimal(formData.get("riskPercent") || 0);
-    const pointsPerUsd = new Decimal(formData.get("pointsPerUsd") || 0);
-    const tradeType = formData.get("tradeType") || "pending";
+    console.log('FormData parsed successfully');
+    const fileCount = Number(formData.get('fileCount')) || 1;
+    const accountSize = Number(formData.get('accountSize'));
+    const riskPercent = Number(formData.get('riskPercent'));
+    const pointsPerUsd = Number(formData.get('pointsPerUsd'));
+    const tradeType = formData.get('tradeType') || 'pending';
 
     const files: File[] = [];
     for (let i = 0; i < fileCount; i++) {
@@ -56,47 +57,57 @@ serve(async (req) => {
       if (file) files.push(file);
     }
 
-    if (!files.length) {
+    if (files.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No files provided" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: 'No files provided' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    console.log(`Processing ${files.length} chart file(s)`);
+
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+      throw new Error('GEMINI_API_KEY is not configured');
     }
 
-    const imageParts: any[] = [];
+    const imageParts: { inline_data: { mime_type: string; data: string } }[] = [];
     let csvData: string | null = null;
 
+    // Process all files
     for (const file of files) {
-      if (file.type.startsWith("image/")) {
-        const buffer = new Uint8Array(await file.arrayBuffer());
-        let binary = "";
-        for (let i = 0; i < buffer.length; i += 8192) {
-          binary += String.fromCharCode(...buffer.subarray(i, i + 8192));
+      console.log('Processing:', file.name, file.type);
+      
+      if (file.type.startsWith('image/')) {
+        const arrayBuffer = await file.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        
+        // Convert to base64 in chunks to avoid stack overflow
+        let binary = '';
+        const chunkSize = 8192;
+        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+          const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+          binary += String.fromCharCode(...chunk);
         }
+        
+        const base64 = btoa(binary);
         imageParts.push({
           inline_data: {
             mime_type: file.type,
-            data: btoa(binary),
-          },
+            data: base64
+          }
         });
-      } else if (file.type === "text/csv") {
+        console.log('Image converted to base64 successfully');
+      } else if (file.type === 'text/csv') {
         const text = await file.text();
-        csvData = csvData ? `${csvData}\n${text}` : text;
+        csvData = csvData ? `${csvData}\n\n${text}` : text;
       }
     }
 
-    /* ===================== RISK ===================== */
+    const riskAmount = (accountSize * riskPercent) / 100;
 
-    const riskAmount = accountSize.mul(riskPercent).div(100);
-
-    /* ===================== PROMPT (UNCHANGED) ===================== */
-
-    const isPendingOrder = tradeType === "pending";
+    // Build AI prompt
+    const isPendingOrder = tradeType === 'pending';
     const systemPrompt = `You are an expert forex trading analyst specializing in technical analysis and trade signal generation. 
 Your task is to analyze trading charts and provide precise trade recommendations.
 
@@ -189,7 +200,7 @@ Key requirements:
 ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Major fair value gap, order block, supply/demand, or Fibonacci levels visible on the SMALLEST timeframe
 - Entry should be viable (not too far from current price) and offer minimal drawdown` : `- For IMMEDIATE TRADES: Only generate a signal if price is AT a major technical level RIGHT NOW with strong confirmation
 - Entry must be at the current price shown on chart where there's clear technical significance
-- Avoid an entry value whose final digit is a zero especially after the decimal, entry point must end withe either, 1, 2, 3, 4, 5, 6, 7, 8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating , e.g., 13517.135 not 13517 or 0.19865 not 0.1987
+- Avoid an entry value whose final digit is a zero especially after the decimal, entry point must end withe either, 1, 2, 3, 4, 5, 6, 7.8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating , e.g., 13517.135 not 13517 or 0.19865 not 0.1987
 -Stop loss MUST be beyond key structure (not just calculated from risk) - be realistic about market volatility
 - Confidence should be 65% or higher for immediate trades (lower confidence = skip the trade when point of invalidation gives a risk of more than 30% despite the identified risk by user if their risk is more than 30%)`}
 - Confidence for trades whose point of invalidation is lower than the risk user for the user should be 80% or higher
@@ -203,7 +214,7 @@ ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Majo
   * Be conservative - choose closer, more achievable targets over distant levels
 - Stop loss should be at the invalidation point for the setup (beyond key structure, not arbitrary)
 - For IMMEDIATE trades, stop loss must account for normal market volatility and should be beyond the technical structure
-- Entry, stop loss, and take profit prices must include all visible decimals from the chart and must end withe either, 1, 2, 3, 4, 5, 6, 7, 8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating (e.g., 1.15647 not 1.156, 4213.000 not 4213)
+- Entry, stop loss, and take profit prices must include all visible decimals from the chart and must end withe either, 1, 2, 3, 4, 5, 6, 7.8 or 9, and mUST include all decimal digits visible on the chart without rounding off or truncating (e.g., 1.15647 not 1.156, 4213.000 not 4213)
 - Base your analysis on visible technical patterns, fair value gap, order block, support/resistance, trend, and price action
 - Be specific and precise with price levels including all values after the decimal point and no rounding off or truncating decimals
 - Provide clear, actionable rationale mentioning timeframe confluence if applicable
@@ -214,104 +225,182 @@ ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Majo
     // Build Gemini API request parts
     const parts: any[] = [
       { text: systemPrompt },
-      {
-        text:
-          files.length > 1
-            ? `Analyze these ${files.length} charts (multiple timeframes).`
-            : `Analyze this chart and provide a trade signal.`,
-      },
-      ...imageParts,
+      { 
+        text: files.length > 1 
+          ? `Analyze these ${files.length} charts (different timeframes of the same symbol). Identify the symbol and provide a trade signal with multi-timeframe confluence.`
+          : `Analyze this chart. First identify the symbol from the chart, then provide a trade signal.`
+      }
     ];
 
-    /* ===================== GEMINI CALL ===================== */
+    if (imageParts.length > 0) {
+      // Add all images to parts
+      imageParts.forEach(imagePart => {
+        parts.push(imagePart);
+      });
+    } else if (csvData) {
+      parts.push({
+        text: `Here is the OHLC CSV data:\n\n${csvData}\n\nIdentify the symbol and timeframe(s), then analyze this data and provide a trade signal.`
+      });
+    } else {
+      throw new Error('Unsupported file type');
+    }
+
+    console.log('Calling Gemini AI for chart analysis...');
 
     const aiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          contents: [{ parts }],
-          generationConfig: { temperature: 0.3 },
+          contents: [
+            {
+              parts: parts
+            }
+          ],
+          generationConfig: {
+            temperature: 0.3,
+          }
         }),
       }
     );
 
     if (!aiResponse.ok) {
-      throw new Error(`Gemini API error: ${aiResponse.status}`);
+      const errorText = await aiResponse.text();
+      console.error('Gemini API error:', aiResponse.status, errorText);
+      
+      if (aiResponse.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Analysis credits depleted. Please add contact admin to recharge and continue.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      throw new Error(`Gemini API error: ${aiResponse.status} - ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
-    const aiText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    console.log('Gemini response received');
 
-    if (!aiText) {
-      throw new Error("Empty AI response");
+    const aiContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!aiContent) {
+      console.error('No content in Gemini response:', JSON.stringify(aiData));
+      throw new Error('Gemini returned no content');
     }
-
+    
+    // Extract JSON from the response
     let signalData;
     try {
-      signalData = JSON.parse(aiText);
+      // Try to parse the entire response as JSON first
+      signalData = JSON.parse(aiContent);
     } catch {
-      const match = aiText.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error("Invalid JSON from AI");
-      signalData = JSON.parse(match[0]);
+      // If that fails, try to extract JSON from markdown code blocks
+      const jsonMatch = aiContent.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+      if (jsonMatch) {
+        signalData = JSON.parse(jsonMatch[1]);
+      } else {
+        // Last resort: try to find JSON object in the text
+        const objectMatch = aiContent.match(/\{[\s\S]*\}/);
+        if (objectMatch) {
+          signalData = JSON.parse(objectMatch[0]);
+        } else {
+          throw new Error('Could not extract valid JSON from AI response');
+        }
+      }
     }
 
-    /* ===================== CONFIDENCE GATE ===================== */
-
-    if (!isPendingOrder && signalData.confidence < 70) {
+    // --- APPLY DECIMAL VALIDATION ---
+    try {
+      console.log('Validating AI price formats...');
+      // Validate Entry
+      if (signalData.entry) {
+        validatePrice(new Decimal(signalData.entry), "Entry Price");
+      }
+      // Validate Take Profit
+      if (signalData.takeProfit) {
+        validatePrice(new Decimal(signalData.takeProfit), "Take Profit");
+      }
+      // Note: We are strictly validating the AI's output here. 
+      // StopLoss is recalculated below, so we don't validate the AI's stopLoss field 
+      // to avoid rejecting valid trades due to a field that will be overwritten anyway.
+    } catch (validationError: any) {
+      console.error('Validation failed:', validationError.message);
       return new Response(
-        JSON.stringify({
-          notViable: true,
-          message: `Immediate trade rejected (confidence ${signalData.confidence}%)`,
+        JSON.stringify({ 
+          error: `AI Response Validation Failed: ${validationError.message}. The AI signal did not meet strict formatting requirements.` 
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    // --------------------------------
+
+    // Check if trade is viable (especially for immediate trades)
+    if (!isPendingOrder && signalData.confidence < 75) {
+      console.log('Trade not viable - confidence rating too low for immediate entry');
+      return new Response(
+        JSON.stringify({ 
+          notViable: true,
+          message: `The current market conditions don't present a viable immediate trade setup (confidence: ${signalData.confidence}%). The setup doesn't meet our strict requirements for immediate entry. Please try again later when market conditions are more favorable, or consider using pending orders instead.`
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    /* ===================== DECIMAL-SAFE TRADE MATH ===================== */
-
-    const entry = new Decimal(signalData.entry);
-    const takeProfit = new Decimal(signalData.takeProfit);
+    // Calculate stop loss based on risk and recalculate reward based on AI's take profit
     const isLong = signalData.direction === "LONG";
 
-    validatePrice(entry, "Entry");
-    validatePrice(takeProfit, "Take Profit");
+    const entryStr = String(signalData.entry);
+    const decimals = entryStr.includes('.') ? entryStr.split('.')[1].length : 0;
+    const scale = Math.pow(10, decimals);
 
-    const riskPoints = pointsPerUsd.mul(riskAmount);
+    const entryPoints = Math.round(signalData.entry * scale);
+    const riskPoints = Math.round(pointsPerUsd * riskAmount);
 
-    const stopLoss = isLong
-      ? entry.minus(riskPoints)
-      : entry.plus(riskPoints);
+    // Calculate stop loss based on risk amount
+    const stopLossPoints = isLong ? entryPoints - riskPoints : entryPoints + riskPoints;
+    const calculatedStopLoss = stopLossPoints / scale;
 
-    validatePrice(stopLoss, "Stop Loss");
-
-    const rewardPoints = takeProfit.minus(entry).abs();
-    const rewardAmount = rewardPoints.div(pointsPerUsd);
-
-    /* ===================== FINAL RESULT ===================== */
+    // Use AI's take profit and calculate actual reward amount
+    const takeProfitPoints = Math.round(signalData.takeProfit * scale);
+    const rewardPoints = Math.abs(takeProfitPoints - entryPoints);
+    const rewardAmount = rewardPoints / pointsPerUsd;
 
     const result = {
       ...signalData,
-      entry: entry.toString(),
-      stopLoss: stopLoss.toString(),
-      takeProfit: takeProfit.toString(),
-      riskAmount: riskAmount.toString(),
-      rewardAmount: rewardAmount.toString(),
-      newsItems: [],
+      stopLoss: calculatedStopLoss,
+      takeProfit: signalData.takeProfit, // Use AI's identified take profit
+      riskAmount,
+      rewardAmount,
+      newsItems: [], // News scanning can be added later
     };
+
+    console.log('Signal generated successfully');
 
     return new Response(
       JSON.stringify(result),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
+    console.error('Error in analyze-chart function:', error);
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error occurred",
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
   }
 });
