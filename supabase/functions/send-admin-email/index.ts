@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
       const emailResponse = await resend.emails.send({
         from: "Trade Advisor <support@tradeadvisor.live>",
         to: [singleEmail!],
-        bcc: ["tradeadvisor.live@gmail.com"],
+        bcc: ["support@tradeadvisor.live"],
         subject: subject,
         html: emailTemplate,
       });
