@@ -54,8 +54,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email to admin with BCC
     const adminEmailResponse = await resend.emails.send({
-      from: "Trade Advisor <noreply@tradeadvisor.live>",
-      to: ["tradeadvisor.live@gmail.com"],
+      from: "Trade Advisor <support@tradeadvisor.live>",
+      to: ["admin@tradeadvisor.live"],
       subject: `New Contact Query: ${subject}`,
       html: `
         <h2>New Contact Query Received</h2>
@@ -74,9 +74,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send confirmation email to user
     const userEmailResponse = await resend.emails.send({
-      from: "Trade Advisor <noreply@tradeadvisor.live>",
+      from: "Trade Advisor <support@tradeadvisor.live>",
       to: [email],
-      bcc: ["tradeadvisor.live@gmail.com"],
       subject: `We received your message: ${subject}`,
       html: `
         <h2>Thank you for contacting Trade Advisor!</h2>
