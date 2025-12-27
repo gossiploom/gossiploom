@@ -247,9 +247,9 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "TradeAdvisor <noreply@tradeadvisor.live>",
+        from: "TradeAdvisor <support@tradeadvisor.live>",
         to: [email.trim().toLowerCase()],
-        bcc: ["tradeadvisor.live@gmail.com"],
+        bcc: ["sammy@tradeadvisor.live"],
         subject: `Welcome ${fullName} to TradeAdvisor.live`,
         html: welcomeEmailHtml,
       }),
@@ -267,7 +267,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "TradeAdvisor <onboarding@resend.dev>",
-        to: ["sammygits@gmail.com"],
+        to: ["sammy@tradeadvisor.live"],
         subject: `New Account #${newProfile?.unique_identifier || 'N/A'} Created - TradeAdvisor`,
         html: `
           <h1>New Account Created</h1>
