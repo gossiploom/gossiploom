@@ -30,9 +30,10 @@ import { useAutoLogout } from "./hooks/useAutoLogout";
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const [isLight, setIsLight] = useState(
-  document.documentElement.classList.contains("light")
-);
+  const [isLight, setIsLight] = useState(() => {
+  const saved = localStorage.getItem("theme");
+  return saved === "light";
+});
 
 useEffect(() => {
   document.documentElement.classList.toggle("light", isLight);
@@ -45,9 +46,13 @@ useEffect(() => {
   return (
     <>
       <AdminNotificationListener />
-      <div className="fixed top-8 right-4 z-50">
+      <div className="fixed top-12 right-4 z-50">
   <button
-    onClick={() => setIsLight(!isLight)}
+    onClick={() => {
+  const next = !isLight;
+  setIsLight(next);
+  localStorage.setItem("theme", next ? "light" : "dark");
+}}
     className="px-3 py-2 rounded-md border text-sm bg-background hover:bg-secondary transition"
   >
     {isLight ? "🌙 Dark" : "☀️ Light"}
