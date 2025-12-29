@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,6 +30,14 @@ import { useAutoLogout } from "./hooks/useAutoLogout";
 const queryClient = new QueryClient();
 
 const AppContent = () => {
+  const [isLight, setIsLight] = useState(
+  document.documentElement.classList.contains("light")
+);
+
+useEffect(() => {
+  document.documentElement.classList.toggle("light", isLight);
+}, [isLight]);
+
   useUserPresence();
   useAutoLogout();
   const { isAdmin } = useAdminCheck();
