@@ -55,67 +55,67 @@ All colors MUST be HSL.
 
 @layer base {
   .light {
-    --background: 210 40% 98%; /* Slightly cool white */
-    --foreground: 222 47% 11%; /* Deep Navy for high contrast text */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
-    --card: 0 0% 100%;         /* Pure white for pop */
+    --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
     /* PRIMARY 
-      Deep Navy - Strong anchor color.
+      Deep Navy - This stays dark to anchor the light theme.
+      White text works well here (Dark Background).
     */
     --primary: 222 47% 11%;
     --primary-foreground: 210 40% 98%;
 
     /* SECONDARY
-      Slightly darker than background to create hierarchy.
+      Light gray-blue for subtle emphasis.
     */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222 47% 11%;
 
     /* MUTED
-      Cool grays for subtle text/borders.
+      Subtle grays.
     */
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 16% 47%;
 
-    /* ACCENT (GOLD/AMBER)
-      Old: 45 93% 58% (Too washed out)
-      New: 43 96% 50% (Richer, deeper Gold/Orange)
-      This makes it visible against white while keeping the 'glow' feel.
+    /* ACCENT (GOLD)
+      Reverted to the brighter/lighter gold (58% lightness).
+      Switched to DARK TEXT for clear visibility.
     */
-    --accent: 43 96% 50%;
+    --accent: 45 93% 58%;
     --accent-foreground: 222 47% 11%;
 
     /* SUCCESS (GREEN)
-      Old: 142 76% 36% (A bit dark/dull)
-      New: 142 72% 42% (Vibrant Emerald)
+      Adjusted to a brighter Emerald (50% lightness).
+      Switched to DARK TEXT so the green can be "bright" 
+      while text remains legible.
     */
-    --success: 142 72% 42%;
-    --success-foreground: 0 0% 100%;
+    --success: 142 70% 50%;
+    --success-foreground: 222 47% 11%;
 
     /* DANGER (RED)
-      Old: 0 84% 60% (Pastel/Pinkish)
-      New: 0 85% 55% (Vibrant Standard Red)
+      Adjusted to a brighter Red (60% lightness).
+      Switched to DARK TEXT for high contrast.
     */
-    --danger: 0 85% 55%;
-    --danger-foreground: 210 40% 98%;
+    --danger: 0 85% 60%;
+    --danger-foreground: 222 47% 11%;
 
     /* BORDERS & INPUTS
-      Slightly more contrast to define edges clearly.
     */
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 43 96% 50%; /* Matches Accent */
+    --ring: 45 93% 58%;
 
     /* CHARTS 
-      adjusted for visual distinctness
+      Matching the brighter variable shades.
     */
-    --chart-long: 142 72% 42%;   /* Matches Success */
-    --chart-short: 0 85% 55%;    /* Matches Danger */
+    --chart-long: 142 70% 50%;
+    --chart-short: 0 85% 60%;
     --chart-neutral: 215 25% 40%;
 
     /* GRADIENTS & EFFECTS 
@@ -126,10 +126,7 @@ All colors MUST be HSL.
       hsl(210 40% 92%) 100%
     );
 
-    /* GLOW 
-      Increased opacity slightly (0.25 -> 0.35) for better visibility 
-    */
-    --glow-gold: 0 0 30px hsl(43 96% 50% / 0.35);
+    --glow-gold: 0 0 30px hsl(45 93% 58% / 0.4);
   }
 }
 
