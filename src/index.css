@@ -55,68 +55,77 @@ All colors MUST be HSL.
 
 @layer base {
   .light {
-    --background: 220 15% 97%;
-    --foreground: 220 13% 13%;
+    --background: 210 25% 95%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 13% 13%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 13%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 158 64% 42%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 158 64% 52%;
+    /* PRIMARY 
+      Deep Navy.
+    */
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 13% 13%;
+    /* SECONDARY
+      Darker gray-blue for better visibility against white cards.
+    */
+    --secondary: 210 20% 90%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* MUTED
+      Subtle grays.
+    */
+    --muted: 210 20% 90%;
+    --muted-foreground: 215 16% 40%;
 
-    --accent: 36 96% 58%;
-    --accent-foreground: 220 13% 13%;
+    /* ACCENT (GOLD/AMBER)
+      Shifted to Deep Amber/Orange (50% lightness).
+      Restored WHITE TEXT (--accent-foreground) for high visibility.
+    */
+    --accent: 38 92% 50%;
+    --accent-foreground: 210 40% 98%;
 
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
+    /* SUCCESS (GREEN)
+      Deep Emerald (36% lightness).
+      Restored WHITE TEXT.
+    */
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
 
-    --warning: 36 96% 58%;
-    --warning-foreground: 220 13% 13%;
+    /* DANGER (RED)
+      Standard Red (50% lightness).
+      Restored WHITE TEXT.
+    */
+    --danger: 0 72% 51%;
+    --danger-foreground: 210 40% 98%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    /* BORDERS & INPUTS
+      Darker border for clearer definition.
+    */
+    --border: 214 20% 85%;
+    --input: 214 20% 85%;
+    --ring: 38 92% 50%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 158 64% 42%;
+    /* CHARTS 
+      Synced with the new deeper colors.
+    */
+    --chart-long: 142 76% 36%;
+    --chart-short: 0 72% 51%;
+    --chart-neutral: 215 25% 40%;
 
-    --radius: 0.75rem;
-    
-    --gradient-success: linear-gradient(135deg, hsl(158 64% 42%), hsl(158 64% 52%));
-    --gradient-warning: linear-gradient(135deg, hsl(36 96% 58%), hsl(36 96% 68%));
-    --gradient-danger: linear-gradient(135deg, hsl(0 72% 51%), hsl(0 72% 61%));
-    
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-    
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* GRADIENTS & EFFECTS 
+    */
+    --gradient-trading: linear-gradient(
+      135deg,
+      hsl(210 25% 95%) 0%,
+      hsl(210 25% 90%) 100%
+    );
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --glow-gold: 0 0 30px hsl(38 92% 50% / 0.35);
   }
 }
 
