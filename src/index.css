@@ -51,65 +51,48 @@
 
 @layer base {
   .light {
-  --background: 210 70% 94%;        /* sky blue */
-  --foreground: 222 47% 14%;        /* dark navy */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
-  /* Hero / landing section */
-  --hero-bg: 210 80% 92%;
-  --hero-foreground: 222 47% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
-  /* Cards */
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 14%;
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
 
-  /* Primary (replace gold with blue) */
-  --primary: 210 90% 45%;           /* strong blue */
-  --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 94%;
+    --secondary-foreground: 222 47% 11%;
 
-  /* Secondary */
-  --secondary: 210 40% 88%;
-  --secondary-foreground: 222 47% 14%;
+    --muted: 210 40% 90%;
+    --muted-foreground: 215 20% 35%;
 
-  /* Muted text */
-  --muted: 210 35% 90%;
-  --muted-foreground: 215 25% 35%;
+    --accent: 45 93% 58%;
+    --accent-foreground: 222 47% 11%;
 
-  /* Accent */
-  --accent: 210 90% 45%;
-  --accent-foreground: 0 0% 100%;
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
 
-  /* Status */
-  --success: 142 72% 38%;
-  --danger: 0 84% 55%;
+    --danger: 0 84% 60%;
+    --danger-foreground: 210 40% 98%;
 
-  /* Borders */
-  --border: 210 30% 82%;
-  --input: 210 30% 82%;
-  --ring: 210 90% 45%;
+    --border: 210 40% 85%;
+    --input: 210 40% 85%;
+    --ring: 45 93% 58%;
 
-  --radius: 0.5rem;
-  }
-}
+    --chart-long: 142 76% 36%;
+    --chart-short: 0 84% 60%;
+    --chart-neutral: 215 20% 35%;
 
-@layer utilities {
-  @keyframes scroll-left {
-    0% {
-      transform: translateX(0%);
-    }
-    100% {
-      transform: translateX(-100%);
-    }
-  }
-  
-  .animate-scroll-left {
-    animation: scroll-left 30s linear infinite;
-  }
-  
-  .animate-scroll-slow {
-    animation: scroll-left 120s linear infinite;
+    --gradient-trading: linear-gradient(
+      135deg,
+      hsl(210 40% 98%) 0%,
+      hsl(210 40% 94%) 100%
+    );
+
+    --glow-gold: 0 0 30px hsl(45 93% 58% / 0.25);
   }
 }
 
