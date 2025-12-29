@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
     --background: 222 47% 11%;
@@ -63,62 +59,33 @@ All colors MUST be HSL.
 
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-
-    /* PRIMARY 
-      Deep Navy.
-    */
+    
     --primary: 222 47% 11%;
     --primary-foreground: 210 40% 98%;
-
-    /* SECONDARY
-      Darker gray-blue for better visibility against white cards.
-    */
+    
     --secondary: 210 20% 90%;
     --secondary-foreground: 222 47% 11%;
-
-    /* MUTED
-      Subtle grays.
-    */
+    
     --muted: 210 20% 90%;
     --muted-foreground: 215 16% 40%;
 
-    /* ACCENT (GOLD/AMBER)
-      Shifted to Deep Amber/Orange (50% lightness).
-      Restored WHITE TEXT (--accent-foreground) for high visibility.
-    */
     --accent: 38 92% 50%;
     --accent-foreground: 210 40% 98%;
-
-    /* SUCCESS (GREEN)
-      Deep Emerald (36% lightness).
-      Restored WHITE TEXT.
-    */
+    
     --success: 142 76% 36%;
     --success-foreground: 210 40% 98%;
-
-    /* DANGER (RED)
-      Standard Red (50% lightness).
-      Restored WHITE TEXT.
-    */
+    
     --danger: 0 72% 51%;
     --danger-foreground: 210 40% 98%;
-
-    /* BORDERS & INPUTS
-      Darker border for clearer definition.
-    */
+    
     --border: 214 20% 85%;
     --input: 214 20% 85%;
     --ring: 38 92% 50%;
 
-    /* CHARTS 
-      Synced with the new deeper colors.
-    */
     --chart-long: 142 76% 36%;
     --chart-short: 0 72% 51%;
     --chart-neutral: 215 25% 40%;
-
-    /* GRADIENTS & EFFECTS 
-    */
+    
     --gradient-trading: linear-gradient(
       135deg,
       hsl(210 25% 95%) 0%,
