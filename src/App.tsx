@@ -45,6 +45,15 @@ useEffect(() => {
   return (
     <>
       <AdminNotificationListener />
+      <div className="fixed top-4 right-4 z-50">
+  <button
+    onClick={() => setIsLight(!isLight)}
+    className="px-3 py-2 rounded-md border text-sm bg-background hover:bg-secondary transition"
+  >
+    {isLight ? "🌙 Dark" : "☀️ Light"}
+  </button>
+</div>
+
       <Routes>
 
         <Route
