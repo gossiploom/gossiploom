@@ -51,63 +51,46 @@
 
 @layer base {
   .light {
-  --background: 210 60% 96%;        /* light sky blue */
-  --foreground: 222 47% 11%;        /* deep navy text */
+  --background: 210 70% 94%;        /* sky blue */
+  --foreground: 222 47% 14%;        /* dark navy */
 
-  /* Cards & popovers */
-  --card: 0 0% 100%;                /* pure white cards */
-  --card-foreground: 222 47% 11%;
+  /* Hero / landing section */
+  --hero-bg: 210 80% 92%;
+  --hero-foreground: 222 47% 14%;
+
+  /* Cards */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 14%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  --popover-foreground: 222 47% 14%;
 
-  /* Primary (gold accent) */
-  --primary: 45 93% 55%;
-  --primary-foreground: 222 47% 11%;
+  /* Primary (replace gold with blue) */
+  --primary: 210 90% 45%;           /* strong blue */
+  --primary-foreground: 0 0% 100%;
 
-  /* Secondary surfaces */
-  --secondary: 210 40% 92%;         /* soft blue-gray */
-  --secondary-foreground: 222 47% 11%;
+  /* Secondary */
+  --secondary: 210 40% 88%;
+  --secondary-foreground: 222 47% 14%;
 
-  /* Muted elements */
+  /* Muted text */
   --muted: 210 35% 90%;
-  --muted-foreground: 215 25% 40%;  /* readable muted text */
+  --muted-foreground: 215 25% 35%;
 
   /* Accent */
-  --accent: 45 93% 55%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 210 90% 45%;
+  --accent-foreground: 0 0% 100%;
 
-  /* Status colors */
+  /* Status */
   --success: 142 72% 38%;
-  --success-foreground: 0 0% 100%;
-
   --danger: 0 84% 55%;
-  --danger-foreground: 0 0% 100%;
 
-  --destructive: 0 84% 55%;
-  --destructive-foreground: 0 0% 100%;
+  /* Borders */
+  --border: 210 30% 82%;
+  --input: 210 30% 82%;
+  --ring: 210 90% 45%;
 
-  /* Borders & inputs */
-  --border: 210 30% 85%;
-  --input: 210 30% 85%;
-  --ring: 45 93% 55%;
-
-  /* Radius */
   --radius: 0.5rem;
-
-  /* Charts */
-  --chart-long: 142 72% 38%;
-  --chart-short: 0 84% 55%;
-  --chart-neutral: 215 25% 50%;
-
-  /* Effects */
-  --gradient-trading: linear-gradient(
-    135deg,
-    hsl(210 60% 96%) 0%,
-    hsl(210 40% 92%) 100%
-  );
-
-  --glow-gold: 0 0 20px hsl(45 93% 55% / 0.25);
   }
 }
 
