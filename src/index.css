@@ -55,49 +55,82 @@ All colors MUST be HSL.
 
 @layer base {
   .light {
-  --background: 210 30% 97%;
-  --foreground: 222 50% 12%;
+    --background: 210 40% 98%; /* Slightly cool white */
+    --foreground: 222 47% 11%; /* Deep Navy for high contrast text */
 
-  --card: 0 0% 100%;
-  --card-foreground: 222 50% 12%;
+    --card: 0 0% 100%;         /* Pure white for pop */
+    --card-foreground: 222 47% 11%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 50% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-  --primary: 222 65% 22%;
-  --primary-foreground: 210 40% 98%;
+    /* PRIMARY 
+      Deep Navy - Strong anchor color.
+    */
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
 
-  --secondary: 210 30% 92%;
-  --secondary-foreground: 222 50% 18%;
+    /* SECONDARY
+      Slightly darker than background to create hierarchy.
+    */
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11%;
 
-  --muted: 210 25% 88%;
-  --muted-foreground: 215 25% 30%;
+    /* MUTED
+      Cool grays for subtle text/borders.
+    */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
 
-  --accent: 42 95% 52%;
-  --accent-foreground: 222 50% 12%;
+    /* ACCENT (GOLD/AMBER)
+      Old: 45 93% 58% (Too washed out)
+      New: 43 96% 50% (Richer, deeper Gold/Orange)
+      This makes it visible against white while keeping the 'glow' feel.
+    */
+    --accent: 43 96% 50%;
+    --accent-foreground: 222 47% 11%;
 
-  --success: 142 72% 38%;
-  --success-foreground: 0 0% 100%;
+    /* SUCCESS (GREEN)
+      Old: 142 76% 36% (A bit dark/dull)
+      New: 142 72% 42% (Vibrant Emerald)
+    */
+    --success: 142 72% 42%;
+    --success-foreground: 0 0% 100%;
 
-  --danger: 0 78% 56%;
-  --danger-foreground: 0 0% 100%;
+    /* DANGER (RED)
+      Old: 0 84% 60% (Pastel/Pinkish)
+      New: 0 85% 55% (Vibrant Standard Red)
+    */
+    --danger: 0 85% 55%;
+    --danger-foreground: 210 40% 98%;
 
-  --border: 210 30% 82%;
-  --input: 210 30% 80%;
-  --ring: 42 95% 52%;
+    /* BORDERS & INPUTS
+      Slightly more contrast to define edges clearly.
+    */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 43 96% 50%; /* Matches Accent */
 
-  --chart-long: 142 72% 38%;
-  --chart-short: 0 78% 56%;
-  --chart-neutral: 215 25% 30%;
+    /* CHARTS 
+      adjusted for visual distinctness
+    */
+    --chart-long: 142 72% 42%;   /* Matches Success */
+    --chart-short: 0 85% 55%;    /* Matches Danger */
+    --chart-neutral: 215 25% 40%;
 
-  --gradient-trading: linear-gradient(
-    135deg,
-    hsl(210 30% 97%) 0%,
-    hsl(210 30% 92%) 100%
-  );
+    /* GRADIENTS & EFFECTS 
+    */
+    --gradient-trading: linear-gradient(
+      135deg,
+      hsl(210 40% 98%) 0%,
+      hsl(210 40% 92%) 100%
+    );
 
-  /* Glow */
-  --glow-gold: 0 0 36px hsl(42 95% 52% / 0.35);
+    /* GLOW 
+      Increased opacity slightly (0.25 -> 0.35) for better visibility 
+    */
+    --glow-gold: 0 0 30px hsl(43 96% 50% / 0.35);
+  }
 }
 
 @layer utilities {
