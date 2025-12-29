@@ -51,70 +51,64 @@
 
 @layer base {
   .light {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+  /* Background & text */
+  --background: 210 60% 96%;        /* light sky blue */
+  --foreground: 222 47% 11%;        /* deep navy text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+  /* Cards & popovers */
+  --card: 0 0% 100%;                /* pure white cards */
+  --card-foreground: 222 47% 11%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
-    
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    
-    --accent: 45 93% 58%;
-    --accent-foreground: 222 47% 11%;
-    
-    --success: 142 76% 36%;
-    --success-foreground: 210 40% 98%;
+  /* Primary (gold accent) */
+  --primary: 45 93% 55%;
+  --primary-foreground: 222 47% 11%;
 
-    --danger: 0 84% 60%;
-    --danger-foreground: 210 40% 98%;
+  /* Secondary surfaces */
+  --secondary: 210 40% 92%;         /* soft blue-gray */
+  --secondary-foreground: 222 47% 11%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+  /* Muted elements */
+  --muted: 210 35% 90%;
+  --muted-foreground: 215 25% 40%;  /* readable muted text */
 
-    /* BORDERS & INPUTS */
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+  /* Accent */
+  --accent: 45 93% 55%;
+  --accent-foreground: 222 47% 11%;
 
-    --radius: 0.75rem;
+  /* Status colors */
+  --success: 142 72% 38%;
+  --success-foreground: 0 0% 100%;
 
-    /* CHART TOKENS */
-    --chart-long: 142 76% 36%;
-    --chart-short: 0 84% 60%;
-    --chart-neutral: 215 20% 35%;
-    
-    --sidebar-width: 280px;
-    --header-height: 64px;
-    
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(250 83% 60%) 100%);
-    --gradient-surface: linear-gradient(180deg, hsl(210 20% 98%) 0%, hsl(210 20% 96%) 100%);
-    --gradient-trading: linear-gradient(135deg, hsl(210 40% 98%) 0%, hsl(210 40% 94%) 100%);
-    
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1), 0 2px 4px -2px hsl(222 47% 11% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
-    --shadow-glow: 0 0 20px hsl(221 83% 53% / 0.3);
-    --glow-gold: 0 0 30px hsl(45 93% 58% / 0.25);
-    
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 45 93% 58%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 221 83% 53%;
-  }
+  --danger: 0 84% 55%;
+  --danger-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Borders & inputs */
+  --border: 210 30% 85%;
+  --input: 210 30% 85%;
+  --ring: 45 93% 55%;
+
+  /* Radius */
+  --radius: 0.5rem;
+
+  /* Charts */
+  --chart-long: 142 72% 38%;
+  --chart-short: 0 84% 55%;
+  --chart-neutral: 215 25% 50%;
+
+  /* Effects */
+  --gradient-trading: linear-gradient(
+    135deg,
+    hsl(210 60% 96%) 0%,
+    hsl(210 40% 92%) 100%
+  );
+
+  --glow-gold: 0 0 20px hsl(45 93% 55% / 0.25);
 }
 
 @layer utilities {
