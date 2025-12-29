@@ -51,7 +51,6 @@
 
 @layer base {
   .light {
-  /* Background & text */
   --background: 210 60% 96%;        /* light sky blue */
   --foreground: 222 47% 11%;        /* deep navy text */
 
@@ -109,6 +108,7 @@
   );
 
   --glow-gold: 0 0 20px hsl(45 93% 55% / 0.25);
+  }
 }
 
 @layer utilities {
