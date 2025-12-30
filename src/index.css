@@ -51,69 +51,53 @@
 
 @layer base {
   .light {
-    --background: 240 100% 99%;
-    --foreground: 240 20% 15%;
+    --background: 42 15% 98%;
+    --foreground: 30 12% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 20% 15%;
+    --card: 42 15% 98%;
+    --card-foreground: 30 12% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 20% 15%;
+    --popover: 42 15% 98%;
+    --popover-foreground: 30 12% 15%;
 
-    /* Vibrant Primary Colors */
-    --primary: 260 70% 55%;  /* Rich Purple - more lively but less bright */
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 260 40% 75%;
-    --primary-dark: 260 80% 40%;
+    --primary: 25 85% 45%;
+    --primary-foreground: 42 15% 98%;
 
-    /* Creative Secondary */
-    --secondary: 180 85% 45%;  /* Teal - lively but softer */
-    --secondary-foreground: 0 0% 100%;
-    --secondary-light: 180 60% 70%;
+    --secondary: 120 25% 35%;
+    --secondary-foreground: 42 15% 98%;
 
-    /* Accent Colors */
-    --accent: 320 75% 55%;  /* Rose Pink - vibrant but comfortable */
-    --accent-foreground: 0 0% 100%;
-    --accent-light: 320 60% 75%;
+    --muted: 42 10% 92%;
+    --muted-foreground: 30 5% 45%;
 
-    /* Success/Growth */
-    --success: 145 85% 40%;
-    --success-foreground: 0 0% 100%;
-
-    /* Vibrant Pink */
-    --pink: 290 80% 60%;
-    --pink-foreground: 0 0% 100%;
-
-    /* Orange Energy */
-    --orange: 35 90% 50%;
-    --orange-foreground: 0 0% 100%;
-
-    --muted: 240 10% 95%;
-    --muted-foreground: 240 10% 40%;
+    --accent: 35 90% 55%;
+    --accent-foreground: 30 12% 15%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 42 15% 98%;
 
-    --border: 240 20% 90%;
-    --input: 240 20% 96%;
-    --ring: 280 100% 60%;
+    --border: 42 8% 85%;
+    --input: 42 8% 85%;
+    --ring: 25 85% 45%;
 
-    --radius: 1rem;
-
+    /* Adventure Theme Colors */
+    --safari-orange: 25 85% 45%;
+    --safari-green: 120 25% 35%;
+    --sunset-gold: 35 90% 55%;
+    --earth-brown: 30 35% 25%;
+    --cream: 42 15% 98%;
+    --ocean-blue: 200 75% 45%;
+    
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(260, 70%, 55%), hsl(320, 75%, 55%));
-    --gradient-secondary: linear-gradient(135deg, hsl(180, 85%, 45%), hsl(35, 90%, 50%));
-    --gradient-hero: linear-gradient(135deg, hsl(260, 70%, 55%) 0%, hsl(290, 80%, 60%) 50%, hsl(320, 75%, 55%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(25 85% 45%), hsl(35 90% 55%));
+    --gradient-card: linear-gradient(145deg, hsl(42 15% 98%), hsl(42 10% 92%));
+    --gradient-adventure: linear-gradient(135deg, hsl(120 25% 35%), hsl(25 85% 45%));
     
     /* Shadows */
-    --shadow-colorful: 0 10px 30px -5px hsl(260, 70%, 55%, 0.15);
-    --shadow-glow: 0 0 40px hsl(320, 75%, 55%, 0.25);
-    --shadow-card: 0 4px 20px hsl(var(--primary) / 0.1);
+    --shadow-warm: 0 10px 30px -10px hsl(25 85% 45% / 0.3);
+    --shadow-card: 0 4px 20px -4px hsl(30 12% 15% / 0.1);
+    --shadow-glow: 0 0 40px hsl(35 90% 55% / 0.4);
 
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
 
