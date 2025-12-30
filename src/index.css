@@ -50,71 +50,49 @@
 }
 
 @layer base {
-  .light {
-    --background: 42 15% 98%;
-    --foreground: 30 12% 15%;
+.light {
+  /* Background & text */
+  --background: 210 70% 94%;        /* sky blue */
+  --foreground: 222 47% 14%;        /* dark navy */
 
-    --card: 42 15% 98%;
-    --card-foreground: 30 12% 15%;
+  /* Hero / landing section */
+  --hero-bg: 210 80% 92%;
+  --hero-foreground: 222 47% 14%;
 
-    --popover: 42 15% 98%;
-    --popover-foreground: 30 12% 15%;
+  /* Cards */
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 14%;
 
-    --primary: 25 85% 45%;
-    --primary-foreground: 42 15% 98%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 14%;
 
-    --secondary: 120 25% 35%;
-    --secondary-foreground: 42 15% 98%;
+  /* Primary (replace gold with blue) */
+  --primary: 210 90% 45%;           /* strong blue */
+  --primary-foreground: 0 0% 100%;
 
-    --muted: 42 10% 92%;
-    --muted-foreground: 30 5% 45%;
+  /* Secondary */
+  --secondary: 210 40% 88%;
+  --secondary-foreground: 222 47% 14%;
 
-    --accent: 35 90% 55%;
-    --accent-foreground: 30 12% 15%;
+  /* Muted text */
+  --muted: 210 35% 90%;
+  --muted-foreground: 215 25% 35%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 42 15% 98%;
+  /* Accent */
+  --accent: 210 90% 45%;
+  --accent-foreground: 0 0% 100%;
 
-    --border: 42 8% 85%;
-    --input: 42 8% 85%;
-    --ring: 25 85% 45%;
+  /* Status */
+  --success: 142 72% 38%;
+  --danger: 0 84% 55%;
 
-    /* Adventure Theme Colors */
-    --safari-orange: 25 85% 45%;
-    --safari-green: 120 25% 35%;
-    --sunset-gold: 35 90% 55%;
-    --earth-brown: 30 35% 25%;
-    --cream: 42 15% 98%;
-    --ocean-blue: 200 75% 45%;
-    
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(25 85% 45%), hsl(35 90% 55%));
-    --gradient-card: linear-gradient(145deg, hsl(42 15% 98%), hsl(42 10% 92%));
-    --gradient-adventure: linear-gradient(135deg, hsl(120 25% 35%), hsl(25 85% 45%));
-    
-    /* Shadows */
-    --shadow-warm: 0 10px 30px -10px hsl(25 85% 45% / 0.3);
-    --shadow-card: 0 4px 20px -4px hsl(30 12% 15% / 0.1);
-    --shadow-glow: 0 0 40px hsl(35 90% 55% / 0.4);
+  /* Borders */
+  --border: 210 30% 82%;
+  --input: 210 30% 82%;
+  --ring: 210 90% 45%;
 
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+  --radius: 0.5rem;
+}
 }
 
 @layer base {
