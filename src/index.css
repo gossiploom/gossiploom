@@ -98,6 +98,7 @@
     --font-heading: 'Crimson Pro', Georgia, serif;
     --font-body: 'Inter', system-ui, sans-serif;
 }
+}
 
 @layer base {
   * {
