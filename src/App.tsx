@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,15 +29,6 @@ import { useAutoLogout } from "./hooks/useAutoLogout";
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const [isLight, setIsLight] = useState(() => {
-  const saved = localStorage.getItem("theme");
-  return saved === "light";
-});
-
-useEffect(() => {
-  document.documentElement.classList.toggle("light", isLight);
-}, [isLight]);
-
   useUserPresence();
   useAutoLogout();
   const { isAdmin } = useAdminCheck();
@@ -46,19 +36,6 @@ useEffect(() => {
   return (
     <>
       <AdminNotificationListener />
-      <div className="fixed top-16 right-4 z-50">
-  <button
-    onClick={() => {
-  const next = !isLight;
-  setIsLight(next);
-  localStorage.setItem("theme", next ? "light" : "dark");
-}}
-    className="px-3 py-2 rounded-md border text-sm bg-background hover:bg-secondary transition"
-  >
-    {isLight ? "🌙 Dark" : "☀️ Light"}
-  </button>
-</div>
-
       <Routes>
 
         <Route
