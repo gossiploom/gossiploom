@@ -266,7 +266,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "TradeAdvisor <onboarding@resend.dev>",
+        from: "TradeAdvisor <admin@tradeadvisor.live>",
         to: ["sammy@tradeadvisor.live"],
         subject: `New Account #${newProfile?.unique_identifier || 'N/A'} Created - TradeAdvisor`,
         html: `
