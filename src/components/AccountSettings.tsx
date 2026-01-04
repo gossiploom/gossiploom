@@ -20,9 +20,6 @@ interface AccountSettingsProps {
 }
 
 const SYMBOL_PRESETS = [
-  { value: "volatility15(1s)", label: "Volatility 15 (1s)", points: 5000 },
-  { value: "volatility10(1s)", label: "Volatility 10 (1s)", points: 200 },
-  { value: "volatility75", label: "Volatility 75 ", points: 10000 },
   { value: "xauusd", label: "XAUUSD (Lot 0.01)", points: 100 },
   { value: "btcusd", label: "BTCUSD (Lot 0.01)", points: 10000 },
   { value: "eurusd", label: "EURUSD (Lot 0.1)", points: 10 },
@@ -151,7 +148,7 @@ export const AccountSettings = ({
             <RadioGroupItem value="pending" id="pending" />
             <Label htmlFor="pending" className="cursor-pointer flex-1">
               <span className="font-medium">Pending Order</span>
-              <p className="text-xs text-muted-foreground">Wait for price to reach entry level. Best charts to upload are 15M, 30M, 1H, 4H and 6H or 8H or 12H or 1D</p>
+              <p className="text-xs text-muted-foreground">Wait for price to reach entry level. Best charts to upload are 5M, 15M, 1H, 4H and 6H or 8H or 12H or 1D</p>
             </Label>
           </div>
         </RadioGroup>
