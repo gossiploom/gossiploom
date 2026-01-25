@@ -68,7 +68,7 @@ const getSessionId = (): string => {
 const fetchGeoData = async (): Promise<GeoData> => {
   try {
     // Use ip-api.com (free, no API key required)
-    const response = await fetch('http://ip-api.com/json/?fields=country,city,regionName,lat,lon,timezone,isp');
+    const response = await fetch('https://ip-api.com/json/?fields=country,city,regionName,lat,lon,timezone,isp');
     if (!response.ok) {
       throw new Error('Failed to fetch geo data');
     }
@@ -136,10 +136,13 @@ export const useVisitorTracking = (pageName: string) => {
           timestamp: new Date().toISOString()
         };
         
+         const { data: { session } } = await supabase.auth.getSession();
+
         await supabase.from('user_interactions').insert([{
           interaction_type: 'page_view',
           page_visited: pageName,
           session_id: sessionId,
+          user_id: session?.user?.id ?? null,
           user_agent: navigator.userAgent,
           metadata
         }]);
@@ -175,13 +178,16 @@ export const trackInteraction = async (
       timestamp: new Date().toISOString()
     };
     
-    await supabase.from('user_interactions').insert([{
-      interaction_type: interactionType,
-      page_visited: pageName,
-      session_id: sessionId,
-      user_agent: navigator.userAgent,
-      metadata
-    }]);
+   const { data: { session } } = await supabase.auth.getSession();
+ await supabase.from('user_interactions').insert([{
+  interaction_type: interactionType,
+  page_visited: pageName,
+  session_id: sessionId,
+  user_id: session?.user?.id ?? null,
+  user_agent: navigator.userAgent,
+  metadata
+}]);
+
   } catch (error) {
     console.error('Error tracking interaction:', error);
   }
