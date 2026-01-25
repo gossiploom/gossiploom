@@ -11,8 +11,11 @@ import { NewsScrollingBanner } from "@/components/NewsScrollingBanner";
 import { SlideInMenu } from "@/components/SlideInMenu";
 import { ProfileCompletionGuard } from "@/components/ProfileCompletionGuard";
 import { Footer } from "@/components/Footer";
+import { useVisitorTracking } from '@/hooks/useVisitorTracking';
 
 const Index = () => {
+useVisitorTracking("Home");
+
   const [accountSize, setAccountSize] = useState(1000);
   const [riskPercent, setRiskPercent] = useState(1);
   const [symbolPreset, setSymbolPreset] = useState("xauusd");
