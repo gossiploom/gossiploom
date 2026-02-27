@@ -24,7 +24,12 @@ import PlatformGuide from "./pages/PlatformGuide";
 import { AdminNotificationListener } from "./components/AdminNotificationListener";
 import { useUserPresence } from "./hooks/useUserPresence";
 import { useAdminCheck } from "./hooks/useAdminCheck";
+import { useSignalProviderCheck } from "./hooks/useSignalProviderCheck";
 import { useAutoLogout } from "./hooks/useAutoLogout";
+
+// NEW: Import Signal Provider and Free Signals pages
+import SignalProvider from "./pages/SignalProvider";
+import FreeSignals from "./pages/FreeSignals";
 
 const queryClient = new QueryClient();
 
@@ -32,54 +37,60 @@ const AppContent = () => {
   useUserPresence();
   useAutoLogout();
   const { isAdmin } = useAdminCheck();
+  const { isSignalProvider } = useSignalProviderCheck();
 
   return (
     <>
       <AdminNotificationListener />
       <Routes>
-
-        <Route
-          path="/"
-          element={
-            isAdmin ? <Navigate to="/admin" replace /> : <Index />
-          }
-        />
-
-        {/* REGULAR ROUTES */}
+        {/* PUBLIC ROUTES - Accessible to everyone */}
+        <Route path="/" element={isAdmin ? <Navigate to="/admin" replace /> : <Index />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/refund" element={<Refund />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/platform-guide" element={<PlatformGuide />} />
+        
+        {/* NEW: Free Signals page - accessible to everyone including non-logged in users */}
+        <Route path="/free-signals" element={<FreeSignals />} />
+        
+        {/* PROTECTED ROUTES - Require authentication */}
         <Route path="/settings" element={<Settings />} />
         <Route path="/history" element={<History />} />
         <Route path="/news" element={<News />} />
         <Route path="/chart-viewer" element={<ChartViewer />} />
         <Route path="/purchase" element={<Purchase />} />
-        <Route path="/admin" element={<Admin />} />
         <Route path="/signals" element={<Signals />} />
         <Route path="/referral-program" element={<ReferralProgram />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/refund" element={<Refund />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/platform-guide" element={<PlatformGuide />} />
-        <Route path="/contact" element={<Contact />} />
-
-        {/* CATCH-ALL */}
+        
+        {/* ADMIN ROUTE - Requires admin role */}
+        <Route path="/admin" element={<Admin />} />
+        
+        {/* NEW: SIGNAL PROVIDER ROUTE - Requires signal_provider role */}
+        <Route path="/signal-provider" element={<SignalProvider />} />
+        
+        {/* 404 ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

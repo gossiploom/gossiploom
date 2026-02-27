@@ -1,1839 +1,583 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { SlideInMenu } from "@/components/SlideInMenu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Bell, CreditCard, UserPlus, Activity, Send, Check, X, Image, MessageSquare, Upload, Calendar, Globe, Mail } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { 
+  Users, 
+  Shield, 
+  TrendingUp, 
+  UserPlus, 
+  Search,
+  CheckCircle,
+  XCircle,
+  Crown,
+  Target,
+  BarChart3,
+  Mail,
+  Phone,
+  Calendar
+} from "lucide-react";
 
-
-interface UserWithDetails {
-  user_id: string;
-  name: string;
-  phone_number: string;
-  unique_identifier: string;
-  analysis_limit: number;
-  is_online: boolean;
-  last_seen: string | null;
-  slots_used: number;
-  slots_remaining: number;
-  successful_trades: number;
-  last_login_ip: string | null;
-  is_signal_subscriber: boolean;
-  subscription_expires_at: string | null;
-  referral_code: string | null;
-  total_referrals: number;
-  successful_referrals: number;
-}
-
-interface Payment {
+interface UserWithRole {
   id: string;
-  user_id: string;
-  amount_kes?: number;
-  amount_usd?: number;
-  package_type: string;
-  status: string;
-  payment_method?: string;
-  created_at: string;
-  screenshot_path?: string;
-  user_name?: string;
-  user_identifier?: string;
-  analysis_slots?: number;
-}
-
-interface SupportThread {
-  id: string;
-  user_id: string;
-  subject: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  user_name?: string;
-  user_identifier?: string;
-}
-
-interface SupportMessage {
-  id: string;
-  thread_id: string;
-  sender_id: string;
-  message: string;
-  attachment_path: string | null;
-  attachment_type: string | null;
-  created_at: string;
-}
-
-interface ContactQuery {
-  id: string;
-  name: string;
   email: string;
-  subject: string;
-  message: string;
-  status: string;
-  admin_response: string | null;
-  responded_at: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone_number: string | null;
+  role: string | null;
   created_at: string;
+  last_sign_in_at: string | null;
 }
 
-interface AdminSignal {
+interface Signal {
   id: string;
-  symbol: string | null;
-  direction: string | null;
-  entry_price: number | null;
-  stop_loss: number | null;
-  take_profit: number | null;
-  risk_reward: string | null;
-  outcome: string;
-  outcome_notes: string | null;
+  provider_id: string;
+  provider_email: string;
+  currency_pair: string;
+  signal_type: "BUY" | "SELL";
+  signal_visibility: "free" | "subscribers" | "both";
+  outcome: "pending" | "win" | "loss" | "breakeven" | null;
   created_at: string;
 }
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { isAdmin, loading } = useAdminCheck();
   const { toast } = useToast();
+  const { isAdmin, loading: checkingAdmin } = useAdminCheck();
   
-  const [users, setUsers] = useState<UserWithDetails[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [supportThreads, setSupportThreads] = useState<SupportThread[]>([]);
-  const [selectedThread, setSelectedThread] = useState<SupportThread | null>(null);
-  const [threadMessages, setThreadMessages] = useState<SupportMessage[]>([]);
-  const [onlineCount, setOnlineCount] = useState(0);
-  const [contactQueries, setContactQueries] = useState<ContactQuery[]>([]);
-  const [selectedQuery, setSelectedQuery] = useState<ContactQuery | null>(null);
-  const [queryResponse, setQueryResponse] = useState("");
-  const [sendingQueryResponse, setSendingQueryResponse] = useState(false);
+  const [users, setUsers] = useState<UserWithRole[]>([]);
+  const [signals, setSignals] = useState<Signal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   
-  // Create user form
-  const [createUserDialog, setCreateUserDialog] = useState(false);
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserPassword, setNewUserPassword] = useState("");
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserPhone, setNewUserPhone] = useState("");
-  const [newUserSlots, setNewUserSlots] = useState("0");
-  const [creatingUser, setCreatingUser] = useState(false);
-
-  // Notification form
-  const [notificationTitle, setNotificationTitle] = useState("");
-  const [notificationMessage, setNotificationMessage] = useState("");
-  const [notificationTarget, setNotificationTarget] = useState<string[]>(["all"]);
-  const [notificationDuration, setNotificationDuration] = useState("10");
-  const [sendingNotification, setSendingNotification] = useState(false);
-
-  // Adjust slots
-  const [adjustSlotsDialog, setAdjustSlotsDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserWithDetails | null>(null);
-  const [newSlots, setNewSlots] = useState("");
-
-  // Subscription management
-  const [subscriptionDialog, setSubscriptionDialog] = useState(false);
-  const [subscriptionExpiry, setSubscriptionExpiry] = useState("");
-
-  // View screenshot
-  const [screenshotDialog, setScreenshotDialog] = useState(false);
-  const [screenshotUrl, setScreenshotUrl] = useState("");
-
-  // Signal posting and management
-  const [signalDialog, setSignalDialog] = useState(false);
-  const [signalSymbol, setSignalSymbol] = useState("");
-  const [signalDirection, setSignalDirection] = useState<"long" | "short">("long");
-  const [signalEntry, setSignalEntry] = useState("");
-  const [signalStopLoss, setSignalStopLoss] = useState("");
-  const [signalTakeProfit, setSignalTakeProfit] = useState("");
-  const [signalRiskReward, setSignalRiskReward] = useState("");
-  const [postingSignal, setPostingSignal] = useState(false);
-  const [adminSignals, setAdminSignals] = useState<AdminSignal[]>([]);
-  const [editSignalDialog, setEditSignalDialog] = useState(false);
-  const [selectedSignal, setSelectedSignal] = useState<AdminSignal | null>(null);
-  const [outcomeDialog, setOutcomeDialog] = useState(false);
-  const [signalOutcome, setSignalOutcome] = useState<"win" | "loss" | "pending" | "active" | "breakeven">("pending");
-  const [outcomeNotes, setOutcomeNotes] = useState("");
+  // Role assignment dialog
+  const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>("");
   
-  const PRESET_NOTES = "Do not continue to hold your trades if Stop Loss has Reached, exit the trade. Consider also using trailing profit or breakeven to lock any realized profit should price retrace to stop loss before getting to take profit. Break even when 1:1.5 profit is realized";
-
-  // Admin reply
-  const [replyMessage, setReplyMessage] = useState("");
-
-  // Admin email
-  const [emailSubject, setEmailSubject] = useState("");
-  const [emailBody, setEmailBody] = useState("");
-  const [emailTargetType, setEmailTargetType] = useState<"all" | "single" | "multiple">("all");
-  const [singleEmailAddress, setSingleEmailAddress] = useState("");
-  const [selectedEmailUsers, setSelectedEmailUsers] = useState<string[]>([]);
-  const [sendingEmail, setSendingEmail] = useState(false);
+  // Stats
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    signalProviders: 0,
+    admins: 0,
+    totalSignals: 0,
+    pendingSignals: 0,
+    completedSignals: 0,
+  });
 
   useEffect(() => {
-    if (!loading && !isAdmin) {
+    if (!checkingAdmin && !isAdmin) {
       navigate("/");
+      toast({
+        title: "Access Denied",
+        description: "You don't have admin permissions.",
+        variant: "destructive",
+      });
     }
-  }, [isAdmin, loading, navigate]);
+  }, [isAdmin, checkingAdmin, navigate, toast]);
 
   useEffect(() => {
     if (isAdmin) {
       fetchUsers();
-      fetchPayments();
-      fetchSupportThreads();
-      fetchContactQueries();
-      fetchAdminSignals();
+      fetchSignals();
+      fetchStats();
     }
   }, [isAdmin]);
 
   const fetchUsers = async () => {
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, name, phone_number, unique_identifier, last_login_ip, is_signal_subscriber, subscription_expires_at, referral_code");
-
-    if (!profiles) return;
-
-    const userIds = profiles.map(p => p.user_id);
-
-    const { data: settings } = await supabase
-      .from("user_settings")
-      .select("user_id, analysis_limit")
-      .in("user_id", userIds);
-
-    const { data: presence } = await supabase
-      .from("user_presence")
-      .select("user_id, is_online, last_seen")
-      .in("user_id", userIds);
-
-    const { data: trades } = await supabase
-      .from("trades")
-      .select("user_id, outcome")
-      .in("user_id", userIds);
-
-    const { data: referrals } = await supabase
-      .from("referrals")
-      .select("referrer_id, has_purchased")
-      .in("referrer_id", userIds);
-
-    const combined = profiles.map(profile => {
-      const userSettings = settings?.find(s => s.user_id === profile.user_id);
-      const userPresence = presence?.find(p => p.user_id === profile.user_id);
-      const userTrades = trades?.filter(t => t.user_id === profile.user_id) || [];
-      const userReferrals = referrals?.filter(r => r.referrer_id === profile.user_id) || [];
-      const slotsUsed = userTrades.length;
-      const successfulTrades = userTrades.filter(t => t.outcome === "win").length;
-      const totalSlots = userSettings?.analysis_limit ?? 0;
-      
-      return {
-        ...profile,
-        analysis_limit: totalSlots,
-        is_online: userPresence?.is_online || false,
-        last_seen: userPresence?.last_seen || null,
-        slots_used: slotsUsed,
-        slots_remaining: Math.max(0, totalSlots - slotsUsed),
-        successful_trades: successfulTrades,
-        total_referrals: userReferrals.length,
-        successful_referrals: userReferrals.filter(r => r.has_purchased).length,
-      };
-    });
-
-    setUsers(combined);
-    setOnlineCount(combined.filter(u => u.is_online).length);
-  };
-
-  const fetchPayments = async () => {
-    const { data: mpesaPayments } = await supabase
-      .from("pending_payments")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    const { data: usdtPayments } = await supabase
-      .from("usdt_payments")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, name, unique_identifier");
-
-    const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-
-    const allPayments: Payment[] = [
-      ...(mpesaPayments?.map(p => ({
-        ...p,
-        user_name: profileMap.get(p.user_id)?.name,
-        user_identifier: profileMap.get(p.user_id)?.unique_identifier,
-      })) || []),
-      ...(usdtPayments?.map(p => ({
-        ...p,
-        payment_method: "usdt",
-        user_name: profileMap.get(p.user_id)?.name,
-        user_identifier: profileMap.get(p.user_id)?.unique_identifier,
-      })) || []),
-    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    setPayments(allPayments);
-  };
-
-  const fetchSupportThreads = async () => {
-    const { data: threads } = await supabase
-      .from("support_threads")
-      .select("*")
-      .order("updated_at", { ascending: false });
-
-    if (!threads) return;
-
-    const userIds = [...new Set(threads.map(t => t.user_id))];
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id, name, unique_identifier")
-      .in("user_id", userIds);
-
-    const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
-
-    const threadsWithUsers = threads.map(t => ({
-      ...t,
-      user_name: profileMap.get(t.user_id)?.name,
-      user_identifier: profileMap.get(t.user_id)?.unique_identifier,
-    }));
-
-    setSupportThreads(threadsWithUsers);
-  };
-
-  const fetchContactQueries = async () => {
-    const { data } = await supabase
-      .from("contact_queries")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setContactQueries((data as ContactQuery[]) || []);
-  };
-
-  const fetchThreadMessages = async (threadId: string) => {
-    const { data } = await supabase
-      .from("support_messages")
-      .select("*")
-      .eq("thread_id", threadId)
-      .order("created_at", { ascending: true });
-
-    setThreadMessages(data || []);
-  };
-
-  const handleCreateUser = async () => {
-    if (!newUserEmail || !newUserPassword || !newUserName || !newUserPhone) {
-      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
-      return;
-    }
-
-    setCreatingUser(true);
     try {
-      const response = await supabase.functions.invoke("admin-create-user", {
-        body: {
-          email: newUserEmail,
-          password: newUserPassword,
-          fullName: newUserName,
-          phoneNumber: newUserPhone,
-          initialSlots: parseInt(newUserSlots),
-        },
-      });
-
-      if (response.error) throw response.error;
-
-      toast({ title: "Success", description: "User created successfully" });
-      setCreateUserDialog(false);
-      setNewUserEmail("");
-      setNewUserPassword("");
-      setNewUserName("");
-      setNewUserPhone("");
-      setNewUserSlots("0");
-      fetchUsers();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setCreatingUser(false);
-    }
-  };
-
-
-  const handleSendNotification = async () => {
-    if (!notificationTitle || !notificationMessage) {
-      toast({ title: "Error", description: "Please fill title and message", variant: "destructive" });
-      return;
-    }
-
-    if (notificationTarget.length === 0) {
-      toast({ title: "Error", description: "Please select at least one recipient", variant: "destructive" });
-      return;
-    }
-
-    setSendingNotification(true);
-    try {
-      const isGlobal = notificationTarget.includes("all");
-      
-      if (isGlobal) {
-        // Send global notification
-        const { error } = await supabase.from("admin_notifications").insert({
-          title: notificationTitle,
-          message: notificationMessage,
-          duration_seconds: parseInt(notificationDuration),
-          is_global: true,
-        });
-        if (error) throw error;
-      } else {
-        // Send to each selected user
-        const notifications = notificationTarget.map(userId => ({
-          title: notificationTitle,
-          message: notificationMessage,
-          duration_seconds: parseInt(notificationDuration),
-          is_global: false,
-          target_user_id: userId,
-        }));
-        
-        const { error } = await supabase.from("admin_notifications").insert(notifications);
-        if (error) throw error;
-      }
-
-      toast({ title: "Success", description: `Notification sent to ${isGlobal ? 'all users' : `${notificationTarget.length} user(s)`}` });
-      setNotificationTitle("");
-      setNotificationMessage("");
-      setNotificationTarget(["all"]);
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setSendingNotification(false);
-    }
-  };
-
-  const handleAdjustSlots = async () => {
-    if (!selectedUser || !newSlots) return;
-
-    try {
-      const { error } = await supabase
-        .from("user_settings")
-        .update({ analysis_limit: parseInt(newSlots) })
-        .eq("user_id", selectedUser.user_id);
-
-      if (error) throw error;
-
-      toast({ title: "Success", description: "Slots updated" });
-      setAdjustSlotsDialog(false);
-      setSelectedUser(null);
-      setNewSlots("");
-      fetchUsers();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleUpdateSubscription = async () => {
-    if (!selectedUser) return;
-
-    try {
-      const { error } = await supabase
+      // Fetch users with their roles
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .update({ 
-          is_signal_subscriber: true,
-          subscription_expires_at: subscriptionExpiry || null,
-        })
-        .eq("user_id", selectedUser.user_id);
+        .select("*");
+
+      if (profilesError) throw profilesError;
+
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("*");
+
+      if (rolesError) throw rolesError;
+
+      // Merge profiles with roles
+      const usersWithRoles = (profiles || []).map((profile: any) => {
+        const userRole = roles?.find((r: any) => r.user_id === profile.id);
+        return {
+          ...profile,
+          role: userRole?.role || null,
+        };
+      });
+
+      setUsers(usersWithRoles);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load users.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchSignals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("signals")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
 
       if (error) throw error;
 
-      toast({ title: "Success", description: "Subscription updated" });
-      setSubscriptionDialog(false);
-      setSelectedUser(null);
-      setSubscriptionExpiry("");
-      fetchUsers();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      // Get provider emails
+      const providerIds = [...new Set((data || []).map((s: any) => s.provider_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .in("id", providerIds);
+
+      const signalsWithEmails = (data || []).map((signal: any) => ({
+        ...signal,
+        provider_email: profiles?.find((p: any) => p.id === signal.provider_id)?.email || "Unknown",
+      }));
+
+      setSignals(signalsWithEmails);
+    } catch (error) {
+      console.error("Error fetching signals:", error);
     }
   };
 
-  const handleViewScreenshot = async (path: string) => {
-    const { data } = await supabase.storage
-      .from("usdt-payments")
-      .createSignedUrl(path, 3600);
-    
-    if (data?.signedUrl) {
-      setScreenshotUrl(data.signedUrl);
-      setScreenshotDialog(true);
-    }
-  };
-
-  const handleVerifyPayment = async (payment: Payment, approve: boolean) => {
+  const fetchStats = async () => {
     try {
-      if (payment.payment_method === "usdt") {
-        if (approve) {
-          await supabase
-            .from("usdt_payments")
-            .update({ 
-              status: "verified",
-              verified_at: new Date().toISOString(),
-            })
-            .eq("id", payment.id);
+      const { data: roles } = await supabase.from("user_roles").select("role");
+      const { count: totalUsers } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
+      
+      const { count: totalSignals } = await supabase
+        .from("signals")
+        .select("*", { count: "exact", head: true });
+      
+      const { count: pendingSignals } = await supabase
+        .from("signals")
+        .select("*", { count: "exact", head: true })
+        .eq("outcome", "pending");
 
-          const { data: currentSettings } = await supabase
-            .from("user_settings")
-            .select("analysis_limit")
-            .eq("user_id", payment.user_id)
-            .single();
+      setStats({
+        totalUsers: totalUsers || 0,
+        signalProviders: roles?.filter((r: any) => r.role === "signal_provider").length || 0,
+        admins: roles?.filter((r: any) => r.role === "admin").length || 0,
+        totalSignals: totalSignals || 0,
+        pendingSignals: pendingSignals || 0,
+        completedSignals: (totalSignals || 0) - (pendingSignals || 0),
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
 
-          const currentSlots = currentSettings?.analysis_limit || 0;
-          const slotsToAdd = payment.analysis_slots || 0;
+  const assignRole = async () => {
+    if (!selectedUser || !selectedRole) return;
 
-          await supabase
-            .from("user_settings")
-            .update({ analysis_limit: currentSlots + slotsToAdd })
-            .eq("user_id", payment.user_id);
+    try {
+      // Check if user already has a role
+      const { data: existingRole } = await supabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", selectedUser.id)
+        .maybeSingle();
 
-          // Mark referral as successful (first purchase)
-          await supabase
-            .from("referrals")
-            .update({ 
-              has_purchased: true,
-              first_purchase_at: new Date().toISOString(),
-            })
-            .eq("referred_id", payment.user_id)
-            .eq("has_purchased", false);
-        } else {
-          await supabase
-            .from("usdt_payments")
-            .update({ status: "rejected" })
-            .eq("id", payment.id);
-        }
+      if (existingRole) {
+        // Update existing role
+        const { error } = await supabase
+          .from("user_roles")
+          .update({ role: selectedRole })
+          .eq("user_id", selectedUser.id);
+
+        if (error) throw error;
       } else {
-        // M-Pesa or Card payment
-        if (approve) {
-          await supabase
-            .from("pending_payments")
-            .update({ 
-              status: "completed",
-              completed_at: new Date().toISOString(),
-            })
-            .eq("id", payment.id);
+        // Insert new role
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({
+            user_id: selectedUser.id,
+            role: selectedRole,
+          });
 
-          const { data: currentSettings } = await supabase
-            .from("user_settings")
-            .select("analysis_limit")
-            .eq("user_id", payment.user_id)
-            .single();
-
-          const currentSlots = currentSettings?.analysis_limit || 0;
-          const slotsToAdd = payment.analysis_slots || 0;
-
-          await supabase
-            .from("user_settings")
-            .update({ analysis_limit: currentSlots + slotsToAdd })
-            .eq("user_id", payment.user_id);
-
-          // Mark referral as successful (first purchase)
-          await supabase
-            .from("referrals")
-            .update({ 
-              has_purchased: true,
-              first_purchase_at: new Date().toISOString(),
-            })
-            .eq("referred_id", payment.user_id)
-            .eq("has_purchased", false);
-        } else {
-          await supabase
-            .from("pending_payments")
-            .update({ status: "rejected" })
-            .eq("id", payment.id);
-        }
+        if (error) throw error;
       }
 
-      toast({ title: "Success", description: approve ? "Payment verified and slots added" : "Payment rejected" });
-      fetchPayments();
+      toast({
+        title: "Success",
+        description: `Role updated to ${selectedRole} for ${selectedUser.email}`,
+      });
+
+      setShowRoleDialog(false);
+      setSelectedUser(null);
       fetchUsers();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handlePostSignal = async () => {
-    if (!signalSymbol || !signalEntry || !signalStopLoss || !signalTakeProfit || !signalRiskReward) {
-      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
-      return;
-    }
-
-    setPostingSignal(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { error: insertError } = await supabase.from("admin_signals").insert({
-        symbol: signalSymbol.toUpperCase(),
-        direction: signalDirection,
-        entry_price: parseFloat(signalEntry),
-        stop_loss: parseFloat(signalStopLoss),
-        take_profit: parseFloat(signalTakeProfit),
-        risk_reward: signalRiskReward,
-        additional_notes: PRESET_NOTES,
-        created_by: user.id,
+      fetchStats();
+    } catch (error) {
+      console.error("Error assigning role:", error);
+      toast({
+        title: "Error",
+        description: "Failed to assign role.",
+        variant: "destructive",
       });
-
-      if (insertError) throw insertError;
-
-      toast({ title: "Success", description: "Signal posted successfully" });
-      setSignalDialog(false);
-      setSignalSymbol("");
-      setSignalDirection("long");
-      setSignalEntry("");
-      setSignalStopLoss("");
-      setSignalTakeProfit("");
-      setSignalRiskReward("");
-      fetchAdminSignals();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setPostingSignal(false);
     }
   };
 
-  const fetchAdminSignals = async () => {
-    const { data } = await supabase
-      .from("admin_signals")
-      .select("id, symbol, direction, entry_price, stop_loss, take_profit, risk_reward, outcome, outcome_notes, created_at")
-      .order("created_at", { ascending: false });
-    setAdminSignals(data || []);
-  };
-
-  const handleEditSignal = async () => {
-    if (!selectedSignal || !signalSymbol || !signalEntry || !signalStopLoss || !signalTakeProfit || !signalRiskReward) {
-      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
-      return;
-    }
-
+  const removeRole = async (userId: string) => {
     try {
       const { error } = await supabase
-        .from("admin_signals")
-        .update({
-          symbol: signalSymbol.toUpperCase(),
-          direction: signalDirection,
-          entry_price: parseFloat(signalEntry),
-          stop_loss: parseFloat(signalStopLoss),
-          take_profit: parseFloat(signalTakeProfit),
-          risk_reward: signalRiskReward,
-        })
-        .eq("id", selectedSignal.id);
-
-      if (error) throw error;
-
-      toast({ title: "Success", description: "Signal updated successfully" });
-      setEditSignalDialog(false);
-      setSelectedSignal(null);
-      fetchAdminSignals();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleDeleteSignal = async (signalId: string) => {
-    if (!confirm("Are you sure you want to delete this signal?")) return;
-
-    try {
-      const { error } = await supabase
-        .from("admin_signals")
+        .from("user_roles")
         .delete()
-        .eq("id", signalId);
+        .eq("user_id", userId);
 
       if (error) throw error;
 
-      toast({ title: "Success", description: "Signal deleted successfully" });
-      fetchAdminSignals();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handleUpdateOutcome = async () => {
-    if (!selectedSignal) return;
-
-    try {
-      const { error } = await supabase
-        .from("admin_signals")
-        .update({
-          outcome: signalOutcome,
-          outcome_notes: outcomeNotes || null,
-          outcome_updated_at: new Date().toISOString(),
-        })
-        .eq("id", selectedSignal.id);
-
-      if (error) throw error;
-
-      toast({ title: "Success", description: "Outcome updated successfully" });
-      setOutcomeDialog(false);
-      setSelectedSignal(null);
-      setSignalOutcome("pending");
-      setOutcomeNotes("");
-      fetchAdminSignals();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const openEditSignalDialog = (signal: AdminSignal) => {
-    setSelectedSignal(signal);
-    setSignalSymbol(signal.symbol || "");
-    setSignalDirection((signal.direction as "long" | "short") || "long");
-    setSignalEntry(signal.entry_price?.toString() || "");
-    setSignalStopLoss(signal.stop_loss?.toString() || "");
-    setSignalTakeProfit(signal.take_profit?.toString() || "");
-    setSignalRiskReward(signal.risk_reward || "");
-    setEditSignalDialog(true);
-  };
-
-  const openOutcomeDialog = (signal: AdminSignal) => {
-    setSelectedSignal(signal);
-    setSignalOutcome((signal.outcome as "win" | "loss" | "pending") || "pending");
-    setOutcomeNotes(signal.outcome_notes || "");
-    setOutcomeDialog(true);
-  };
-
-  const handleAdminReply = async () => {
-    if (!selectedThread || !replyMessage.trim()) return;
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      await supabase.from("support_messages").insert({
-        thread_id: selectedThread.id,
-        sender_id: user.id,
-        subject: selectedThread.subject,
-        message: replyMessage,
+      toast({
+        title: "Success",
+        description: "Role removed successfully.",
       });
 
-      await supabase
-        .from("support_threads")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", selectedThread.id);
-
-      setReplyMessage("");
-      fetchThreadMessages(selectedThread.id);
-      toast({ title: "Reply sent" });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      fetchUsers();
+      fetchStats();
+    } catch (error) {
+      console.error("Error removing role:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove role.",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleRespondToQuery = async () => {
-    if (!selectedQuery || !queryResponse.trim()) return;
-
-    setSendingQueryResponse(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { error } = await supabase.functions.invoke("respond-contact-query", {
-        body: {
-          queryId: selectedQuery.id,
-          response: queryResponse.trim(),
-          userEmail: selectedQuery.email,
-          userName: selectedQuery.name,
-          originalSubject: selectedQuery.subject,
-          originalMessage: selectedQuery.message,
-          adminUserId: user.id,
-        },
-      });
-
-      if (error) throw error;
-
-      toast({ title: "Response sent", description: "Email sent to user" });
-      setQueryResponse("");
-      setSelectedQuery(null);
-      fetchContactQueries();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setSendingQueryResponse(false);
+  const getRoleBadge = (role: string | null) => {
+    switch (role) {
+      case "admin":
+        return <Badge className="bg-red-500"><Shield className="w-3 h-3 mr-1" /> Admin</Badge>;
+      case "signal_provider":
+        return <Badge className="bg-purple-500"><Target className="w-3 h-3 mr-1" /> Signal Provider</Badge>;
+      default:
+        return <Badge variant="outline"><Users className="w-3 h-3 mr-1" /> User</Badge>;
     }
   };
 
-  const handleSendAdminEmail = async () => {
-    if (!emailSubject.trim() || !emailBody.trim()) {
-      toast({ title: "Error", description: "Subject and body are required", variant: "destructive" });
-      return;
-    }
+  const filteredUsers = users.filter((user) =>
+    user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.last_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-    if (emailTargetType === "single" && !singleEmailAddress.trim()) {
-      toast({ title: "Error", description: "Email address is required", variant: "destructive" });
-      return;
-    }
-
-    if (emailTargetType === "multiple" && selectedEmailUsers.length === 0) {
-      toast({ title: "Error", description: "Please select at least one user", variant: "destructive" });
-      return;
-    }
-
-    setSendingEmail(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("send-admin-email", {
-        body: {
-          subject: emailSubject.trim(),
-          body: emailBody.trim(),
-          targetType: emailTargetType,
-          singleEmail: emailTargetType === "single" ? singleEmailAddress.trim() : undefined,
-          multipleUserIds: emailTargetType === "multiple" ? selectedEmailUsers : undefined,
-        },
-      });
-
-      if (error) throw error;
-
-      toast({ 
-        title: "Email sent", 
-        description: data.message || "Email sent successfully" 
-      });
-      setEmailSubject("");
-      setEmailBody("");
-      setSingleEmailAddress("");
-      setSelectedEmailUsers([]);
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setSendingEmail(false);
-    }
-  };
-
-  if (loading) {
+  if (checkingAdmin || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  if (!isAdmin) return null;
-
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-background relative">
-
-    <div className="absolute top-5 right-4 z-50">
-      <SlideInMenu />
-    </div>
-
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage users, payments, and notifications</p>
-          </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+          <p className="text-muted-foreground">
+            Manage users, roles, and signals
+          </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-500/20 rounded-lg">
-                  <Activity className="h-5 w-5 text-green-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Online Now</p>
-                  <p className="text-2xl font-bold">{onlineCount}</p>
-                </div>
-              </div>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <div className="text-xs text-muted-foreground">Total Users</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <Users className="h-5 w-5 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Users</p>
-                  <p className="text-2xl font-bold">{users.length}</p>
-                </div>
-              </div>
+              <div className="text-2xl font-bold text-purple-500">{stats.signalProviders}</div>
+              <div className="text-xs text-muted-foreground">Signal Providers</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500/20 rounded-lg">
-                  <CreditCard className="h-5 w-5 text-purple-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Pending Payments</p>
-                  <p className="text-2xl font-bold">{payments.filter(p => p.status === "pending").length}</p>
-                </div>
-              </div>
+              <div className="text-2xl font-bold text-red-500">{stats.admins}</div>
+              <div className="text-xs text-muted-foreground">Admins</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-500/20 rounded-lg">
-                  <MessageSquare className="h-5 w-5 text-orange-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Open Tickets</p>
-                  <p className="text-2xl font-bold">{supportThreads.filter(t => t.status === "open").length}</p>
-                </div>
-              </div>
+              <div className="text-2xl font-bold">{stats.totalSignals}</div>
+              <div className="text-xs text-muted-foreground">Total Signals</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-cyan-500/20 rounded-lg">
-                  <Mail className="h-5 w-5 text-cyan-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Pending Queries</p>
-                  <p className="text-2xl font-bold">{contactQueries.filter(q => q.status === "pending").length}</p>
-                </div>
-              </div>
+              <div className="text-2xl font-bold text-yellow-500">{stats.pendingSignals}</div>
+              <div className="text-xs text-muted-foreground">Pending</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold text-green-500">{stats.completedSignals}</div>
+              <div className="text-xs text-muted-foreground">Completed</div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="users" className="space-y-4">
-          <TabsList className="grid grid-cols-7 w-full max-w-5xl">
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="support">Support</TabsTrigger>
-            <TabsTrigger value="queries">Queries</TabsTrigger>
-            <TabsTrigger value="email">Email</TabsTrigger>
-            <TabsTrigger value="signals">Signals</TabsTrigger>
+        <Tabs defaultValue="users" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="users">
+              <Users className="w-4 h-4 mr-2" />
+              User Management
+            </TabsTrigger>
+            <TabsTrigger value="signals">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              All Signals
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="users">
+          <TabsContent value="users" className="mt-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>User Management</CardTitle>
-                  <CardDescription>View and manage all users</CardDescription>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>User Management</CardTitle>
+                    <CardDescription>
+                      Manage user roles and permissions
+                    </CardDescription>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search users..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 w-full md:w-80"
+                    />
+                  </div>
                 </div>
-                <Dialog open={createUserDialog} onOpenChange={setCreateUserDialog}>
-                  <DialogTrigger asChild>
-                    <Button><UserPlus className="h-4 w-4 mr-2" /> Create User</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create New User</DialogTitle>
-                      <DialogDescription>Create a new user account with login credentials</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Email</Label>
-                        <Input value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)} type="email" />
-                      </div>
-                      <div>
-                        <Label>Password</Label>
-                        <Input value={newUserPassword} onChange={e => setNewUserPassword(e.target.value)} type="password" />
-                      </div>
-                      <div>
-                        <Label>Full Name</Label>
-                        <Input value={newUserName} onChange={e => setNewUserName(e.target.value)} />
-                      </div>
-                      <div>
-                        <Label>Phone Number</Label>
-                        <Input value={newUserPhone} onChange={e => setNewUserPhone(e.target.value)} />
-                      </div>
-                      <div>
-                        <Label>Initial Analysis Slots</Label>
-                        <Input value={newUserSlots} onChange={e => setNewUserSlots(e.target.value)} type="number" />
-                      </div>
-                      <Button onClick={handleCreateUser} disabled={creatingUser} className="w-full">
-                        {creatingUser ? "Creating..." : "Create User"}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[500px]">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Slots Used</TableHead>
-                        <TableHead>Slots Left</TableHead>
-                        <TableHead>Wins</TableHead>
-                        <TableHead>Referrals</TableHead>
-                        <TableHead>IP Address</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>User</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Joined</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.map(user => (
-                        <TableRow key={user.user_id}>
-                          <TableCell className="font-mono">{user.unique_identifier}</TableCell>
+                      {filteredUsers.map((user) => (
+                        <TableRow key={user.id}>
                           <TableCell>
                             <div>
-                              {user.name || "—"}
-                              {user.is_signal_subscriber && (
-                                <Badge variant="outline" className="ml-2 text-xs">Subscriber</Badge>
+                              <div className="font-medium">
+                                {user.first_name} {user.last_name}
+                              </div>
+                              <div className="text-sm text-muted-foreground">{user.email}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {user.phone_number && (
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                  <Phone className="w-3 h-3 mr-1" />
+                                  {user.phone_number}
+                                </div>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>{user.phone_number || "—"}</TableCell>
-                          <TableCell>{user.slots_used}</TableCell>
-                          <TableCell>{user.slots_remaining}</TableCell>
-                          <TableCell className="text-green-600">{user.successful_trades}</TableCell>
+                          <TableCell>{getRoleBadge(user.role)}</TableCell>
                           <TableCell>
-                            <span className="text-primary font-semibold">{user.successful_referrals}</span>
-                            <span className="text-muted-foreground">/{user.total_referrals}</span>
-                          </TableCell>
-                          <TableCell className="font-mono text-xs">{user.last_login_ip || "—"}</TableCell>
-                          <TableCell>
-                            <Badge variant={user.is_online ? "default" : "secondary"}>
-                              {user.is_online ? "Online" : "Offline"}
-                            </Badge>
+                            <div className="flex items-center text-sm text-muted-foreground">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              {new Date(user.created_at).toLocaleDateString()}
+                            </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-1">
+                            <div className="flex gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
                                   setSelectedUser(user);
-                                  setNewSlots(String(user.analysis_limit));
-                                  setAdjustSlotsDialog(true);
+                                  setSelectedRole(user.role || "signal_provider");
+                                  setShowRoleDialog(true);
                                 }}
                               >
-                                Slots
+                                <Crown className="w-3 h-3 mr-1" />
+                                {user.role ? "Change Role" : "Assign Role"}
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setSubscriptionExpiry(user.subscription_expires_at || "");
-                                  setSubscriptionDialog(true);
-                                }}
-                              >
-                                <Calendar className="h-4 w-4" />
-                              </Button>
+                              {user.role && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => removeRole(user.id)}
+                                >
+                                  <XCircle className="w-3 h-3 mr-1" />
+                                  Remove
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </ScrollArea>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="payments">
+          <TabsContent value="signals" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Payment Tracking</CardTitle>
-                <CardDescription>View all payments and verify transactions</CardDescription>
+                <CardTitle>All Signals</CardTitle>
+                <CardDescription>
+                  View and manage all signals from providers
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Package</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {payments.map(payment => (
-                      <TableRow key={payment.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{payment.user_name || "—"}</p>
-                            <p className="text-xs text-muted-foreground">{payment.user_identifier}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {payment.payment_method === "usdt" ? "USDT" : payment.payment_method === "paypal" ? "Card" : "M-Pesa"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{payment.package_type}</TableCell>
-                        <TableCell>
-                          {payment.amount_usd ? `$${payment.amount_usd}` : `KES ${payment.amount_kes}`}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={payment.status === "pending" ? "secondary" : payment.status === "verified" || payment.status === "completed" ? "default" : "destructive"}>
-                            {payment.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(payment.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            {payment.screenshot_path && (
-                              <Button size="sm" variant="outline" onClick={() => handleViewScreenshot(payment.screenshot_path!)}>
-                                <Image className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {payment.status === "pending" && (
-                              <>
-                                <Button size="sm" onClick={() => handleVerifyPayment(payment, true)}>
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleVerifyPayment(payment, false)}>
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {payments.length === 0 && (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
-                          No payments found
-                        </TableCell>
+                        <TableHead>Signal</TableHead>
+                        <TableHead>Provider</TableHead>
+                        <TableHead>Visibility</TableHead>
+                        <TableHead>Outcome</TableHead>
+                        <TableHead>Posted</TableHead>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="notifications">
-            <Card>
-              <CardHeader>
-                <CardTitle>Send Notification</CardTitle>
-                <CardDescription>Send pop-up notifications to users</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Title</Label>
-                  <Input
-                    value={notificationTitle}
-                    onChange={e => setNotificationTitle(e.target.value)}
-                    placeholder="Notification title"
-                  />
-                </div>
-                <div>
-                  <Label>Message</Label>
-                  <Textarea
-                    value={notificationMessage}
-                    onChange={e => setNotificationMessage(e.target.value)}
-                    placeholder="Notification message"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Target Recipients</Label>
-                    <div className="mt-2 space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={notificationTarget.includes("all")}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setNotificationTarget(["all"]);
-                            } else {
-                              setNotificationTarget([]);
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        <Globe className="h-4 w-4" />
-                        <span className="text-sm font-medium">All Visitors (including non-users)</span>
-                      </label>
-                      <div className="border-t my-2" />
-                      {users.map(user => (
-                        <label key={user.user_id} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={notificationTarget.includes(user.user_id)}
-                            disabled={notificationTarget.includes("all")}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setNotificationTarget(prev => prev.filter(t => t !== "all").concat(user.user_id));
-                              } else {
-                                setNotificationTarget(prev => prev.filter(t => t !== user.user_id));
+                    </TableHeader>
+                    <TableBody>
+                      {signals.map((signal) => (
+                        <TableRow key={signal.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">{signal.currency_pair}</span>
+                              <Badge
+                                variant={signal.signal_type === "BUY" ? "default" : "destructive"}
+                              >
+                                {signal.signal_type}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">{signal.provider_email}</div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                signal.signal_visibility === "free"
+                                  ? "default"
+                                  : signal.signal_visibility === "subscribers"
+                                  ? "secondary"
+                                  : "outline"
                               }
-                            }}
-                            className="rounded"
-                          />
-                          <span className="text-sm">{user.name || user.unique_identifier} ({user.unique_identifier})</span>
-                        </label>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Selected: {notificationTarget.includes("all") ? "All" : `${notificationTarget.length} user(s)`}
-                    </p>
-                  </div>
-                  <div>
-                    <Label>Duration (seconds, 0 = until dismissed)</Label>
-                    <Input
-                      value={notificationDuration}
-                      onChange={e => setNotificationDuration(e.target.value)}
-                      type="number"
-                      min="0"
-                    />
-                  </div>
-                </div>
-                <Button onClick={handleSendNotification} disabled={sendingNotification || notificationTarget.length === 0} className="w-full">
-                  <Send className="h-4 w-4 mr-2" />
-                  {sendingNotification ? "Sending..." : "Send Notification"}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="support">
-            <div className="grid md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Support Tickets</CardTitle>
-                  <CardDescription>User messages and requests</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[400px]">
-                    <div className="p-4 space-y-2">
-                      {supportThreads.map(thread => (
-                        <div
-                          key={thread.id}
-                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                            selectedThread?.id === thread.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
-                          }`}
-                          onClick={() => {
-                            setSelectedThread(thread);
-                            fetchThreadMessages(thread.id);
-                          }}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="font-medium text-sm">{thread.subject}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {thread.user_name || thread.user_identifier}
-                              </p>
-                            </div>
-                            <Badge variant={thread.status === "open" ? "default" : "secondary"}>
-                              {thread.status}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(thread.updated_at).toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
-                      {supportThreads.length === 0 && (
-                        <p className="text-center text-muted-foreground py-8">No support tickets</p>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    {selectedThread ? selectedThread.subject : "Select a ticket"}
-                  </CardTitle>
-                  {selectedThread && (
-                    <CardDescription>
-                      From: {selectedThread.user_name || selectedThread.user_identifier}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent className="p-0">
-                  {selectedThread ? (
-                    <>
-                      <ScrollArea className="h-[280px] px-4">
-                        <div className="space-y-3 py-4">
-                          {threadMessages.map(msg => (
-                            <div
-                              key={msg.id}
-                              className={`p-3 rounded-lg max-w-[85%] ${
-                                msg.sender_id !== selectedThread.user_id
-                                  ? 'ml-auto bg-primary text-primary-foreground'
-                                  : 'bg-muted'
-                              }`}
                             >
-                              <p className="text-sm">{msg.message}</p>
-                              <p className={`text-xs mt-1 ${
-                                msg.sender_id !== selectedThread.user_id ? 'opacity-70' : 'text-muted-foreground'
-                              }`}>
-                                {new Date(msg.created_at).toLocaleString()}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                      <div className="p-4 border-t flex gap-2">
-                        <Input
-                          value={replyMessage}
-                          onChange={e => setReplyMessage(e.target.value)}
-                          placeholder="Type your reply..."
-                          onKeyDown={e => e.key === "Enter" && handleAdminReply()}
-                        />
-                        <Button onClick={handleAdminReply} disabled={!replyMessage.trim()}>
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="h-[340px] flex items-center justify-center text-muted-foreground">
-                      Select a ticket to view messages
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="queries">
-            <div className="grid md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    Queries from Non-Users
-                  </CardTitle>
-                  <CardDescription>Contact form submissions from website visitors</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[400px]">
-                    <div className="p-4 space-y-2">
-                      {contactQueries.map(query => (
-                        <div
-                          key={query.id}
-                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                            selectedQuery?.id === query.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
-                          }`}
-                          onClick={() => setSelectedQuery(query)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="font-medium text-sm">{query.subject}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {query.name} • {query.email}
-                              </p>
-                            </div>
-                            <Badge variant={query.status === "pending" ? "secondary" : "default"}>
-                              {query.status}
+                              {signal.signal_visibility}
                             </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(query.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                      ))}
-                      {contactQueries.length === 0 && (
-                        <p className="text-center text-muted-foreground py-8">No contact queries</p>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    {selectedQuery ? selectedQuery.subject : "Select a query"}
-                  </CardTitle>
-                  {selectedQuery && (
-                    <CardDescription>
-                      From: {selectedQuery.name} ({selectedQuery.email})
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {selectedQuery ? (
-                    <div className="space-y-4">
-                      <div className="p-4 bg-muted rounded-lg">
-                        <p className="text-sm whitespace-pre-wrap">{selectedQuery.message}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Received: {new Date(selectedQuery.created_at).toLocaleString()}
-                        </p>
-                      </div>
-
-                      {selectedQuery.admin_response ? (
-                        <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                          <p className="text-xs text-primary font-medium mb-1">Your Response:</p>
-                          <p className="text-sm whitespace-pre-wrap">{selectedQuery.admin_response}</p>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Responded: {selectedQuery.responded_at && new Date(selectedQuery.responded_at).toLocaleString()}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <Label>Your Response</Label>
-                          <Textarea
-                            value={queryResponse}
-                            onChange={e => setQueryResponse(e.target.value)}
-                            placeholder="Type your response to the user..."
-                            rows={4}
-                          />
-                          <Button 
-                            onClick={handleRespondToQuery} 
-                            disabled={!queryResponse.trim() || sendingQueryResponse}
-                            className="w-full"
-                          >
-                            <Send className="h-4 w-4 mr-2" />
-                            {sendingQueryResponse ? "Sending..." : "Send Response"}
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                      Select a query to view and respond
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="email">
-            <Card>
-              <CardHeader>
-                <CardTitle>Send Email</CardTitle>
-                <CardDescription>Send emails to all users, multiple users, or a single recipient</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Recipients</Label>
-                  <Select value={emailTargetType} onValueChange={(v: "all" | "single" | "multiple") => {
-                    setEmailTargetType(v);
-                    setSelectedEmailUsers([]);
-                    setSingleEmailAddress("");
-                  }}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Users ({users.length} users)</SelectItem>
-                      <SelectItem value="multiple">Select Multiple Users</SelectItem>
-                      <SelectItem value="single">Single Email Address</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {emailTargetType === "single" && (
-                  <div className="space-y-2">
-                    <Label>Email Address</Label>
-                    <Input
-                      type="email"
-                      placeholder="recipient@example.com"
-                      value={singleEmailAddress}
-                      onChange={e => setSingleEmailAddress(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                {emailTargetType === "multiple" && (
-                  <div className="space-y-2">
-                    <Label>Select Users</Label>
-                    <div className="max-h-48 overflow-y-auto border rounded-md p-3 space-y-2">
-                      {users.map(user => (
-                        <label key={user.user_id} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={selectedEmailUsers.includes(user.user_id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedEmailUsers(prev => [...prev, user.user_id]);
-                              } else {
-                                setSelectedEmailUsers(prev => prev.filter(id => id !== user.user_id));
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                signal.outcome === "win"
+                                  ? "default"
+                                  : signal.outcome === "loss"
+                                  ? "destructive"
+                                  : "outline"
                               }
-                            }}
-                            className="rounded"
-                          />
-                          <span className="text-sm">{user.name || user.unique_identifier} ({user.unique_identifier})</span>
-                        </label>
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Selected: {selectedEmailUsers.length} user(s)
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label>Subject *</Label>
-                  <Input
-                    placeholder="Enter email subject"
-                    value={emailSubject}
-                    onChange={e => setEmailSubject(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Body *</Label>
-                  <Textarea
-                    placeholder="Enter email body. Use **text** for bold, *text* for italic, __text__ for underline."
-                    value={emailBody}
-                    onChange={e => setEmailBody(e.target.value)}
-                    rows={10}
-                    className="font-mono"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Formatting tips: **bold**, *italic*, __underline__. Line breaks will be preserved.
-                  </p>
-                </div>
-
-                <Button 
-                  onClick={handleSendAdminEmail} 
-                  disabled={sendingEmail || !emailSubject.trim() || !emailBody.trim() || (emailTargetType === "multiple" && selectedEmailUsers.length === 0)}
-                  className="w-full"
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {sendingEmail ? "Sending..." : 
-                    emailTargetType === "all" ? `Send to All ${users.length} Users` : 
-                    emailTargetType === "multiple" ? `Send to ${selectedEmailUsers.length} User(s)` : 
-                    "Send Email"}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="signals">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Trading Signals</CardTitle>
-                  <CardDescription>Post signals for subscribed users</CardDescription>
-                </div>
-                <Dialog open={signalDialog} onOpenChange={setSignalDialog}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Send className="h-4 w-4 mr-2" />
-                      Post Signal
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Post New Signal</DialogTitle>
-                      <DialogDescription>Enter trading signal details</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Symbol *</Label>
-                        <Input
-                          value={signalSymbol}
-                          onChange={e => setSignalSymbol(e.target.value)}
-                          placeholder="e.g., EUR/USD, XAU/USD"
-                        />
-                      </div>
-                      <div>
-                        <Label>Direction *</Label>
-                        <Select value={signalDirection} onValueChange={(v: "long" | "short") => setSignalDirection(v)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="long">Long (Buy)</SelectItem>
-                            <SelectItem value="short">Short (Sell)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label>Entry Point *</Label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={signalEntry}
-                            onChange={e => setSignalEntry(e.target.value)}
-                            placeholder="e.g., 1.0850"
-                          />
-                        </div>
-                        <div>
-                          <Label>Stop Loss *</Label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={signalStopLoss}
-                            onChange={e => setSignalStopLoss(e.target.value)}
-                            placeholder="e.g., 1.0800"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label>Take Profit *</Label>
-                          <Input
-                            type="number"
-                            step="any"
-                            value={signalTakeProfit}
-                            onChange={e => setSignalTakeProfit(e.target.value)}
-                            placeholder="e.g., 1.0950"
-                          />
-                        </div>
-                        <div>
-                          <Label>Risk to Reward *</Label>
-                          <Input
-                            value={signalRiskReward}
-                            onChange={e => setSignalRiskReward(e.target.value)}
-                            placeholder="e.g., 1:2"
-                          />
-                        </div>
-                      </div>
-                      <div className="p-3 bg-muted rounded-lg">
-                        <Label className="text-xs text-muted-foreground">Additional Notes (preset):</Label>
-                        <p className="text-xs mt-1">{PRESET_NOTES}</p>
-                      </div>
-                      <Button 
-                        onClick={handlePostSignal} 
-                        disabled={postingSignal || !signalSymbol || !signalEntry || !signalStopLoss || !signalTakeProfit || !signalRiskReward} 
-                        className="w-full"
-                      >
-                        <Send className="h-4 w-4 mr-2" />
-                        {postingSignal ? "Posting..." : "Post Signal"}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between mb-4 p-3 bg-muted rounded-lg">
-                  <span className="text-sm">{users.filter(u => u.is_signal_subscriber).length} active signal subscribers</span>
-                  <span className="text-sm text-muted-foreground">{adminSignals.length} signals posted</span>
-                </div>
-                
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-3">
-                    {adminSignals.map(signal => (
-                      <div key={signal.id} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold">{signal.symbol}</span>
-                            <Badge variant={signal.direction === "long" ? "default" : "destructive"}>
-                              {signal.direction === "long" ? "LONG" : "SHORT"}
-                            </Badge>
-                            <Badge 
-                              variant={signal.outcome === "win" ? "default" : signal.outcome === "loss" ? "destructive" : "secondary"}
-                              className={signal.outcome === "win" ? "bg-green-600" : signal.outcome === "loss" ? "bg-red-600" : ""}
                             >
-                              {signal.outcome.toUpperCase()}
+                              {signal.outcome || "pending"}
                             </Badge>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => openEditSignalDialog(signal)}>
-                              Edit
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => openOutcomeDialog(signal)}>
-                              Outcome
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteSignal(signal.id)}>
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-4 gap-2 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Entry:</span> {signal.entry_price}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">SL:</span> {signal.stop_loss}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">TP:</span> {signal.take_profit}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">R:R:</span> {signal.risk_reward}
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {new Date(signal.created_at).toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
-                    {adminSignals.length === 0 && (
-                      <p className="text-center text-muted-foreground py-8">No signals posted yet</p>
-                    )}
-                  </div>
-                </ScrollArea>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(signal.created_at).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Adjust Slots Dialog */}
-        <Dialog open={adjustSlotsDialog} onOpenChange={setAdjustSlotsDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Adjust Analysis Slots</DialogTitle>
-              <DialogDescription>
-                Update slots for {selectedUser?.name || selectedUser?.unique_identifier}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>New Slot Count</Label>
-                <Input
-                  value={newSlots}
-                  onChange={e => setNewSlots(e.target.value)}
-                  type="number"
-                  min="0"
-                />
-              </div>
-              <Button onClick={handleAdjustSlots} className="w-full">Update Slots</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Subscription Dialog */}
-        <Dialog open={subscriptionDialog} onOpenChange={setSubscriptionDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Manage Subscription</DialogTitle>
-              <DialogDescription>
-                Update signal subscription for {selectedUser?.name || selectedUser?.unique_identifier}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Subscription Expiry Date</Label>
-                <Input
-                  type="datetime-local"
-                  value={subscriptionExpiry}
-                  onChange={e => setSubscriptionExpiry(e.target.value)}
-                />
-              </div>
-              <Button onClick={handleUpdateSubscription} className="w-full">
-                Activate/Update Subscription
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Screenshot Dialog */}
-        <Dialog open={screenshotDialog} onOpenChange={setScreenshotDialog}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Payment Screenshot</DialogTitle>
-            </DialogHeader>
-            <div className="flex justify-center">
-              <img src={screenshotUrl} alt="Payment proof" className="max-h-[70vh] object-contain rounded-lg" />
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Signal Dialog */}
-        <Dialog open={editSignalDialog} onOpenChange={setEditSignalDialog}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Edit Signal</DialogTitle>
-              <DialogDescription>Update trading signal details</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Symbol *</Label>
-                <Input
-                  value={signalSymbol}
-                  onChange={e => setSignalSymbol(e.target.value)}
-                  placeholder="e.g., EUR/USD"
-                />
-              </div>
-              <div>
-                <Label>Direction *</Label>
-                <Select value={signalDirection} onValueChange={(v: "long" | "short") => setSignalDirection(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="long">Long (Buy)</SelectItem>
-                    <SelectItem value="short">Short (Sell)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Entry Point *</Label>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={signalEntry}
-                    onChange={e => setSignalEntry(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Stop Loss *</Label>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={signalStopLoss}
-                    onChange={e => setSignalStopLoss(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Take Profit *</Label>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={signalTakeProfit}
-                    onChange={e => setSignalTakeProfit(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>Risk to Reward *</Label>
-                  <Input
-                    value={signalRiskReward}
-                    onChange={e => setSignalRiskReward(e.target.value)}
-                  />
-                </div>
-              </div>
-              <Button onClick={handleEditSignal} className="w-full">
-                Update Signal
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Outcome Dialog */}
-        <Dialog open={outcomeDialog} onOpenChange={setOutcomeDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Update Signal Outcome</DialogTitle>
-              <DialogDescription>
-                {selectedSignal?.symbol} - {selectedSignal?.direction?.toUpperCase()}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Outcome</Label>
-                <Select value={signalOutcome} onValueChange={(v: "win" | "loss" | "pending" | "active" | "breakeven") => setSignalOutcome(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="win">Win</SelectItem>
-                    <SelectItem value="loss">Loss</SelectItem>
-                    <SelectItem value="breakeven">Break Even</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Notes (optional)</Label>
-                <Textarea
-                  value={outcomeNotes}
-                  onChange={e => setOutcomeNotes(e.target.value)}
-                  placeholder="Add any notes about the outcome..."
-                  rows={3}
-                />
-              </div>
-              <Button onClick={handleUpdateOutcome} className="w-full">
-                Update Outcome
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
+
+      {/* Role Assignment Dialog */}
+      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Role</DialogTitle>
+            <DialogDescription>
+              {selectedUser && (
+                <>
+                  Assign a role to <strong>{selectedUser.email}</strong>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Select Role</Label>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="signal_provider">
+                    <div className="flex items-center">
+                      <Target className="w-4 h-4 mr-2 text-purple-500" />
+                      Signal Provider - Can post free and subscriber signals
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="admin">
+                    <div className="flex items-center">
+                      <Shield className="w-4 h-4 mr-2 text-red-500" />
+                      Admin - Full access to all features
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="bg-muted p-3 rounded text-sm">
+              <strong>Signal Provider:</strong> Can create and manage trading signals.
+              Signals can be published as free (visible to everyone), subscribers only,
+              or both. Provider can update signal outcomes.
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowRoleDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={assignRole}>
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Assign Role
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
