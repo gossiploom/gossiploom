@@ -75,6 +75,13 @@ const Admin = () => {
     completedSignals: 0,
   });
 
+const Admin = () => {
+
+  const navigate = useNavigate();
+  const { isAdmin, checkingAdmin } = useAdminCheck();
+  const { toast } = useToast();
+
+  // Redirect non-admins
   useEffect(() => {
     if (!checkingAdmin && !isAdmin) {
       navigate("/");
@@ -86,6 +93,7 @@ const Admin = () => {
     }
   }, [isAdmin, checkingAdmin, navigate, toast]);
 
+  // Fetch data ONLY when admin confirmed
   useEffect(() => {
     if (isAdmin) {
       fetchUsers();
@@ -94,9 +102,17 @@ const Admin = () => {
     }
   }, [isAdmin]);
 
+  // Render guards MUST come AFTER all hooks
+  if (checkingAdmin) {
+    return <div>Checking admin permissions...</div>;
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
+
   const fetchUsers = async () => {
     try {
-      // Fetch users with their roles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*");
@@ -109,6 +125,11 @@ const Admin = () => {
 
       if (rolesError) throw rolesError;
 
+      // rest of logic...
+    } catch (error) {
+      console.error(error);
+    }
+  };
       // Merge profiles with roles
       const usersWithRoles = (profiles || []).map((profile: any) => {
         const userRole = roles?.find((r: any) => r.user_id === profile.id);
