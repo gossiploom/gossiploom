@@ -261,7 +261,7 @@ ${isPendingOrder ? `- For PENDING ORDERS: Entry must be at liquidity zones, Majo
             }
           ],
           generationConfig: {
-            temperature: 0.3,
+            temperature: 0.2,
           }
         }),
       }
