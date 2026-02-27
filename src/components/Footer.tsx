@@ -1,21 +1,4 @@
 import { Link } from "react-router-dom";
-import { 
-  TrendingUp, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Twitter, 
-  Facebook, 
-  Instagram, 
-  Youtube,
-  Gift,
-  Target,
-  BarChart3,
-  Users,
-  HelpCircle,
-  FileText,
-  Shield
-} from "lucide-react";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -196,17 +179,19 @@ export const Footer = () => {
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 support@tradeadvisor.live
-            </a>
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              © {currentYear} TradeAdvisor. All rights reserved.
+            </div>
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="border-t border-border pt-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Trade Advisor. All rights reserved.
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Trading involves risk. Past performance is not indicative of future results.
+        {/* Disclaimer */}
+        <div className="mt-8 pt-8 border-t">
+          <p className="text-xs text-muted-foreground text-center max-w-4xl mx-auto">
+            <strong>Risk Disclaimer:</strong> Trading forex involves substantial risk of loss and is not suitable for all investors. 
+            Past performance is not indicative of future results. Please ensure you fully understand the risks involved.
           </p>
         </div>
       </div>
