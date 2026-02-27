@@ -1,4 +1,21 @@
 import { Link } from "react-router-dom";
+import { 
+  TrendingUp, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Twitter, 
+  Facebook, 
+  Instagram, 
+  Youtube,
+  Gift,
+  Target,
+  BarChart3,
+  Users,
+  HelpCircle,
+  FileText,
+  Shield
+} from "lucide-react";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
