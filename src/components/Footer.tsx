@@ -28,7 +28,7 @@ export const Footer = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="w-6 h-6 text-primary" />
-              <span className="text-xl font-bold">GossipLoom</span>
+              <span className="text-xl font-bold">TradeAdvisor</span>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Professional forex trading signals and analysis to help you make informed trading decisions.
@@ -195,28 +195,18 @@ export const Footer = () => {
             <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                support@gossiploom.com
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                +1 (555) 123-4567
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                New York, NY
-              </div>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              © {currentYear} GossipLoom. All rights reserved.
-            </div>
+                support@tradeadvisor.live
+            </a>
           </div>
         </div>
 
-        {/* Disclaimer */}
-        <div className="mt-8 pt-8 border-t">
-          <p className="text-xs text-muted-foreground text-center max-w-4xl mx-auto">
-            <strong>Risk Disclaimer:</strong> Trading forex involves substantial risk of loss and is not suitable for all investors. 
-            Past performance is not indicative of future results. Please ensure you fully understand the risks involved.
+        {/* Copyright */}
+        <div className="border-t border-border pt-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Trade Advisor. All rights reserved.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Trading involves risk. Past performance is not indicative of future results.
           </p>
         </div>
       </div>
