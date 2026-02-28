@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Settings, History, LogOut, Newspaper, Home, ShoppingCart, Shield, Bell, TrendingUp, Users } from "lucide-react";
+import { Menu, Settings, History, LogOut, Newspaper, Home, LineChart, ShoppingCart, Shield, Bell, TrendingUp, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
-import { useSignalProviderCheck } from "@/hooks/useSignalProviderCheck";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { Badge } from "@/components/ui/badge";
 
@@ -13,12 +12,11 @@ export const SlideInMenu = () => {
   const [open, setOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useAdminCheck();
-  const { isSignalProvider, loading: checkingSignalProvider } = useSignalProviderCheck();
+  const { isSignalProvider } = useSignalProviderCheck();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -26,84 +24,74 @@ export const SlideInMenu = () => {
         setOpen(false);
       }
     };
-    if (open) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [open]);
 
   useEffect(() => {
-    const fetchUnread = async () => {
-      try {
-        const { data } = await supabase.auth.getUser();
-        const user = data?.user;
-        if (!user) return;
-
-        const { data: allNotifications } = await supabase
-          .from("admin_notifications")
-          .select("id")
-          .or(`is_global.eq.true,target_user_id.eq.${user.id}`);
-
-        const { data: readNotifications } = await supabase
-          .from("notification_reads")
-          .select("notification_id")
-          .eq("user_id", user.id);
-
-        const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
-        setUnreadCount(allNotifications?.filter(n => !readIds.has(n.id)).length || 0);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUnread();
+    fetchUnreadCount();
   }, []);
+
+  const fetchUnreadCount = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: allNotifications } = await supabase
+      .from("admin_notifications")
+      .select("id")
+      .or(`is_global.eq.true,target_user_id.eq.${user.id}`);
+
+    const { data: readNotifications } = await supabase
+      .from("notification_reads")
+      .select("notification_id")
+      .eq("user_id", user.id);
+
+    const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
+    const unread = allNotifications?.filter(n => !readIds.has(n.id)).length || 0;
+    setUnreadCount(unread);
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    toast({ title: "Signed out successfully" });
+    toast({
+      title: "Signed out successfully",
+    });
     navigate("/auth");
     setOpen(false);
   };
 
-  // Always render JSX; show loader if checking roles
-  if (loading || checkingSignalProvider) {
-    return (
-      <div className="fixed top-5 right-4 z-[60]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  const menuItems = isAdmin
-    ? [
-        { to: "/admin", icon: Shield, label: "Admin Dashboard", primary: true },
-        { to: "/settings", icon: Settings, label: "Settings" },
-        { to: "/history", icon: History, label: "History" },
-        { to: "/news", icon: Newspaper, label: "News" },
-      ]
-    : isSignalProvider
-    ? [
-        { to: "/signal-provider", icon: TrendingUp, label: "Signal Provider Dashboard", primary: true },
-        { to: "/history", icon: History, label: "History" },
-        { to: "/purchase", icon: ShoppingCart, label: "Purchase Slots" },
-        { to: "/news", icon: Newspaper, label: "News" },
-        { to: "/settings", icon: Settings, label: "Settings" },
-      ]
-    : [
-        { to: "/", icon: Home, label: "Home" },
-        { to: "/signals", icon: TrendingUp, label: "Signals" },
-        { to: "/history", icon: History, label: "History" },
-        { to: "/purchase", icon: ShoppingCart, label: "Purchase Slots" },
-        { to: "/news", icon: Newspaper, label: "News" },
-        { to: "/settings", icon: Settings, label: "Settings" },
-        { to: "/referral-program", icon: Users, label: "Referral Program" },
-      ];
-
+  const menuItems = isAdmin ? [
+    { to: "/admin", icon: Shield, label: "Admin Dashboard", primary: true },
+    { to: "/settings", icon: Settings, label: "Settings" },
+    { to: "/history", icon: History, label: "History" },
+    { to: "/news", icon: Newspaper, label: "News" },,
+  ] : [
+   const menuItems = isSignalProvider ? [
+    { to: "/SignalProvider", icon: Shield, label: "SignalProvider Dashboard", primary: true },
+    { to: "/", icon: Home, label: "Home" },
+    { to: "/settings", icon: Settings, label: "Settings" },
+    { to: "/history", icon: History, label: "History" },
+    { to: "/news", icon: Newspaper, label: "News" },,
+  ] : [
+    { to: "/", icon: Home, label: "Home" },
+    { to: "/signals", icon: TrendingUp, label: "Signals" },
+    { to: "/history", icon: History, label: "History" },
+    { to: "/purchase", icon: ShoppingCart, label: "Purchase Slots" },
+    { to: "/news", icon: Newspaper, label: "News" },
+    { to: "/settings", icon: Settings, label: "Settings" },
+    { to: "/referral-program", icon: Users, label: "Referral Program" },
+  ];
   return (
     <>
       <div className="fixed top-5 right-4 z-[60]" ref={menuRef}>
-        <Button
-          variant="ghost"
+        <Button 
+          variant="ghost" 
           className="flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border rounded-md px-3 py-2 hover:bg-accent"
           onClick={() => setOpen(!open)}
         >
@@ -114,21 +102,22 @@ export const SlideInMenu = () => {
         {open && (
           <div className="absolute top-full right-0 mt-2 w-64 bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
             <nav className="flex flex-col p-2">
-              {menuItems.map(({ to, icon: Icon, label, primary }) => (
-                <Link key={to} to={to} onClick={() => setOpen(false)}>
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start gap-2 ${primary ? "text-primary" : ""}`}
+              {menuItems.map((item) => (
+                <Link key={item.to} to={item.to} onClick={() => setOpen(false)}>
+                  <Button 
+                    variant="ghost" 
+                    className={`w-full justify-start gap-2 ${item.primary ? 'text-primary' : ''}`}
                   >
-                    <Icon className="h-4 w-4" />
-                    {label}
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
                   </Button>
                 </Link>
               ))}
-
-              {!isAdmin && !isSignalProvider && (
-                <Button
-                  variant="ghost"
+              
+              {/* Notifications button for non-admin users */}
+              {!isAdmin && (
+                <Button 
+                  variant="ghost" 
                   className="w-full justify-start gap-2"
                   onClick={() => {
                     setOpen(false);
@@ -144,9 +133,9 @@ export const SlideInMenu = () => {
                   )}
                 </Button>
               )}
-
-              <Button
-                variant="ghost"
+              
+              <Button 
+                variant="ghost" 
                 className="w-full justify-start gap-2 text-destructive hover:text-destructive"
                 onClick={handleSignOut}
               >
@@ -158,12 +147,12 @@ export const SlideInMenu = () => {
         )}
       </div>
 
-      <NotificationsPanel
-        isOpen={showNotifications}
+      <NotificationsPanel 
+        isOpen={showNotifications} 
         onClose={() => {
           setShowNotifications(false);
           fetchUnreadCount();
-        }}
+        }} 
       />
     </>
   );
