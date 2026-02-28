@@ -19,7 +19,8 @@ const SignalProvider = () => {
     }
   }, [loading, isSignalProvider, navigate, toast]);
 
-  if (loading) {
+  // Safe loading placeholder
+  if (loading || typeof isSignalProvider === "undefined") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -27,15 +28,12 @@ const SignalProvider = () => {
     );
   }
 
-  if (!isSignalProvider) {
-    return null;
-  }
+  if (!isSignalProvider) return null; // prevents unauthorized flash
 
-  // 👇 PUT YOUR SIGNAL PROVIDER DASHBOARD CONTENT HERE
   return (
-    <div className="min-h-screen p-6">
+    <div>
+      {/* Put your Signal Provider dashboard content here */}
       <h1 className="text-2xl font-bold">Signal Provider Dashboard</h1>
-      <p>Welcome to your dashboard.</p>
     </div>
   );
 };
