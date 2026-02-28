@@ -13,6 +13,7 @@ export const SlideInMenu = () => {
   const [open, setOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -25,32 +26,37 @@ export const SlideInMenu = () => {
         setOpen(false);
       }
     };
-
     if (open) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
   useEffect(() => {
-    fetchUnreadCount();
+    const fetchUnread = async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        const user = data?.user;
+        if (!user) return;
+
+        const { data: allNotifications } = await supabase
+          .from("admin_notifications")
+          .select("id")
+          .or(`is_global.eq.true,target_user_id.eq.${user.id}`);
+
+        const { data: readNotifications } = await supabase
+          .from("notification_reads")
+          .select("notification_id")
+          .eq("user_id", user.id);
+
+        const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
+        setUnreadCount(allNotifications?.filter(n => !readIds.has(n.id)).length || 0);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUnread();
   }, []);
-
-  const fetchUnreadCount = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: allNotifications } = await supabase
-      .from("admin_notifications")
-      .select("id")
-      .or(`is_global.eq.true,target_user_id.eq.${user.id}`);
-
-    const { data: readNotifications } = await supabase
-      .from("notification_reads")
-      .select("notification_id")
-      .eq("user_id", user.id);
-
-    const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
-    setUnreadCount(allNotifications?.filter(n => !readIds.has(n.id)).length || 0);
-  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -59,10 +65,15 @@ export const SlideInMenu = () => {
     setOpen(false);
   };
 
-  // Wait for signal provider check
-  if (checkingSignalProvider) return null;
+  // Always render JSX; show loader if checking roles
+  if (loading || checkingSignalProvider) {
+    return (
+      <div className="fixed top-5 right-4 z-[60]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-  // Build menu
   const menuItems = isAdmin
     ? [
         { to: "/admin", icon: Shield, label: "Admin Dashboard", primary: true },
@@ -107,7 +118,7 @@ export const SlideInMenu = () => {
                 <Link key={to} to={to} onClick={() => setOpen(false)}>
                   <Button
                     variant="ghost"
-                    className={`w-full justify-start gap-2 ${primary ? 'text-primary' : ''}`}
+                    className={`w-full justify-start gap-2 ${primary ? "text-primary" : ""}`}
                   >
                     <Icon className="h-4 w-4" />
                     {label}
