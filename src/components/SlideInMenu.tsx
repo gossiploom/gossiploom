@@ -1,3 +1,4 @@
+import { useSignalProviderCheck } from "@/hooks/useSignalProviderCheck";
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ export const SlideInMenu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useAdminCheck();
+  const { isSignalProvider, loading: loadingSignalProvider } = useSignalProviderCheck();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -107,25 +109,24 @@ export const SlideInMenu = () => {
                 </Link>
               ))}
               
-              {/* Notifications button for non-admin users */}
-              {!isAdmin && (
-                <Button 
-                  variant="ghost" 
-                  className="w-full justify-start gap-2"
-                  onClick={() => {
-                    setOpen(false);
-                    setShowNotifications(true);
-                  }}
-                >
-                  <Bell className="h-4 w-4" />
-                  Notifications
-                  {unreadCount > 0 && (
-                    <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0.5">
-                      {unreadCount}
-                    </Badge>
-                  )}
-                </Button>
-              )}
+              {!isAdmin && !isSignalProvider && (
+  <Button 
+    variant="ghost" 
+    className="w-full justify-start gap-2"
+    onClick={() => {
+      setOpen(false);
+      setShowNotifications(true);
+    }}
+  >
+    <Bell className="h-4 w-4" />
+    Notifications
+    {unreadCount > 0 && (
+      <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0.5">
+        {unreadCount}
+      </Badge>
+    )}
+  </Button>
+)}
               
               <Button 
                 variant="ghost" 
