@@ -100,9 +100,6 @@ export const SlideInMenu = () => {
     setOpen(false);
   };
 
-  // -----------------------------
-  // ROLE BASED MENU LOGIC
-  // -----------------------------
   let menuItems: MenuItem[] = [];
 
   if (isAdmin) {
