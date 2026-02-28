@@ -69,7 +69,7 @@ export const SlideInMenu = () => {
     { to: "/admin", icon: Shield, label: "Admin Dashboard", primary: true },
     { to: "/settings", icon: Settings, label: "Settings" },
     { to: "/history", icon: History, label: "History" },
-    { to: "/news", icon: Newspaper, label: "News" },,
+    { to: "/news", icon: Newspaper, label: "News" },
   ] : [
     { to: "/", icon: Home, label: "Home" },
     { to: "/signals", icon: TrendingUp, label: "Signals" },
