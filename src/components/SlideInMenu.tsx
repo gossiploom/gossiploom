@@ -37,15 +37,18 @@ export const SlideInMenu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // -----------------------------
+  // Hooks must always be top-level
+  // -----------------------------
   const { isAdmin, loading: adminLoading } = useAdminCheck();
-  const { isSignalProvider, loading: providerLoading } =
-    useSignalProviderCheck();
+  const { isSignalProvider, loading: providerLoading } = useSignalProviderCheck();
 
-  // Prevent rendering before roles load (important for production)
-  if (adminLoading || providerLoading) {
-    return null;
-  }
+  // Prevent rendering until roles are loaded
+  if (adminLoading || providerLoading) return null;
 
+  // -----------------------------
+  // Click outside to close menu
+  // -----------------------------
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -53,24 +56,20 @@ export const SlideInMenu = () => {
       }
     };
 
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    if (open) document.addEventListener("mousedown", handleClickOutside);
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
+  // -----------------------------
+  // Fetch unread notifications
+  // -----------------------------
   useEffect(() => {
     fetchUnreadCount();
   }, []);
 
   const fetchUnreadCount = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     const { data: allNotifications } = await supabase
@@ -83,16 +82,14 @@ export const SlideInMenu = () => {
       .select("notification_id")
       .eq("user_id", user.id);
 
-    const readIds = new Set(
-      readNotifications?.map((r) => r.notification_id) || []
-    );
-
-    const unread =
-      allNotifications?.filter((n) => !readIds.has(n.id)).length || 0;
-
+    const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
+    const unread = allNotifications?.filter(n => !readIds.has(n.id)).length || 0;
     setUnreadCount(unread);
   };
 
+  // -----------------------------
+  // Sign out handler
+  // -----------------------------
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     toast({ title: "Signed out successfully" });
@@ -100,28 +97,21 @@ export const SlideInMenu = () => {
     setOpen(false);
   };
 
+  // -----------------------------
+  // Define role-based menu items
+  // -----------------------------
   let menuItems: MenuItem[] = [];
 
   if (isAdmin) {
     menuItems = [
-      {
-        to: "/admin",
-        icon: Shield,
-        label: "Admin Dashboard",
-        primary: true,
-      },
+      { to: "/admin", icon: Shield, label: "Admin Dashboard", primary: true },
       { to: "/settings", icon: Settings, label: "Settings" },
       { to: "/history", icon: History, label: "History" },
       { to: "/news", icon: Newspaper, label: "News" },
     ];
   } else if (isSignalProvider) {
     menuItems = [
-      {
-        to: "/signal-provider",
-        icon: Shield,
-        label: "Signal Provider Dashboard",
-        primary: true,
-      },
+      { to: "/signal-provider", icon: Shield, label: "Signal Provider Dashboard", primary: true },
       { to: "/", icon: Home, label: "Home" },
       { to: "/settings", icon: Settings, label: "Settings" },
       { to: "/history", icon: History, label: "History" },
@@ -139,6 +129,9 @@ export const SlideInMenu = () => {
     ];
   }
 
+  // -----------------------------
+  // Render component
+  // -----------------------------
   return (
     <>
       <div className="fixed top-5 right-4 z-[60]" ref={menuRef}>
@@ -155,16 +148,10 @@ export const SlideInMenu = () => {
           <div className="absolute top-full right-0 mt-2 w-64 bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
             <nav className="flex flex-col p-2">
               {menuItems.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setOpen(false)}
-                >
+                <Link key={item.to} to={item.to} onClick={() => setOpen(false)}>
                   <Button
                     variant="ghost"
-                    className={`w-full justify-start gap-2 ${
-                      item.primary ? "text-primary" : ""
-                    }`}
+                    className={`w-full justify-start gap-2 ${item.primary ? "text-primary" : ""}`}
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
@@ -185,10 +172,7 @@ export const SlideInMenu = () => {
                   <Bell className="h-4 w-4" />
                   Notifications
                   {unreadCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="ml-auto text-xs px-1.5 py-0.5"
-                    >
+                    <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0.5">
                       {unreadCount}
                     </Badge>
                   )}
