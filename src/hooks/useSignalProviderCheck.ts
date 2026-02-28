@@ -6,15 +6,22 @@ export const useSignalProviderCheck = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let authSubscription: any;
+
     const checkSignalProvider = async () => {
+      setLoading(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
         if (!user) {
           setIsSignalProvider(false);
           setLoading(false);
           return;
         }
 
+        // Check user role
         const { data, error } = await supabase
           .from("user_roles")
           .select("role")
@@ -22,22 +29,30 @@ export const useSignalProviderCheck = () => {
           .eq("role", "signal_provider")
           .maybeSingle();
 
-        setIsSignalProvider(!!data && !error);
-      } catch (error) {
-        console.error("Error checking signal provider status:", error);
+        if (error) {
+          console.error("Error fetching role:", error);
+        }
+
+        setIsSignalProvider(!!data);
+      } catch (err) {
+        console.error("Error checking signal provider status:", err);
         setIsSignalProvider(false);
       } finally {
         setLoading(false);
       }
     };
 
+    // Initial check
     checkSignalProvider();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    // Listen to auth changes
+    authSubscription = supabase.auth.onAuthStateChange((_event, session) => {
       checkSignalProvider();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      authSubscription?.data?.subscription?.unsubscribe();
+    };
   }, []);
 
   return { isSignalProvider, loading };
