@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useSignalProviderCheck } from "@/hooks/useSignalProviderCheck";
-import SignalProviderDashboard from "./SignalProviderDashboard"; // Move your main JSX here
 
 const SignalProvider = () => {
   const { toast } = useToast();
@@ -29,10 +28,16 @@ const SignalProvider = () => {
   }
 
   if (!isSignalProvider) {
-    return null; // prevents flash of unauthorized content
+    return null;
   }
 
-  return <SignalProviderDashboard />;
+  // 👇 PUT YOUR SIGNAL PROVIDER DASHBOARD CONTENT HERE
+  return (
+    <div className="min-h-screen p-6">
+      <h1 className="text-2xl font-bold">Signal Provider Dashboard</h1>
+      <p>Welcome to your dashboard.</p>
+    </div>
+  );
 };
 
 export default SignalProvider;
