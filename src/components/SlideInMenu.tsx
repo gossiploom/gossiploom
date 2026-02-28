@@ -1,10 +1,23 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Settings, History, LogOut, Newspaper, Home, LineChart, ShoppingCart, Shield, Bell, TrendingUp, Users } from "lucide-react";
+import { 
+  Menu, 
+  Settings, 
+  History, 
+  LogOut, 
+  Newspaper, 
+  Home, 
+  ShoppingCart, 
+  Shield, 
+  Bell, 
+  TrendingUp, 
+  Users 
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useSignalProviderCheck } from "@/hooks/useSignalProviderCheck"; // ✅ MAKE SURE THIS EXISTS
 import { NotificationsPanel } from "./NotificationsPanel";
 import { Badge } from "@/components/ui/badge";
 
@@ -53,45 +66,54 @@ export const SlideInMenu = () => {
       .eq("user_id", user.id);
 
     const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
-    const unread = allNotifications?.filter(n => !readIds.has(n.id)).length || 0;
+    const unread =
+      allNotifications?.filter(n => !readIds.has(n.id)).length || 0;
+
     setUnreadCount(unread);
   };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    toast({
-      title: "Signed out successfully",
-    });
+    toast({ title: "Signed out successfully" });
     navigate("/auth");
     setOpen(false);
   };
 
-  const menuItems = isAdmin ? [
-    { to: "/admin", icon: Shield, label: "Admin Dashboard", primary: true },
-    { to: "/settings", icon: Settings, label: "Settings" },
-    { to: "/history", icon: History, label: "History" },
-    { to: "/news", icon: Newspaper, label: "News" },,
-  ] : [
-   const menuItems = isSignalProvider ? [
-    { to: "/SignalProvider", icon: Shield, label: "SignalProvider Dashboard", primary: true },
-    { to: "/", icon: Home, label: "Home" },
-    { to: "/settings", icon: Settings, label: "Settings" },
-    { to: "/history", icon: History, label: "History" },
-    { to: "/news", icon: Newspaper, label: "News" },,
-  ] : [
-    { to: "/", icon: Home, label: "Home" },
-    { to: "/signals", icon: TrendingUp, label: "Signals" },
-    { to: "/history", icon: History, label: "History" },
-    { to: "/purchase", icon: ShoppingCart, label: "Purchase Slots" },
-    { to: "/news", icon: Newspaper, label: "News" },
-    { to: "/settings", icon: Settings, label: "Settings" },
-    { to: "/referral-program", icon: Users, label: "Referral Program" },
-  ];
+  // ✅ CLEAN ROLE-BASED MENU LOGIC
+  let menuItems;
+
+  if (isAdmin) {
+    menuItems = [
+      { to: "/admin", icon: Shield, label: "Admin Dashboard", primary: true },
+      { to: "/settings", icon: Settings, label: "Settings" },
+      { to: "/history", icon: History, label: "History" },
+      { to: "/news", icon: Newspaper, label: "News" },
+    ];
+  } else if (isSignalProvider) {
+    menuItems = [
+      { to: "/signal-provider", icon: Shield, label: "Signal Provider Dashboard", primary: true },
+      { to: "/", icon: Home, label: "Home" },
+      { to: "/settings", icon: Settings, label: "Settings" },
+      { to: "/history", icon: History, label: "History" },
+      { to: "/news", icon: Newspaper, label: "News" },
+    ];
+  } else {
+    menuItems = [
+      { to: "/", icon: Home, label: "Home" },
+      { to: "/signals", icon: TrendingUp, label: "Signals" },
+      { to: "/history", icon: History, label: "History" },
+      { to: "/purchase", icon: ShoppingCart, label: "Purchase Slots" },
+      { to: "/news", icon: Newspaper, label: "News" },
+      { to: "/settings", icon: Settings, label: "Settings" },
+      { to: "/referral-program", icon: Users, label: "Referral Program" },
+    ];
+  }
+
   return (
     <>
       <div className="fixed top-5 right-4 z-[60]" ref={menuRef}>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="flex items-center gap-2 bg-card/95 backdrop-blur-sm border border-border rounded-md px-3 py-2 hover:bg-accent"
           onClick={() => setOpen(!open)}
         >
@@ -104,20 +126,22 @@ export const SlideInMenu = () => {
             <nav className="flex flex-col p-2">
               {menuItems.map((item) => (
                 <Link key={item.to} to={item.to} onClick={() => setOpen(false)}>
-                  <Button 
-                    variant="ghost" 
-                    className={`w-full justify-start gap-2 ${item.primary ? 'text-primary' : ''}`}
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start gap-2 ${
+                      item.primary ? "text-primary" : ""
+                    }`}
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
                   </Button>
                 </Link>
               ))}
-              
-              {/* Notifications button for non-admin users */}
+
+              {/* Notifications (for non-admin users only) */}
               {!isAdmin && (
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="w-full justify-start gap-2"
                   onClick={() => {
                     setOpen(false);
@@ -127,15 +151,18 @@ export const SlideInMenu = () => {
                   <Bell className="h-4 w-4" />
                   Notifications
                   {unreadCount > 0 && (
-                    <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0.5">
+                    <Badge
+                      variant="destructive"
+                      className="ml-auto text-xs px-1.5 py-0.5"
+                    >
                       {unreadCount}
                     </Badge>
                   )}
                 </Button>
               )}
-              
-              <Button 
-                variant="ghost" 
+
+              <Button
+                variant="ghost"
                 className="w-full justify-start gap-2 text-destructive hover:text-destructive"
                 onClick={handleSignOut}
               >
@@ -147,12 +174,12 @@ export const SlideInMenu = () => {
         )}
       </div>
 
-      <NotificationsPanel 
-        isOpen={showNotifications} 
+      <NotificationsPanel
+        isOpen={showNotifications}
         onClose={() => {
           setShowNotifications(false);
           fetchUnreadCount();
-        }} 
+        }}
       />
     </>
   );
