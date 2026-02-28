@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Settings, History, LogOut, Newspaper, Home, LineChart, ShoppingCart, Shield, Bell, TrendingUp, Users } from "lucide-react";
+import { Menu, Settings, History, LogOut, Newspaper, Home, ShoppingCart, Shield, Bell, TrendingUp, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -59,10 +59,10 @@ export const SlideInMenu = () => {
     setOpen(false);
   };
 
-  // Wait for the signal provider hook to finish loading
+  // Wait for signal provider check
   if (checkingSignalProvider) return null;
 
-  // Build menu dynamically
+  // Build menu
   const menuItems = isAdmin
     ? [
         { to: "/admin", icon: Shield, label: "Admin Dashboard", primary: true },
@@ -103,14 +103,14 @@ export const SlideInMenu = () => {
         {open && (
           <div className="absolute top-full right-0 mt-2 w-64 bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
             <nav className="flex flex-col p-2">
-              {menuItems.map((item) => (
-                <Link key={item.to} to={item.to} onClick={() => setOpen(false)}>
+              {menuItems.map(({ to, icon: Icon, label, primary }) => (
+                <Link key={to} to={to} onClick={() => setOpen(false)}>
                   <Button
                     variant="ghost"
-                    className={`w-full justify-start gap-2 ${item.primary ? 'text-primary' : ''}`}
+                    className={`w-full justify-start gap-2 ${primary ? 'text-primary' : ''}`}
                   >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
+                    <Icon className="h-4 w-4" />
+                    {label}
                   </Button>
                 </Link>
               ))}
