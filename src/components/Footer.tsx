@@ -35,6 +35,10 @@ export const Footer = () => {
             <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
               Contact Us
             </Link>
+            <span className="text-border hidden sm:inline">|</span>
+            <Link to="/freesignals" className="text-muted-foreground hover:text-primary transition-colors">
+              FreeSignals
+            </Link>
           </nav>
 
           {/* Contact Email */}
