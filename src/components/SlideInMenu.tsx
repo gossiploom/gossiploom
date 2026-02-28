@@ -21,13 +21,6 @@ import { useSignalProviderCheck } from "@/hooks/useSignalProviderCheck";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { Badge } from "@/components/ui/badge";
 
-type MenuItem = {
-  to: string;
-  icon: any;
-  label: string;
-  primary?: boolean;
-};
-
 export const SlideInMenu = () => {
   const [open, setOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -38,12 +31,12 @@ export const SlideInMenu = () => {
   const { toast } = useToast();
 
   // -----------------------------
-  // Hooks must always be top-level
+  // Hooks at top-level only
   // -----------------------------
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const { isSignalProvider, loading: providerLoading } = useSignalProviderCheck();
 
-  // Prevent rendering until roles are loaded
+  // Early return until role checks are complete
   if (adminLoading || providerLoading) return null;
 
   // -----------------------------
@@ -55,9 +48,7 @@ export const SlideInMenu = () => {
         setOpen(false);
       }
     };
-
     if (open) document.addEventListener("mousedown", handleClickOutside);
-
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
@@ -65,27 +56,26 @@ export const SlideInMenu = () => {
   // Fetch unread notifications
   // -----------------------------
   useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: allNotifications } = await supabase
+        .from("admin_notifications")
+        .select("id")
+        .or(`is_global.eq.true,target_user_id.eq.${user.id}`);
+
+      const { data: readNotifications } = await supabase
+        .from("notification_reads")
+        .select("notification_id")
+        .eq("user_id", user.id);
+
+      const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
+      setUnreadCount(allNotifications?.filter(n => !readIds.has(n.id)).length || 0);
+    };
+
     fetchUnreadCount();
   }, []);
-
-  const fetchUnreadCount = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: allNotifications } = await supabase
-      .from("admin_notifications")
-      .select("id")
-      .or(`is_global.eq.true,target_user_id.eq.${user.id}`);
-
-    const { data: readNotifications } = await supabase
-      .from("notification_reads")
-      .select("notification_id")
-      .eq("user_id", user.id);
-
-    const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
-    const unread = allNotifications?.filter(n => !readIds.has(n.id)).length || 0;
-    setUnreadCount(unread);
-  };
 
   // -----------------------------
   // Sign out handler
@@ -98,9 +88,9 @@ export const SlideInMenu = () => {
   };
 
   // -----------------------------
-  // Define role-based menu items
+  // Role-based menu items
   // -----------------------------
-  let menuItems: MenuItem[] = [];
+  let menuItems = [];
 
   if (isAdmin) {
     menuItems = [
@@ -130,7 +120,7 @@ export const SlideInMenu = () => {
   }
 
   // -----------------------------
-  // Render component
+  // Render
   // -----------------------------
   return (
     <>
@@ -159,7 +149,6 @@ export const SlideInMenu = () => {
                 </Link>
               ))}
 
-              {/* Notifications for non-admin users */}
               {!isAdmin && (
                 <Button
                   variant="ghost"
@@ -196,6 +185,7 @@ export const SlideInMenu = () => {
         isOpen={showNotifications}
         onClose={() => {
           setShowNotifications(false);
+          // Refresh unread count after closing panel
           fetchUnreadCount();
         }}
       />
