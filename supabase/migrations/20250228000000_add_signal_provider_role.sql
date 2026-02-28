@@ -172,3 +172,11 @@ GROUP BY provider_id;
 COMMENT ON TABLE signals IS 'Stores trading signals created by signal providers';
 COMMENT ON COLUMN signals.signal_visibility IS 'Who can see this signal: free (everyone), subscribers (paid users), or both';
 COMMENT ON COLUMN signals.outcome IS 'Result of the signal: pending, win, loss, or breakeven';
+
+-- Step 11: User roles Mapping
+CREATE TABLE IF NOT EXISTS user_roles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  role app_role NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
