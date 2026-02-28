@@ -1,35 +1,50 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  Menu, 
-  Settings, 
-  History, 
-  LogOut, 
-  Newspaper, 
-  Home, 
-  ShoppingCart, 
-  Shield, 
-  Bell, 
-  TrendingUp, 
-  Users 
+import {
+  Menu,
+  Settings,
+  History,
+  LogOut,
+  Newspaper,
+  Home,
+  ShoppingCart,
+  Shield,
+  Bell,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
-import { useSignalProviderCheck } from "@/hooks/useSignalProviderCheck"; // ✅ MAKE SURE THIS EXISTS
+import { useSignalProviderCheck } from "@/hooks/useSignalProviderCheck";
 import { NotificationsPanel } from "./NotificationsPanel";
 import { Badge } from "@/components/ui/badge";
+
+type MenuItem = {
+  to: string;
+  icon: any;
+  label: string;
+  primary?: boolean;
+};
 
 export const SlideInMenu = () => {
   const [open, setOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAdmin } = useAdminCheck();
-  const { isSignalProvider } = useSignalProviderCheck();
+
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
+  const { isSignalProvider, loading: providerLoading } =
+    useSignalProviderCheck();
+
+  // Prevent rendering before roles load (important for production)
+  if (adminLoading || providerLoading) {
+    return null;
+  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,7 +67,10 @@ export const SlideInMenu = () => {
   }, []);
 
   const fetchUnreadCount = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (!user) return;
 
     const { data: allNotifications } = await supabase
@@ -65,9 +83,12 @@ export const SlideInMenu = () => {
       .select("notification_id")
       .eq("user_id", user.id);
 
-    const readIds = new Set(readNotifications?.map(r => r.notification_id) || []);
+    const readIds = new Set(
+      readNotifications?.map((r) => r.notification_id) || []
+    );
+
     const unread =
-      allNotifications?.filter(n => !readIds.has(n.id)).length || 0;
+      allNotifications?.filter((n) => !readIds.has(n.id)).length || 0;
 
     setUnreadCount(unread);
   };
@@ -79,19 +100,31 @@ export const SlideInMenu = () => {
     setOpen(false);
   };
 
-  // ✅ CLEAN ROLE-BASED MENU LOGIC
-  let menuItems;
+  // -----------------------------
+  // ROLE BASED MENU LOGIC
+  // -----------------------------
+  let menuItems: MenuItem[] = [];
 
   if (isAdmin) {
     menuItems = [
-      { to: "/admin", icon: Shield, label: "Admin Dashboard", primary: true },
+      {
+        to: "/admin",
+        icon: Shield,
+        label: "Admin Dashboard",
+        primary: true,
+      },
       { to: "/settings", icon: Settings, label: "Settings" },
       { to: "/history", icon: History, label: "History" },
       { to: "/news", icon: Newspaper, label: "News" },
     ];
   } else if (isSignalProvider) {
     menuItems = [
-      { to: "/signal-provider", icon: Shield, label: "Signal Provider Dashboard", primary: true },
+      {
+        to: "/signal-provider",
+        icon: Shield,
+        label: "Signal Provider Dashboard",
+        primary: true,
+      },
       { to: "/", icon: Home, label: "Home" },
       { to: "/settings", icon: Settings, label: "Settings" },
       { to: "/history", icon: History, label: "History" },
@@ -125,7 +158,11 @@ export const SlideInMenu = () => {
           <div className="absolute top-full right-0 mt-2 w-64 bg-card/95 backdrop-blur-sm border border-border rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
             <nav className="flex flex-col p-2">
               {menuItems.map((item) => (
-                <Link key={item.to} to={item.to} onClick={() => setOpen(false)}>
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                >
                   <Button
                     variant="ghost"
                     className={`w-full justify-start gap-2 ${
@@ -138,7 +175,7 @@ export const SlideInMenu = () => {
                 </Link>
               ))}
 
-              {/* Notifications (for non-admin users only) */}
+              {/* Notifications for non-admin users */}
               {!isAdmin && (
                 <Button
                   variant="ghost"
